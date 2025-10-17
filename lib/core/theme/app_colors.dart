@@ -7,4 +7,10 @@ class AppColors {
   static const Color background = Color(0xFFF8FAFC); //Soft White
   static const Color text = Color(0xFF0F172A); //Cool Navy
   static const Color cta = Color(0xFFFF5F6D); //Coral Red
+
+  static const LinearGradient primaryGradient = LinearGradient(
+    colors: [primary, accent],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight
+  );
 }
