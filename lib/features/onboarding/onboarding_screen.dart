@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:genzfit/core/theme/app_theme.dart';
+import 'package:genzfit/features/onboarding/role_selection_screen.dart';
+import 'package:genzfit/rotes/routes.dart';
+
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -133,7 +136,26 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  onPressed: _nextPage,
+                  onPressed: (){
+                    if (_currentPage == onboardingData.length - 1) {
+                      // ✨ Custom fade transition
+                      Navigator.of(context).pushReplacement(
+                        PageRouteBuilder(
+                          pageBuilder: (context, animation, secondaryAnimation) =>
+                          const  RoleSelectionScreen(),
+                          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                            return FadeTransition(
+                              opacity: animation,
+                              child: child,
+                            );
+                          },
+                          transitionDuration: const Duration(milliseconds: 700),
+                        ),
+                      );
+                    } else {
+                      _nextPage();
+                    }
+                  },
                   child: Text(
                     _currentPage == onboardingData.length - 1
                         ? "Get Started"
