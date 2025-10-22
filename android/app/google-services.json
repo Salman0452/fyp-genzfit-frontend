@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1088491642353",
+    "project_id": "genzfit-d36f0",
+    "storage_bucket": "genzfit-d36f0.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1088491642353:android:767ed488706c2fd6c97850",
+        "android_client_info": {
+          "package_name": "com.example.genzfit"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDSBPfkd3Hx4Q8jsb0jgbkJEbR5LBHKQlk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
