@@ -64,7 +64,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                     if (selectedRole == 'Trainer') {
                       Navigator.pushNamed(context, '/trainerLogin');
                     } else if (selectedRole == 'Fitness Seeker') {
-                      Navigator.pushNamed(context, '/clientLogin');
+                      Navigator.pushNamed(context, '/seekerLogin');
                     }
                   },
                   style: ElevatedButton.styleFrom(
@@ -77,8 +77,10 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                   ),
                   child: Text(
                     "Continue",
-                    style: AppTextStyles.subheading
-                        .copyWith(color: Colors.white, fontWeight: FontWeight.w600),
+                    style: AppTextStyles.subheading.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
               ],

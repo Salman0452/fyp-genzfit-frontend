@@ -137,7 +137,8 @@ class _TrainerSignupScreenState extends State<TrainerSignupScreen> {
                   const SizedBox(height: 24),
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFFF5F6D),
+                      backgroundColor: AppColors.cta,
+                      foregroundColor: Colors.white,
                       minimumSize: const Size(double.infinity, 55),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -146,8 +147,14 @@ class _TrainerSignupScreenState extends State<TrainerSignupScreen> {
                     onPressed: _isLoading ? null : _signup,
                     child: _isLoading
                         ? const CircularProgressIndicator(color: Colors.white)
-                        : const Text("Sign Up",
-                        style: TextStyle(color: Colors.white, fontSize: 18)),
+                        : const Text(
+                            "Sign Up",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                   ),
                   const SizedBox(height: 16),
                   TextButton(
@@ -168,27 +175,23 @@ class _TrainerSignupScreenState extends State<TrainerSignupScreen> {
 
   Widget _buildTextField(TextEditingController controller, String hint, IconData icon,
       {bool isPassword = false}) {
-    final focusNode = FocusNode();
-
-    return Focus(
-      onFocusChange: (_) => setState(() {}),
-      child: TextField(
-        controller: controller,
-        focusNode: focusNode,
-        obscureText: isPassword,
-        style: const TextStyle(color: Colors.white),
-        decoration: InputDecoration(
-          prefixIcon: Icon(icon, color: Colors.white70),
-          hintText: hint,
-          hintStyle: const TextStyle(color: Colors.white54),
-          filled: true,
-          fillColor: focusNode.hasFocus
-              ? Colors.white.withOpacity(0.2)
-              : Colors.white.withOpacity(0.1),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide.none,
-          ),
+    return TextField(
+      controller: controller,
+      obscureText: isPassword,
+      style: const TextStyle(color: Colors.white),
+      decoration: InputDecoration(
+        prefixIcon: Icon(icon, color: Colors.white70),
+        hintText: hint,
+        hintStyle: const TextStyle(color: Colors.white54),
+        filled: true,
+        fillColor: Colors.white.withOpacity(0.1),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.white.withOpacity(0.2)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Colors.white, width: 1.5),
         ),
       ),
     );

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:genzfit/core/theme/app_theme.dart';
+import 'package:genzfit/core/theme/app_colors.dart';
 import 'package:genzfit/features/onboarding/role_selection_screen.dart';
 import 'package:genzfit/rotes/routes.dart';
 
@@ -49,11 +50,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Color(0xFF00C6FB), Color(0xFF2AF598)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
+          gradient: AppColors.primaryGradient,
         ),
         child: SafeArea(
           child: Column(
@@ -85,7 +82,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           Text(
                             onboardingData[index]['title']!,
                             style: Theme.of(context).textTheme.headlineMedium!.copyWith(
-                              color: const Color(0xFF0F172A),
+                              color: AppColors.text,
                               fontWeight: FontWeight.bold,
                             ),
                             textAlign: TextAlign.center,
@@ -94,7 +91,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           Text(
                             onboardingData[index]['subtitle']!,
                             style: Theme.of(context).textTheme.bodyLarge!.copyWith(
-                              color: Colors.black87,
+                              color: AppColors.textSecondary,
                             ),
                             textAlign: TextAlign.center,
                           ),
@@ -117,8 +114,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     width: _currentPage == index ? 24 : 8,
                     decoration: BoxDecoration(
                       color: _currentPage == index
-                          ? const Color(0xFF005BEA)
-                          : Colors.white.withOpacity(0.6),
+                          ? AppColors.accent
+                          : AppColors.textMuted,
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
@@ -130,7 +127,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 padding: const EdgeInsets.all(24.0),
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFFF5F6D),
+                    backgroundColor: AppColors.cta,
+                    foregroundColor: Colors.white,
                     minimumSize: const Size(double.infinity, 55),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -160,7 +158,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     _currentPage == onboardingData.length - 1
                         ? "Get Started"
                         : "Next",
-                    style: const TextStyle(fontSize: 18, color: Colors.white),
+                    style: const TextStyle(
+                      fontSize: 18,
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ),

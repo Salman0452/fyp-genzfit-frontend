@@ -3,14 +3,14 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../services/auth_service.dart';
 
-class TrainerLoginScreen extends StatefulWidget {
-  const TrainerLoginScreen({super.key});
+class SeekerLoginScreen extends StatefulWidget {
+  const SeekerLoginScreen({super.key});
 
   @override
-  State<TrainerLoginScreen> createState() => _TrainerLoginScreenState();
+  State<SeekerLoginScreen> createState() => _SeekerLoginScreenState();
 }
 
-class _TrainerLoginScreenState extends State<TrainerLoginScreen>
+class _SeekerLoginScreenState extends State<SeekerLoginScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _fadeAnimation;
@@ -77,7 +77,7 @@ class _TrainerLoginScreenState extends State<TrainerLoginScreen>
       final email = emailController.text.trim();
       final password = passwordController.text;
 
-      final error = await _authService.loginTrainer(
+      final error = await _authService.loginSeeker(
         email: email,
         password: password,
       );
@@ -88,10 +88,10 @@ class _TrainerLoginScreenState extends State<TrainerLoginScreen>
         _showSnackBar(error);
       } else {
         _showSnackBar("Login Successful!", type: 'success');
-        
-        // Navigate to trainer dashboard
+
+        // Navigate to seeker dashboard
         Future.delayed(const Duration(milliseconds: 500), () {
-          Navigator.pushReplacementNamed(context, '/trainerDashboard');
+          Navigator.pushReplacementNamed(context, '/seekerDashboard');
         });
       }
     }
@@ -114,7 +114,7 @@ class _TrainerLoginScreenState extends State<TrainerLoginScreen>
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       Text(
-                        "Trainer Login",
+                        "Seeker Login",
                         style: AppTextStyles.heading.copyWith(color: Colors.white),
                       ),
                       const SizedBox(height: 40),
@@ -174,7 +174,7 @@ class _TrainerLoginScreenState extends State<TrainerLoginScreen>
                       const SizedBox(height: 16),
                       TextButton(
                         onPressed: () {
-                          Navigator.pushNamed(context, '/trainerSignup');
+                          Navigator.pushNamed(context, '/seekerSignup');
                         },
                         child: const Text(
                           "Don’t have an account? Sign up",
@@ -213,13 +213,13 @@ class _TrainerLoginScreenState extends State<TrainerLoginScreen>
         ),
         suffixIcon: isPassword
             ? IconButton(
-          icon: Icon(
-            _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
-            color: Colors.white70,
-          ),
-          onPressed: () =>
-              setState(() => _isPasswordVisible = !_isPasswordVisible),
-        )
+                icon: Icon(
+                  _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                  color: Colors.white70,
+                ),
+                onPressed: () =>
+                    setState(() => _isPasswordVisible = !_isPasswordVisible),
+              )
             : null,
         filled: true,
         fillColor: Colors.white.withOpacity(0.1),

@@ -7,18 +7,36 @@ class AppTextStyles {
     fontSize: 28,
     fontWeight: FontWeight.w700,
     color: AppColors.text,
+    letterSpacing: -0.5,
   );
 
   static const TextStyle subheading = TextStyle(
     fontFamily: 'Poppins',
     fontSize: 18,
-    fontWeight: FontWeight.w500,
-    color: Color(0xCC0F172A), // same as text with opacity 0.8
+    fontWeight: FontWeight.w600,
+    color: AppColors.text,
+    letterSpacing: -0.3,
   );
 
   static const TextStyle body = TextStyle(
     fontFamily: 'Inter',
     fontSize: 14,
-    color: Color(0xB30F172A), // ~0.7 opacity
+    color: AppColors.textSecondary,
+    height: 1.5,
+  );
+
+  static const TextStyle bodyBold = TextStyle(
+    fontFamily: 'Inter',
+    fontSize: 14,
+    fontWeight: FontWeight.w600,
+    color: AppColors.text,
+    height: 1.5,
+  );
+
+  static const TextStyle caption = TextStyle(
+    fontFamily: 'Inter',
+    fontSize: 12,
+    color: AppColors.textMuted,
+    height: 1.4,
   );
 }
