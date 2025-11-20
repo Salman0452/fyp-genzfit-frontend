@@ -1,0 +1,173 @@
+// Firestore Security Rules for GenZFit
+// Deploy these rules to Firebase Console -> Firestore Database -> Rules
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+    
+    function getUserRole() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+    }
+    
+    function isAdmin() {
+      return isSignedIn() && getUserRole() == 'admin';
+    }
+    
+    function isTrainer() {
+      return isSignedIn() && getUserRole() == 'trainer';
+    }
+    
+    function isClient() {
+      return isSignedIn() && getUserRole() == 'client';
+    }
+    
+    function isActive() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.status == 'active';
+    }
+    
+    // Users collection
+    match /users/{userId} {
+      // Anyone can read their own user document
+      allow read: if isOwner(userId) || isAdmin();
+      
+      // Users can create their own document during signup
+      allow create: if isOwner(userId) && isSignedIn();
+      
+      // Users can update their own document (except role and status)
+      allow update: if isOwner(userId) && 
+        request.resource.data.role == resource.data.role &&
+        request.resource.data.status == resource.data.status;
+      
+      // Only admins can delete users or change status
+      allow delete: if isAdmin();
+    }
+    
+    // Measurements collection
+    match /measurements/{measurementId} {
+      allow read: if isOwner(resource.data.userId) || isAdmin();
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if isOwner(resource.data.userId);
+    }
+    
+    // Avatars collection
+    match /avatars/{avatarId} {
+      allow read: if isOwner(resource.data.userId) || isAdmin();
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if isOwner(resource.data.userId);
+    }
+    
+    // Trainers collection
+    match /trainers/{trainerId} {
+      // Anyone can read verified trainer profiles
+      allow read: if true;
+      
+      // Trainers can create and update their own profile
+      allow create: if isOwner(trainerId) && isTrainer();
+      allow update: if isOwner(trainerId) && isTrainer();
+      
+      // Only admins can delete trainer profiles
+      allow delete: if isAdmin();
+    }
+    
+    // Chats collection
+    match /chats/{chatId} {
+      // Users can read chats they are part of
+      allow read: if isSignedIn() && 
+        request.auth.uid in resource.data.participants;
+      
+      // Users can create chats
+      allow create: if isSignedIn() && 
+        request.auth.uid in request.resource.data.participants;
+      
+      // Users can update chats they are part of
+      allow update: if isSignedIn() && 
+        request.auth.uid in resource.data.participants;
+      
+      // Messages subcollection
+      match /messages/{messageId} {
+        allow read: if isSignedIn() && 
+          request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.participants;
+        
+        allow create: if isSignedIn() && 
+          request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.participants &&
+          request.resource.data.senderId == request.auth.uid;
+        
+        allow update, delete: if isOwner(resource.data.senderId);
+      }
+    }
+    
+    // Sessions collection
+    match /sessions/{sessionId} {
+      // Users can read sessions they are part of
+      allow read: if isSignedIn() && 
+        (request.auth.uid == resource.data.clientId || 
+         request.auth.uid == resource.data.trainerId);
+      
+      // Clients can create sessions
+      allow create: if isClient() && 
+        request.resource.data.clientId == request.auth.uid;
+      
+      // Trainers and clients can update sessions
+      allow update: if isSignedIn() && 
+        (request.auth.uid == resource.data.clientId || 
+         request.auth.uid == resource.data.trainerId);
+    }
+    
+    // Recommendations collection
+    match /recommendations/{recommendationId} {
+      allow read: if isOwner(resource.data.userId) || isAdmin();
+      allow create: if isSignedIn();
+      allow update, delete: if isOwner(resource.data.userId);
+    }
+    
+    // Chatbot history collection
+    match /chatbot_history/{userId} {
+      allow read, write: if isOwner(userId);
+      
+      match /conversations/{messageId} {
+        allow read, write: if isOwner(userId);
+      }
+    }
+    
+    // Platform analytics (admin only)
+    match /platform_analytics/{document=**} {
+      allow read: if isAdmin();
+      allow write: if isAdmin();
+    }
+    
+    // Verification requests
+    match /verification_requests/{requestId} {
+      // Trainers can read their own requests
+      allow read: if isOwner(resource.data.trainerId) || isAdmin();
+      
+      // Trainers can create verification requests
+      allow create: if isTrainer() && 
+        request.resource.data.trainerId == request.auth.uid;
+      
+      // Only admins can update (approve/reject) requests
+      allow update: if isAdmin();
+    }
+    
+    // Reports collection
+    match /reports/{reportId} {
+      // Users can read their own reports
+      allow read: if isOwner(resource.data.reportedBy) || isAdmin();
+      
+      // Any signed-in user can create a report
+      allow create: if isSignedIn() && 
+        request.resource.data.reportedBy == request.auth.uid;
+      
+      // Only admins can update or delete reports
+      allow update, delete: if isAdmin();
+    }
+  }
+}

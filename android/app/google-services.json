@@ -7,12 +7,25 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:1088491642353:android:767ed488706c2fd6c97850",
+        "mobilesdk_app_id": "1:1088491642353:android:957691b7dd660419c97850",
         "android_client_info": {
           "package_name": "com.example.genzfit"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "1088491642353-8nds6c8bl9bkqt1k58a94csjsl6chpc9.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.genzfit",
+            "certificate_hash": "0000000000000000000000000000000000000000"
+          }
+        },
+        {
+          "client_id": "1088491642353-74talbge7btd4pv6vv3uucj9o5f8lv8s.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyDSBPfkd3Hx4Q8jsb0jgbkJEbR5LBHKQlk"
@@ -20,7 +33,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1088491642353-74talbge7btd4pv6vv3uucj9o5f8lv8s.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }
