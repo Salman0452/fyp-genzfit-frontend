@@ -52,6 +52,47 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
     }
   }
 
+  Future<void> _showLogoutDialog() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        title: const Text(
+          'Logout',
+          style: TextStyle(color: AppColors.textPrimary),
+        ),
+        content: const Text(
+          'Are you sure you want to logout?',
+          style: TextStyle(color: AppColors.textSecondary),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(color: AppColors.textSecondary),
+            ),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text(
+              'Logout',
+              style: TextStyle(color: AppColors.error),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && mounted) {
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      await authProvider.signOut();
+      if (mounted) {
+        Navigator.pushReplacementNamed(context, '/role-selection');
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
@@ -64,10 +105,9 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
         backgroundColor: AppColors.surface,
         actions: [
           IconButton(
-            icon: const Icon(Icons.settings),
-            onPressed: () {
-              // TODO: Navigate to settings
-            },
+            icon: const Icon(Icons.logout),
+            onPressed: _showLogoutDialog,
+            tooltip: 'Logout',
           ),
         ],
       ),

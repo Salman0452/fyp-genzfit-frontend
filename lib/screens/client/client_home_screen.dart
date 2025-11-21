@@ -8,6 +8,7 @@ import 'package:genzfit/screens/client/avatar_viewer_screen.dart';
 import 'package:genzfit/screens/client/recommendations_screen.dart';
 import 'package:genzfit/screens/client/trainer_marketplace_screen.dart';
 import 'package:genzfit/screens/client/ai_coach_screen.dart';
+import 'package:genzfit/screens/client/daily_plan_screen.dart';
 import 'package:genzfit/screens/chat/chat_list_screen.dart';
 import 'package:genzfit/services/body_analysis_service.dart';
 import 'package:genzfit/services/notification_service.dart';
@@ -360,14 +361,14 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
           children: [
             Expanded(
               child: _buildActionCard(
-                'AI Recommendations',
-                Icons.lightbulb,
-                Colors.orange,
+                'Today\'s Plan',
+                Icons.today,
+                Colors.purple,
                 () {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => const RecommendationsScreen(),
+                      builder: (context) => const DailyPlanScreen(),
                     ),
                   );
                 },

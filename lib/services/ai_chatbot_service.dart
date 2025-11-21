@@ -95,44 +95,158 @@ class AIChatbotService {
   Future<String> _buildContextPrompt(String userId, UserModel user) async {
     final measurement = await getLatestMeasurement(userId);
     
+    // Get user's recommendations (meals and exercises)
+    final recommendations = await _getRecommendations(userId);
+    
+    // Get user's progress history
+    final progressHistory = await _getProgressHistory(userId);
+    
     String context = '''
-You are GenZFit AI Coach, a knowledgeable and supportive fitness assistant. You provide personalized fitness advice, workout plans, nutrition guidance, and motivation.
+You are GenZFit AI Coach, a highly knowledgeable and supportive personal fitness and nutrition assistant. You have complete access to the user's fitness profile and should provide personalized, data-driven advice.
 
-User Profile:
-- Name: ${user.name}
-- Goal: ${user.goals ?? 'Not specified'}
+=== USER PROFILE ===
+Name: ${user.name}
+Email: ${user.email}
+Primary Goal: ${user.goals ?? 'Not specified'}
+Account Created: ${user.createdAt.toString().split(' ')[0]}
 ''';
 
     if (measurement != null) {
       context += '''
-- Height: ${measurement.height.toStringAsFixed(1)} cm
-- Weight: ${measurement.weight.toStringAsFixed(1)} kg
-- BMI: ${measurement.bmi.toStringAsFixed(1)} (${measurement.bmiCategory})
+
+=== CURRENT BODY MEASUREMENTS (as of ${measurement.date.toString().split(' ')[0]}) ===
+Height: ${measurement.height.toStringAsFixed(1)} cm (${(measurement.height / 2.54 / 12).toStringAsFixed(1)} ft)
+Weight: ${measurement.weight.toStringAsFixed(1)} kg (${(measurement.weight * 2.20462).toStringAsFixed(1)} lbs)
+BMI: ${measurement.bmi.toStringAsFixed(1)} - Category: ${measurement.bmiCategory}
 ''';
 
       if (measurement.estimatedMeasurements.isNotEmpty) {
-        context += '\nBody Measurements:\n';
+        context += '\n=== DETAILED BODY MEASUREMENTS ===\n';
         measurement.estimatedMeasurements.forEach((key, value) {
-          context += '- ${key}: ${value.toStringAsFixed(1)} cm\n';
+          final formattedKey = key.replaceAllMapped(
+            RegExp(r'([A-Z])'),
+            (match) => ' ${match.group(0)}',
+          ).trim();
+          context += '${formattedKey.substring(0, 1).toUpperCase()}${formattedKey.substring(1)}: ${value.toStringAsFixed(1)} cm\n';
         });
+      }
+
+      if (measurement.notes != null && measurement.notes!.isNotEmpty) {
+        context += '\nUser Notes: ${measurement.notes}\n';
+      }
+    }
+
+    // Add recommendations if available
+    if (recommendations['meals'] != null && recommendations['meals'].isNotEmpty) {
+      context += '\n=== CURRENT MEAL PLAN ===\n';
+      final meals = recommendations['meals'] as List;
+      for (int i = 0; i < meals.length && i < 3; i++) {
+        context += '${i + 1}. ${meals[i]}\n';
+      }
+    }
+
+    if (recommendations['exercises'] != null && recommendations['exercises'].isNotEmpty) {
+      context += '\n=== CURRENT EXERCISE PLAN ===\n';
+      final exercises = recommendations['exercises'] as List;
+      for (int i = 0; i < exercises.length && i < 5; i++) {
+        context += '${i + 1}. ${exercises[i]}\n';
+      }
+    }
+
+    // Add progress tracking
+    if (progressHistory.isNotEmpty) {
+      context += '\n=== PROGRESS TRACKING (Last ${progressHistory.length} measurements) ===\n';
+      for (var record in progressHistory) {
+        final date = record['date'];
+        final weight = record['weight'];
+        final bmi = record['bmi'];
+        context += 'Date: $date - Weight: ${weight}kg, BMI: $bmi\n';
+      }
+      
+      if (progressHistory.length > 1) {
+        final firstWeight = progressHistory.last['weight'];
+        final currentWeight = progressHistory.first['weight'];
+        final weightChange = currentWeight - firstWeight;
+        context += '\nTotal Weight Change: ${weightChange > 0 ? '+' : ''}${weightChange.toStringAsFixed(1)} kg\n';
       }
     }
 
     context += '''
 
-Guidelines:
-- Be encouraging and supportive
-- Provide actionable, specific advice
-- Consider the user's goal and current measurements
-- If asked about medical conditions, advise consulting a healthcare professional
-- Keep responses concise but informative
-- Use a friendly, conversational tone
-- Suggest exercises appropriate for their fitness level
+=== YOUR ROLE & CAPABILITIES ===
+- Analyze the user's measurements and provide personalized fitness advice
+- Track their progress over time and celebrate achievements
+- Suggest appropriate exercises based on their goal (${user.goals ?? 'general fitness'})
+- Recommend meal plans and nutrition strategies
+- Adjust recommendations based on their BMI category (${measurement?.bmiCategory ?? 'Unknown'})
+- Provide motivation and encouragement
+- Answer questions about workouts, nutrition, and health
 
-Now, please respond to the user's message.
+=== GUIDELINES ===
+✓ Be encouraging and supportive, especially when discussing body measurements
+✓ Provide specific, actionable advice based on their data
+✓ Reference their measurements when giving recommendations
+✓ Track and acknowledge their progress
+✓ Adjust difficulty based on their current fitness level
+✓ If asked about medical conditions, advise consulting a healthcare professional
+✓ Keep responses concise but informative (2-4 paragraphs max)
+✓ Use a friendly, conversational tone
+✓ Celebrate small wins and progress milestones
+
+=== IMPORTANT ===
+You have access to all user data above. Use it to provide personalized, data-driven advice. Always consider their goal, current measurements, and progress when responding.
+
+Now, please respond to the user's message with personalized fitness guidance.
 ''';
 
     return context;
+  }
+
+  /// Get user's latest recommendations
+  Future<Map<String, dynamic>> _getRecommendations(String userId) async {
+    try {
+      final snapshot = await _firestore
+          .collection('recommendations')
+          .where('userId', isEqualTo: userId)
+          .orderBy('generatedAt', descending: true)
+          .limit(1)
+          .get();
+
+      if (snapshot.docs.isEmpty) return {};
+
+      final data = snapshot.docs.first.data();
+      return {
+        'meals': data['mealPlan'] ?? data['meals'] ?? [],
+        'exercises': data['exercisePlan'] ?? data['exercises'] ?? [],
+      };
+    } catch (e) {
+      print('Error getting recommendations: $e');
+      return {};
+    }
+  }
+
+  /// Get user's progress history
+  Future<List<Map<String, dynamic>>> _getProgressHistory(String userId) async {
+    try {
+      final snapshot = await _firestore
+          .collection('measurements')
+          .where('userId', isEqualTo: userId)
+          .orderBy('date', descending: true)
+          .limit(5)
+          .get();
+
+      return snapshot.docs.map((doc) {
+        final measurement = MeasurementModel.fromFirestore(doc);
+        return {
+          'date': measurement.date.toString().split(' ')[0],
+          'weight': measurement.weight,
+          'bmi': double.parse(measurement.bmi.toStringAsFixed(1)),
+        };
+      }).toList();
+    } catch (e) {
+      print('Error getting progress history: $e');
+      return [];
+    }
   }
 
   /// Send a message and get AI response
@@ -244,30 +358,45 @@ Now, please respond to the user's message.
     final measurement = await getLatestMeasurement(userId);
     
     List<String> prompts = [
-      'What exercises should I do today?',
-      'Create a meal plan for me',
-      'How can I stay motivated?',
+      'How am I progressing towards my goal?',
+      'Analyze my current measurements',
+      'What should I focus on this week?',
     ];
 
     if (measurement != null) {
       if (user.goals == 'weightLoss') {
         prompts.addAll([
-          'What\'s the best cardio for weight loss?',
-          'How many calories should I eat?',
+          'Create a calorie deficit meal plan for me',
+          'What cardio exercises suit my BMI of ${measurement.bmi.toStringAsFixed(1)}?',
+          'How can I speed up my weight loss safely?',
         ]);
       } else if (user.goals == 'weightGain') {
         prompts.addAll([
-          'What protein-rich foods should I eat?',
-          'Best exercises for muscle building?',
+          'High-protein meals for muscle building',
+          'Best strength training for my body type',
+          'How much should I eat to gain muscle?',
         ]);
       } else if (user.goals == 'fitness') {
         prompts.addAll([
-          'How to improve my endurance?',
-          'What\'s a balanced workout routine?',
+          'Design a balanced workout routine for me',
+          'How to improve my overall fitness level?',
+          'What exercises target my weak areas?',
         ]);
       }
+
+      // Add BMI-specific prompts
+      if (measurement.bmiCategory == 'Underweight') {
+        prompts.add('Safe ways to increase my weight');
+      } else if (measurement.bmiCategory == 'Overweight' || measurement.bmiCategory == 'Obese') {
+        prompts.add('Exercises for my current weight');
+      }
+    } else {
+      prompts.addAll([
+        'How do I get started with fitness?',
+        'What measurements should I track?',
+      ]);
     }
 
-    return prompts;
+    return prompts.take(6).toList();
   }
 }

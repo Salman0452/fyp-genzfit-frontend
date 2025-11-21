@@ -63,11 +63,15 @@ class AuthService {
         await _firestore.collection('trainers').doc(user.uid).set({
           'userId': user.uid,
           'bio': '',
+          'expertise': expertise ?? [],
           'certifications': [],
           'videoUrls': [],
-          'availability': {},
+          'hourlyRate': hourlyRate ?? 0.0,
+          'rating': 0.0,
           'clients': 0,
           'totalEarnings': 0.0,
+          'verified': false,
+          'availability': {},
         });
       }
 
@@ -75,7 +79,7 @@ class AuthService {
     } on FirebaseAuthException catch (e) {
       throw _handleAuthException(e);
     } catch (e) {
-      throw Exception('Sign up failed: ${e.toString()}');
+      throw Exception('Sign up failed. Please try again.');
     }
   }
 
@@ -105,7 +109,7 @@ class AuthService {
     } on FirebaseAuthException catch (e) {
       throw _handleAuthException(e);
     } catch (e) {
-      throw Exception('Sign in failed: ${e.toString()}');
+      throw Exception('Login failed. Please try again.');
     }
   }
 
@@ -147,7 +151,7 @@ class AuthService {
     } on FirebaseAuthException catch (e) {
       throw _handleAuthException(e);
     } catch (e) {
-      throw Exception('Password reset failed: ${e.toString()}');
+      throw Exception('Password reset failed. Please try again.');
     }
   }
 
@@ -179,23 +183,31 @@ class AuthService {
   String _handleAuthException(FirebaseAuthException e) {
     switch (e.code) {
       case 'weak-password':
-        return 'The password is too weak';
+        return 'Password is too weak. Please use a stronger password.';
       case 'email-already-in-use':
-        return 'An account already exists with this email';
+        return 'An account already exists with this email.';
       case 'invalid-email':
-        return 'Invalid email address';
+        return 'Please enter a valid email address.';
       case 'user-not-found':
-        return 'No user found with this email';
+        return 'No account found with this email. Please sign up first.';
       case 'wrong-password':
-        return 'Incorrect password';
+        return 'Incorrect password. Please try again.';
+      case 'invalid-credential':
+        return 'Invalid email or password. Please check and try again.';
       case 'user-disabled':
-        return 'This account has been disabled';
+        return 'This account has been disabled. Please contact support.';
       case 'too-many-requests':
-        return 'Too many failed attempts. Please try again later';
+        return 'Too many failed login attempts. Please try again later.';
       case 'operation-not-allowed':
-        return 'Email/password sign in is not enabled';
+        return 'Email/password sign in is not enabled.';
+      case 'network-request-failed':
+        return 'Network error. Please check your internet connection.';
+      case 'requires-recent-login':
+        return 'Please log in again to perform this action.';
+      case 'credential-already-in-use':
+        return 'This credential is already associated with another account.';
       default:
-        return 'Authentication error: ${e.message}';
+        return 'Login failed. Please check your credentials and try again.';
     }
   }
 

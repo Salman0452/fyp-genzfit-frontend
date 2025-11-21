@@ -20,6 +20,22 @@ class AuthProvider extends ChangeNotifier {
   
   AuthProvider() {
     _initializeAuthState();
+    _checkCurrentUser();
+  }
+
+  // Check if there's already a logged in user (for app restart)
+  Future<void> _checkCurrentUser() async {
+    final user = _authService.currentUser;
+    if (user != null) {
+      _firebaseUser = user;
+      try {
+        _currentUser = await _authService.getUserData(user.uid);
+        notifyListeners();
+      } catch (e) {
+        _error = e.toString();
+        notifyListeners();
+      }
+    }
   }
 
   // Initialize auth state

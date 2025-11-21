@@ -1,0 +1,81 @@
+// DEVELOPMENT FIRESTORE RULES - GenZFit
+// ⚠️ WARNING: These rules allow authenticated users to read/write most data
+// Use only for development/testing. Replace with firestore.rules for production.
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper function
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    // Users collection - authenticated users can read/write their own data
+    match /users/{userId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && request.auth.uid == userId;
+      allow update: if isSignedIn() && request.auth.uid == userId;
+      allow delete: if isSignedIn() && request.auth.uid == userId;
+    }
+    
+    // Measurements - users can manage their own
+    match /measurements/{measurementId} {
+      allow read, write: if isSignedIn();
+    }
+    
+    // Avatars - users can manage their own
+    match /avatars/{avatarId} {
+      allow read, write: if isSignedIn();
+    }
+    
+    // Trainers - anyone can read, trainers can write their own
+    match /trainers/{trainerId} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn();
+    }
+    
+    // Chats - authenticated users can read/write
+    match /chats/{chatId} {
+      allow read, write: if isSignedIn();
+      
+      match /messages/{messageId} {
+        allow read, write: if isSignedIn();
+      }
+    }
+    
+    // Sessions - authenticated users can read/write
+    match /sessions/{sessionId} {
+      allow read, write: if isSignedIn();
+    }
+    
+    // Recommendations - authenticated users can read/write
+    match /recommendations/{recommendationId} {
+      allow read, write: if isSignedIn();
+    }
+    
+    // Chatbot history - users can manage their own
+    match /chatbot_history/{userId} {
+      allow read, write: if isSignedIn();
+      
+      match /conversations/{messageId} {
+        allow read, write: if isSignedIn();
+      }
+    }
+    
+    // Platform analytics - authenticated users can read/write
+    match /platform_analytics/{document=**} {
+      allow read, write: if isSignedIn();
+    }
+    
+    // Verification requests - authenticated users can read/write
+    match /verification_requests/{requestId} {
+      allow read, write: if isSignedIn();
+    }
+    
+    // Reports - authenticated users can read/write
+    match /reports/{reportId} {
+      allow read, write: if isSignedIn();
+    }
+  }
+}

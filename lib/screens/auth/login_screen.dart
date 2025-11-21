@@ -45,13 +45,13 @@ class _LoginScreenState extends State<LoginScreen> {
       final user = authProvider.currentUser;
       if (user == null) return;
 
-      // Navigate based on role
+      // Navigate based on role - clear all previous routes
       if (user.role == UserRole.client) {
-        Navigator.pushReplacementNamed(context, '/client-home');
+        Navigator.pushNamedAndRemoveUntil(context, '/client-home', (route) => false);
       } else if (user.role == UserRole.trainer) {
-        Navigator.pushReplacementNamed(context, '/trainer-home');
+        Navigator.pushNamedAndRemoveUntil(context, '/trainer-home', (route) => false);
       } else if (user.role == UserRole.admin) {
-        Navigator.pushReplacementNamed(context, '/admin-dashboard');
+        Navigator.pushNamedAndRemoveUntil(context, '/admin-dashboard', (route) => false);
       }
     } else {
       Helpers.showSnackBar(
@@ -63,33 +63,7 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _handleForgotPassword() async {
-    final email = _emailController.text.trim();
-    if (email.isEmpty) {
-      Helpers.showSnackBar(
-        context,
-        'Please enter your email',
-        isError: true,
-      );
-      return;
-    }
-
-    final authProvider = context.read<AuthProvider>();
-    final success = await authProvider.resetPassword(email);
-
-    if (!mounted) return;
-
-    if (success) {
-      Helpers.showSnackBar(
-        context,
-        'Password reset link sent to your email',
-      );
-    } else {
-      Helpers.showSnackBar(
-        context,
-        authProvider.error ?? 'Failed to send reset link',
-        isError: true,
-      );
-    }
+    Navigator.pushNamed(context, '/forgot-password');
   }
 
   @override

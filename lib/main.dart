@@ -6,6 +6,7 @@ import 'providers/auth_provider.dart';
 import 'screens/splash_screen.dart';
 import 'screens/auth/role_selection_screen.dart';
 import 'screens/auth/login_screen.dart';
+import 'screens/auth/forgot_password_screen.dart';
 import 'screens/client/client_home_screen.dart';
 import 'screens/trainer/trainer_home_screen.dart';
 import 'utils/constants.dart';
@@ -99,6 +100,7 @@ class GenZFitApp extends StatelessWidget {
           '/': (context) => const SplashScreen(),
           '/role-selection': (context) => const RoleSelectionScreen(),
           '/login': (context) => const LoginScreen(),
+          '/forgot-password': (context) => const ForgotPasswordScreen(),
           '/client-home': (context) => const ClientHomeScreen(),
           '/trainer-home': (context) => const TrainerHomeScreen(),
           '/admin-dashboard': (context) => const PlaceholderScreen(title: 'Admin Dashboard'),
@@ -116,46 +118,57 @@ class PlaceholderScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(title),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () {
-              context.read<AuthProvider>().signOut();
-              Navigator.pushReplacementNamed(context, '/login');
-            },
-          ),
-        ],
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(
-              Icons.construction,
-              size: 64,
-              color: AppConstants.primaryGold,
-            ),
-            const SizedBox(height: AppConstants.paddingLarge),
-            Text(
-              title,
-              style: const TextStyle(
-                color: AppConstants.textWhite,
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: AppConstants.paddingSmall),
-            const Text(
-              'Coming soon...',
-              style: TextStyle(
-                color: AppConstants.textGray,
-                fontSize: AppConstants.fontLarge,
-              ),
+    return PopScope(
+      // Prevent back button from going to auth screens
+      canPop: false,
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(title),
+          automaticallyImplyLeading: false, // Remove back button
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.logout),
+              onPressed: () async {
+                await context.read<AuthProvider>().signOut();
+                if (context.mounted) {
+                  Navigator.pushNamedAndRemoveUntil(
+                    context,
+                    '/login',
+                    (route) => false,
+                  );
+                }
+              },
             ),
           ],
+        ),
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(
+                Icons.construction,
+                size: 64,
+                color: AppConstants.primaryGold,
+              ),
+              const SizedBox(height: AppConstants.paddingLarge),
+              Text(
+                title,
+                style: const TextStyle(
+                  color: AppConstants.textWhite,
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: AppConstants.paddingSmall),
+              const Text(
+                'Coming soon...',
+                style: TextStyle(
+                  color: AppConstants.textGray,
+                  fontSize: AppConstants.fontLarge,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

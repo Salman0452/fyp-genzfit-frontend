@@ -37,28 +37,77 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   Future<void> _checkAuthState() async {
-    await Future.delayed(const Duration(seconds: 2));
+    // Wait for animation to complete
+    await Future.delayed(const Duration(milliseconds: 1500));
 
     if (!mounted) return;
 
     final authProvider = context.read<AuthProvider>();
+    
+    // Wait for Firebase Auth to restore session (max 3 seconds)
+    int attempts = 0;
+    while (attempts < 30) {
+      if (authProvider.user != null && authProvider.userModel != null) {
+        // User is fully loaded
+        break;
+      }
+      if (authProvider.user == null && attempts > 10) {
+        // No user after 1 second, likely not logged in
+        break;
+      }
+      await Future.delayed(const Duration(milliseconds: 100));
+      attempts++;
+    }
+
+    if (!mounted) return;
+
     final user = authProvider.user;
     final userModel = authProvider.userModel;
 
     if (user == null) {
+      // No Firebase Auth user, go to role selection
       Navigator.pushReplacementNamed(context, '/role-selection');
-    } else {
-      // Navigate based on user role
-      if (userModel?.role == UserRole.client) {
-        Navigator.pushReplacementNamed(context, '/client-home');
-      } else if (userModel?.role == UserRole.trainer) {
-        Navigator.pushReplacementNamed(context, '/trainer-home');
-      } else if (userModel?.role == UserRole.admin) {
-        Navigator.pushReplacementNamed(context, '/admin-dashboard');
-      } else {
-        // Fallback if role is not set
-        Navigator.pushReplacementNamed(context, '/role-selection');
+    } else if (userModel == null) {
+      // Firebase user exists but Firestore data failed to load
+      // Try to fetch user data one more time
+      try {
+        await authProvider.refreshUserData();
+        if (!mounted) return;
+        
+        final refreshedModel = authProvider.userModel;
+        if (refreshedModel != null) {
+          _navigateToHome(refreshedModel.role);
+        } else {
+          // Still null, sign out and restart
+          await authProvider.signOut();
+          if (mounted) {
+            Navigator.pushReplacementNamed(context, '/role-selection');
+          }
+        }
+      } catch (e) {
+        // Failed to fetch user data, sign out
+        await authProvider.signOut();
+        if (mounted) {
+          Navigator.pushReplacementNamed(context, '/role-selection');
+        }
       }
+    } else {
+      // User is fully loaded, navigate to home
+      _navigateToHome(userModel.role);
+    }
+  }
+
+  void _navigateToHome(UserRole role) {
+    if (!mounted) return;
+    
+    if (role == UserRole.client) {
+      Navigator.pushNamedAndRemoveUntil(context, '/client-home', (route) => false);
+    } else if (role == UserRole.trainer) {
+      Navigator.pushNamedAndRemoveUntil(context, '/trainer-home', (route) => false);
+    } else if (role == UserRole.admin) {
+      Navigator.pushNamedAndRemoveUntil(context, '/admin-dashboard', (route) => false);
+    } else {
+      Navigator.pushReplacementNamed(context, '/role-selection');
     }
   }
 

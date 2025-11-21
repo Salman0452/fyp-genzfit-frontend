@@ -304,12 +304,47 @@ class _AICoachScreenState extends State<AICoachScreen> {
           ),
           const SizedBox(height: 12),
           Text(
-            'Get personalized workout plans, nutrition advice,\nand motivation based on your goals',
+            'Get personalized advice based on your\nmeasurements, goals, and progress',
             textAlign: TextAlign.center,
             style: GoogleFonts.inter(
               fontSize: 14,
               color: Colors.white60,
               height: 1.5,
+            ),
+          ),
+          const SizedBox(height: 24),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFF1C1C1E),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: const Color(0xFF00D4FF).withOpacity(0.3),
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.check_circle, color: Color(0xFF00C853), size: 20),
+                    const SizedBox(width: 8),
+                    Text(
+                      'AI has access to:',
+                      style: GoogleFonts.poppins(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                _buildDataPoint('Your body measurements & BMI'),
+                _buildDataPoint('Current meal & exercise plans'),
+                _buildDataPoint('Progress tracking over time'),
+                _buildDataPoint('Your fitness goals'),
+              ],
             ),
           ),
           const SizedBox(height: 40),
@@ -353,6 +388,35 @@ class _AICoachScreenState extends State<AICoachScreen> {
               }).toList(),
             ),
           ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDataPoint(String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        children: [
+          const SizedBox(width: 28),
+          Container(
+            width: 4,
+            height: 4,
+            decoration: const BoxDecoration(
+              color: Color(0xFF00D4FF),
+              shape: BoxShape.circle,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              text,
+              style: GoogleFonts.inter(
+                fontSize: 13,
+                color: Colors.white70,
+              ),
+            ),
+          ),
         ],
       ),
     );

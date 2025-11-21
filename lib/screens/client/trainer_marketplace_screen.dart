@@ -157,7 +157,8 @@ class _TrainerMarketplaceScreenState extends State<TrainerMarketplaceScreen> {
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance
           .collection('trainers')
-          .where('verified', isEqualTo: true)
+          // Temporarily removed verified filter for testing
+          // .where('verified', isEqualTo: true)
           .snapshots(),
       builder: (context, trainerSnapshot) {
         if (trainerSnapshot.connectionState == ConnectionState.waiting) {

@@ -98,11 +98,11 @@ class _SignupScreenState extends State<SignupScreen> {
     if (success) {
       Helpers.showSnackBar(context, 'Account created successfully!');
       
-      // Navigate based on role
+      // Navigate based on role - clear all previous routes
       if (widget.role == UserRole.client) {
-        Navigator.pushReplacementNamed(context, '/client-home');
+        Navigator.pushNamedAndRemoveUntil(context, '/client-home', (route) => false);
       } else if (widget.role == UserRole.trainer) {
-        Navigator.pushReplacementNamed(context, '/trainer-home');
+        Navigator.pushNamedAndRemoveUntil(context, '/trainer-home', (route) => false);
       }
     } else {
       Helpers.showSnackBar(
