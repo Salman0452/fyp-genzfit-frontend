@@ -6,6 +6,10 @@ import 'package:genzfit/models/measurement_model.dart';
 import 'package:genzfit/utils/constants.dart';
 import 'package:genzfit/widgets/custom_button.dart';
 import 'package:genzfit/widgets/loading_widget.dart';
+import 'package:genzfit/screens/client/settings_screen.dart';
+import 'package:genzfit/screens/client/measurement_detail_screen.dart';
+import 'package:genzfit/screens/client/body_scan_screen.dart';
+import 'package:genzfit/screens/client/edit_profile_screen.dart';
 import 'package:intl/intl.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
@@ -52,45 +56,36 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
     }
   }
 
-  Future<void> _showLogoutDialog() async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppColors.surface,
-        title: const Text(
-          'Logout',
-          style: TextStyle(color: AppColors.textPrimary),
-        ),
-        content: const Text(
-          'Are you sure you want to logout?',
-          style: TextStyle(color: AppColors.textSecondary),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text(
-              'Cancel',
-              style: TextStyle(color: AppColors.textSecondary),
-            ),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text(
-              'Logout',
-              style: TextStyle(color: AppColors.error),
-            ),
-          ),
-        ],
+  void _navigateToSettings() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const SettingsScreen(),
+      ),
+    );
+  }
+
+  void _navigateToMeasurementDetail(MeasurementModel measurement) async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => MeasurementDetailScreen(measurement: measurement),
       ),
     );
 
-    if (confirmed == true && mounted) {
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      await authProvider.signOut();
-      if (mounted) {
-        Navigator.pushReplacementNamed(context, '/role-selection');
-      }
+    // Refresh if measurement was deleted
+    if (result == true) {
+      _loadMeasurements();
     }
+  }
+
+  void _navigateToBodyScan() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const BodyScanScreen(),
+      ),
+    ).then((_) => _loadMeasurements());
   }
 
   @override
@@ -105,9 +100,9 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
         backgroundColor: AppColors.surface,
         actions: [
           IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: _showLogoutDialog,
-            tooltip: 'Logout',
+            icon: const Icon(Icons.settings),
+            onPressed: _navigateToSettings,
+            tooltip: 'Settings',
           ),
         ],
       ),
@@ -128,8 +123,58 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
                     const SizedBox(height: 24),
 
                     // Latest measurement card
-                    if (_measurements.isNotEmpty)
+                    if (_measurements.isNotEmpty) ...[
                       _buildLatestMeasurementCard(_measurements.first),
+                      const SizedBox(height: 16),
+                      // Update measurement button
+                      CustomButton(
+                        text: 'Update Measurements',
+                        onPressed: _navigateToBodyScan,
+                        icon: Icons.camera_alt,
+                      ),
+                    ] else ...[
+                      Container(
+                        padding: const EdgeInsets.all(32),
+                        decoration: BoxDecoration(
+                          color: AppColors.surface,
+                          borderRadius: BorderRadius.circular(AppSizes.borderRadius),
+                          border: Border.all(color: AppColors.accent.withOpacity(0.2)),
+                        ),
+                        child: Column(
+                          children: [
+                            const Icon(
+                              Icons.photo_camera,
+                              size: 64,
+                              color: AppColors.textSecondary,
+                            ),
+                            const SizedBox(height: 16),
+                            const Text(
+                              'No measurements yet',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            const Text(
+                              'Take your first body scan to start tracking',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                            const SizedBox(height: 20),
+                            CustomButton(
+                              text: 'Take Body Scan',
+                              onPressed: _navigateToBodyScan,
+                              icon: Icons.camera_alt,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                     const SizedBox(height: 24),
 
                     // Measurement history
@@ -224,7 +269,12 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
           CustomButton(
             text: 'Edit Profile',
             onPressed: () {
-              // TODO: Navigate to edit profile
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const EditProfileScreen(),
+                ),
+              ).then((_) => setState(() {})); // Refresh on return
             },
             isOutlined: true,
           ),
@@ -454,75 +504,107 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
   }
 
   Widget _buildMeasurementHistoryItem(MeasurementModel measurement) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppSizes.borderRadius),
-      ),
-      child: Row(
-        children: [
-          // Photo thumbnail
-          if (measurement.photoUrls.isNotEmpty)
-            ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: CachedNetworkImage(
-                imageUrl: measurement.photoUrls.first,
-                width: 60,
-                height: 60,
-                fit: BoxFit.cover,
-                placeholder: (context, url) => Container(
-                  color: AppColors.charcoal,
-                  child: const Center(
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: AppColors.accent,
+    return GestureDetector(
+      onTap: () => _navigateToMeasurementDetail(measurement),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(AppSizes.borderRadius),
+        ),
+        child: Row(
+          children: [
+            // Photo thumbnail or icon
+            if (measurement.photoUrls.isNotEmpty)
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: CachedNetworkImage(
+                  imageUrl: measurement.photoUrls.first,
+                  width: 60,
+                  height: 60,
+                  fit: BoxFit.cover,
+                  placeholder: (context, url) => Container(
+                    width: 60,
+                    height: 60,
+                    color: AppColors.charcoal,
+                    child: const Center(
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: AppColors.accent,
+                      ),
+                    ),
+                  ),
+                  errorWidget: (context, url, error) => Container(
+                    width: 60,
+                    height: 60,
+                    color: AppColors.charcoal,
+                    child: const Icon(
+                      Icons.image_not_supported,
+                      color: AppColors.textSecondary,
                     ),
                   ),
                 ),
-                errorWidget: (context, url, error) => Container(
+              )
+            else
+              Container(
+                width: 60,
+                height: 60,
+                decoration: BoxDecoration(
                   color: AppColors.charcoal,
-                  child: const Icon(
-                    Icons.image_not_supported,
-                    color: AppColors.textSecondary,
-                  ),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  Icons.photo_camera,
+                  color: AppColors.textSecondary,
+                  size: 30,
                 ),
               ),
-            ),
-          const SizedBox(width: 16),
+            const SizedBox(width: 16),
 
-          // Info
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  DateFormat('MMMM dd, yyyy').format(measurement.date),
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.textPrimary,
+            // Info
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    DateFormat('MMMM dd, yyyy').format(measurement.date),
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textPrimary,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'BMI: ${measurement.bmi.toStringAsFixed(1)} • ${measurement.bmiCategory}',
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: AppColors.textSecondary,
+                  const SizedBox(height: 4),
+                  Text(
+                    'BMI: ${measurement.bmi.toStringAsFixed(1)} • ${measurement.bmiCategory}',
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: AppColors.textSecondary,
+                    ),
                   ),
-                ),
-              ],
+                  if (measurement.photoUrls.length > 1)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4),
+                      child: Text(
+                        '${measurement.photoUrls.length} photos',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: AppColors.accent,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
             ),
-          ),
 
-          // Arrow
-          const Icon(
-            Icons.chevron_right,
-            color: AppColors.accent,
-          ),
-        ],
+            // Arrow
+            const Icon(
+              Icons.chevron_right,
+              color: AppColors.accent,
+            ),
+          ],
+        ),
       ),
     );
   }

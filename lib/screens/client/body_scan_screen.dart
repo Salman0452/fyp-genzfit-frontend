@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:genzfit/services/body_analysis_service.dart';
+import 'package:genzfit/services/anthropometric_service.dart';
 import 'package:genzfit/widgets/pose_overlay_painter.dart';
 import 'package:genzfit/utils/constants.dart';
 import 'package:genzfit/widgets/custom_button.dart';
@@ -26,11 +27,15 @@ class _BodyScanScreenState extends State<BodyScanScreen> {
   bool _showGuidelines = true;
   List<File> _capturedPhotos = [];
   final BodyAnalysisService _bodyAnalysisService = BodyAnalysisService();
+  final AnthropometricService _anthropometricService = AnthropometricService();
   Map<String, dynamic>? _analysisResult;
+  Map<String, double>? _predictedMeasurements;
 
   final TextEditingController _heightController = TextEditingController();
   final TextEditingController _weightController = TextEditingController();
+  final TextEditingController _ageController = TextEditingController();
   final TextEditingController _notesController = TextEditingController();
+  String _selectedGender = 'male';
 
   @override
   void initState() {
@@ -146,120 +151,262 @@ class _BodyScanScreenState extends State<BodyScanScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      isDismissible: false,
       backgroundColor: AppColors.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (context) => Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom,
-          left: 20,
-          right: 20,
-          top: 20,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const Text(
-              'Complete Your Scan',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: AppColors.textPrimary,
-              ),
-            ),
-            const SizedBox(height: 20),
-            
-            // Height input
-            TextField(
-              controller: _heightController,
-              keyboardType: TextInputType.number,
-              style: const TextStyle(color: AppColors.textPrimary),
-              decoration: InputDecoration(
-                labelText: 'Height (cm)',
-                labelStyle: const TextStyle(color: AppColors.textSecondary),
-                filled: true,
-                fillColor: AppColors.charcoal,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(AppSizes.borderRadius),
-                  borderSide: BorderSide.none,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setModalState) => Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
+            left: 20,
+            right: 20,
+            top: 20,
+          ),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Complete Your Scan',
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close, color: AppColors.textSecondary),
+                      onPressed: () {
+                        setState(() {
+                          _capturedPhotos.clear();
+                          _analysisResult = null;
+                          _predictedMeasurements = null;
+                        });
+                        Navigator.pop(context);
+                      },
+                    ),
+                  ],
                 ),
-                prefixIcon: const Icon(Icons.height, color: AppColors.accent),
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            // Weight input
-            TextField(
-              controller: _weightController,
-              keyboardType: TextInputType.number,
-              style: const TextStyle(color: AppColors.textPrimary),
-              decoration: InputDecoration(
-                labelText: 'Weight (kg)',
-                labelStyle: const TextStyle(color: AppColors.textSecondary),
-                filled: true,
-                fillColor: AppColors.charcoal,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(AppSizes.borderRadius),
-                  borderSide: BorderSide.none,
+                const SizedBox(height: 20),
+                
+                // Height input
+                TextField(
+                  controller: _heightController,
+                  keyboardType: TextInputType.number,
+                  style: const TextStyle(color: AppColors.textPrimary),
+                  decoration: InputDecoration(
+                    labelText: 'Height (cm) *',
+                    labelStyle: const TextStyle(color: AppColors.textSecondary),
+                    filled: true,
+                    fillColor: AppColors.charcoal,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(AppSizes.borderRadius),
+                      borderSide: BorderSide.none,
+                    ),
+                    prefixIcon: const Icon(Icons.height, color: AppColors.accent),
+                  ),
+                  onChanged: (value) => _updatePredictions(setModalState),
                 ),
-                prefixIcon: const Icon(Icons.monitor_weight, color: AppColors.accent),
-              ),
-            ),
-            const SizedBox(height: 16),
+                const SizedBox(height: 16),
 
-            // Notes input
-            TextField(
-              controller: _notesController,
-              maxLines: 2,
-              style: const TextStyle(color: AppColors.textPrimary),
-              decoration: InputDecoration(
-                labelText: 'Notes (optional)',
-                labelStyle: const TextStyle(color: AppColors.textSecondary),
-                filled: true,
-                fillColor: AppColors.charcoal,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(AppSizes.borderRadius),
-                  borderSide: BorderSide.none,
+                // Weight input
+                TextField(
+                  controller: _weightController,
+                  keyboardType: TextInputType.number,
+                  style: const TextStyle(color: AppColors.textPrimary),
+                  decoration: InputDecoration(
+                    labelText: 'Weight (kg) *',
+                    labelStyle: const TextStyle(color: AppColors.textSecondary),
+                    filled: true,
+                    fillColor: AppColors.charcoal,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(AppSizes.borderRadius),
+                      borderSide: BorderSide.none,
+                    ),
+                    prefixIcon: const Icon(Icons.monitor_weight, color: AppColors.accent),
+                  ),
+                  onChanged: (value) => _updatePredictions(setModalState),
                 ),
-                prefixIcon: const Icon(Icons.notes, color: AppColors.accent),
-              ),
-            ),
-            const SizedBox(height: 24),
+                const SizedBox(height: 16),
 
-            // Save button
-            CustomButton(
-              text: 'Save Measurement',
-              onPressed: _saveMeasurement,
-              isLoading: _isProcessing,
-            ),
-            const SizedBox(height: 16),
+                // Age input
+                TextField(
+                  controller: _ageController,
+                  keyboardType: TextInputType.number,
+                  style: const TextStyle(color: AppColors.textPrimary),
+                  decoration: InputDecoration(
+                    labelText: 'Age *',
+                    labelStyle: const TextStyle(color: AppColors.textSecondary),
+                    filled: true,
+                    fillColor: AppColors.charcoal,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(AppSizes.borderRadius),
+                      borderSide: BorderSide.none,
+                    ),
+                    prefixIcon: const Icon(Icons.cake, color: AppColors.accent),
+                  ),
+                  onChanged: (value) => _updatePredictions(setModalState),
+                ),
+                const SizedBox(height: 16),
 
-            // Cancel button
-            CustomButton(
-              text: 'Retake Photo',
-              onPressed: () {
-                setState(() {
-                  _capturedPhotos.clear();
-                  _analysisResult = null;
-                });
-                Navigator.pop(context);
-              },
-              isOutlined: true,
+                // Gender selection
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: AppColors.charcoal,
+                    borderRadius: BorderRadius.circular(AppSizes.borderRadius),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Gender *',
+                        style: TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 14,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: RadioListTile<String>(
+                              title: const Text('Male', style: TextStyle(color: AppColors.textPrimary)),
+                              value: 'male',
+                              groupValue: _selectedGender,
+                              activeColor: AppColors.accent,
+                              onChanged: (value) {
+                                setModalState(() => _selectedGender = value!);
+                                _updatePredictions(setModalState);
+                              },
+                              contentPadding: EdgeInsets.zero,
+                              dense: true,
+                            ),
+                          ),
+                          Expanded(
+                            child: RadioListTile<String>(
+                              title: const Text('Female', style: TextStyle(color: AppColors.textPrimary)),
+                              value: 'female',
+                              groupValue: _selectedGender,
+                              activeColor: AppColors.accent,
+                              onChanged: (value) {
+                                setModalState(() => _selectedGender = value!);
+                                _updatePredictions(setModalState);
+                              },
+                              contentPadding: EdgeInsets.zero,
+                              dense: true,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // Predicted measurements section
+                if (_predictedMeasurements != null) ...[
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          AppColors.accent.withOpacity(0.1),
+                          AppColors.accent.withOpacity(0.05),
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(AppSizes.borderRadius),
+                      border: Border.all(color: AppColors.accent.withOpacity(0.3)),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            const Icon(Icons.auto_awesome, color: AppColors.accent, size: 20),
+                            const SizedBox(width: 8),
+                            const Text(
+                              'AI-Predicted Body Measurements',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.accent,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        ..._buildMeasurementsList(),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                ],
+
+                // Notes input
+                TextField(
+                  controller: _notesController,
+                  maxLines: 2,
+                  style: const TextStyle(color: AppColors.textPrimary),
+                  decoration: InputDecoration(
+                    labelText: 'Notes (optional)',
+                    labelStyle: const TextStyle(color: AppColors.textSecondary),
+                    filled: true,
+                    fillColor: AppColors.charcoal,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(AppSizes.borderRadius),
+                      borderSide: BorderSide.none,
+                    ),
+                    prefixIcon: const Icon(Icons.notes, color: AppColors.accent),
+                  ),
+                ),
+                const SizedBox(height: 24),
+
+                // Save button
+                CustomButton(
+                  text: 'Save Measurement',
+                  onPressed: _saveMeasurement,
+                  isLoading: _isProcessing,
+                ),
+                const SizedBox(height: 16),
+
+                // Cancel button
+                CustomButton(
+                  text: 'Retake Photo',
+                  onPressed: () {
+                    setState(() {
+                      _capturedPhotos.clear();
+                      _analysisResult = null;
+                      _predictedMeasurements = null;
+                    });
+                    Navigator.pop(context);
+                  },
+                  isOutlined: true,
+                ),
+                const SizedBox(height: 20),
+              ],
             ),
-            const SizedBox(height: 20),
-          ],
+          ),
         ),
       ),
     );
   }
 
   Future<void> _saveMeasurement() async {
-    if (_heightController.text.isEmpty || _weightController.text.isEmpty) {
+    // Validate required fields
+    if (_heightController.text.isEmpty || 
+        _weightController.text.isEmpty || 
+        _ageController.text.isEmpty || 
+        _selectedGender.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Please enter height and weight'),
+          content: Text('Please fill all required fields (height, weight, age, gender)'),
           backgroundColor: AppColors.error,
         ),
       );
@@ -278,6 +425,17 @@ class _BodyScanScreenState extends State<BodyScanScreen> {
 
       final height = double.parse(_heightController.text);
       final weight = double.parse(_weightController.text);
+      final age = int.parse(_ageController.text);
+
+      // Combine ML Kit measurements with predicted measurements
+      final mlKitMeasurements = Map<String, double>.from(
+        _analysisResult?['measurements'] ?? {},
+      );
+      
+      final allMeasurements = <String, double>{
+        ...mlKitMeasurements,
+        if (_predictedMeasurements != null) ..._predictedMeasurements!,
+      };
 
       await _bodyAnalysisService.saveMeasurement(
         userId: userId,
@@ -285,9 +443,7 @@ class _BodyScanScreenState extends State<BodyScanScreen> {
         weight: weight,
         bodyLandmarks: _analysisResult?['landmarks'] ?? {},
         photos: _capturedPhotos,
-        estimatedMeasurements: Map<String, double>.from(
-          _analysisResult?['measurements'] ?? {},
-        ),
+        estimatedMeasurements: allMeasurements,
         notes: _notesController.text.isNotEmpty ? _notesController.text : null,
       );
 
@@ -315,12 +471,91 @@ class _BodyScanScreenState extends State<BodyScanScreen> {
     }
   }
 
+  void _updatePredictions(StateSetter setModalState) {
+    final height = double.tryParse(_heightController.text);
+    final weight = double.tryParse(_weightController.text);
+    final age = int.tryParse(_ageController.text);
+
+    if (height != null && weight != null && age != null && _selectedGender.isNotEmpty) {
+      // Convert landmarks to Map<String, double> if available
+      Map<String, double>? mlKitProportions;
+      if (_analysisResult?['landmarks'] != null) {
+        final landmarks = _analysisResult!['landmarks'] as Map<String, dynamic>;
+        mlKitProportions = landmarks.map(
+          (key, value) => MapEntry(key, (value as num).toDouble()),
+        );
+      }
+
+      final predictions = _anthropometricService.predictMeasurements(
+        height: height,
+        weight: weight,
+        age: age,
+        gender: _selectedGender,
+        mlKitProportions: mlKitProportions,
+      );
+
+      setModalState(() {
+        _predictedMeasurements = predictions;
+      });
+    }
+  }
+
+  List<Widget> _buildMeasurementsList() {
+    if (_predictedMeasurements == null) return [];
+
+    final measurements = [
+      {'key': 'chest', 'label': 'Chest', 'icon': Icons.accessibility},
+      {'key': 'waist', 'label': 'Waist', 'icon': Icons.straighten},
+      {'key': 'hips', 'label': 'Hips', 'icon': Icons.accessibility_new},
+      {'key': 'shoulders', 'label': 'Shoulders', 'icon': Icons.accessibility},
+      {'key': 'neck', 'label': 'Neck', 'icon': Icons.face},
+      {'key': 'bicep', 'label': 'Bicep', 'icon': Icons.fitness_center},
+      {'key': 'forearm', 'label': 'Forearm', 'icon': Icons.pan_tool},
+      {'key': 'wrist', 'label': 'Wrist', 'icon': Icons.watch},
+      {'key': 'thigh', 'label': 'Thigh', 'icon': Icons.directions_walk},
+      {'key': 'calf', 'label': 'Calf', 'icon': Icons.directions_run},
+      {'key': 'ankle', 'label': 'Ankle', 'icon': Icons.airline_seat_legroom_normal},
+      {'key': 'inseam', 'label': 'Inseam', 'icon': Icons.height},
+    ];
+
+    return measurements.where((m) => _predictedMeasurements!.containsKey(m['key'])).map((m) {
+      final value = _predictedMeasurements![m['key'] as String];
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 8),
+        child: Row(
+          children: [
+            Icon(m['icon'] as IconData, size: 16, color: AppColors.textSecondary),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                m['label'] as String,
+                style: const TextStyle(
+                  color: AppColors.textPrimary,
+                  fontSize: 14,
+                ),
+              ),
+            ),
+            Text(
+              '${value?.toStringAsFixed(1)} cm',
+              style: const TextStyle(
+                color: AppColors.accent,
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+      );
+    }).toList();
+  }
+
   @override
   void dispose() {
     _cameraController?.dispose();
     _heightController.dispose();
     _weightController.dispose();
     _notesController.dispose();
+    _ageController.dispose();
     super.dispose();
   }
 

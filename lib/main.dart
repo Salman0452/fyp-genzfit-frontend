@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
 import 'providers/auth_provider.dart';
+import 'providers/language_provider.dart';
+import 'utils/app_localizations.dart';
 import 'screens/splash_screen.dart';
 import 'screens/auth/role_selection_screen.dart';
 import 'screens/auth/login_screen.dart';
@@ -39,71 +42,87 @@ class GenZFitApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ChangeNotifierProvider(create: (_) => LanguageProvider()),
       ],
-      child: MaterialApp(
-        debugShowCheckedModeBanner: false,
-        title: 'GenZFit',
-        theme: ThemeData(
-          useMaterial3: true,
-          brightness: Brightness.dark,
-          scaffoldBackgroundColor: AppConstants.primaryBlack,
-          primaryColor: AppConstants.primaryGold,
-          colorScheme: const ColorScheme.dark(
-            primary: AppConstants.primaryGold,
-            secondary: AppConstants.accentGold,
-            surface: AppConstants.charcoalGray,
-            error: AppConstants.errorRed,
-          ),
-          appBarTheme: const AppBarTheme(
-            backgroundColor: AppConstants.primaryBlack,
-            elevation: 0,
-            centerTitle: true,
-            titleTextStyle: TextStyle(
-              color: AppConstants.textWhite,
-              fontSize: AppConstants.fontXLarge,
-              fontWeight: FontWeight.bold,
-            ),
-            iconTheme: IconThemeData(color: AppConstants.textWhite),
-          ),
-          textTheme: const TextTheme(
-            displayLarge: TextStyle(
-              color: AppConstants.textWhite,
-              fontSize: 32,
-              fontWeight: FontWeight.bold,
-            ),
-            displayMedium: TextStyle(
-              color: AppConstants.textWhite,
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
-            ),
-            bodyLarge: TextStyle(
-              color: AppConstants.textWhite,
-              fontSize: AppConstants.fontLarge,
-            ),
-            bodyMedium: TextStyle(
-              color: AppConstants.textGray,
-              fontSize: AppConstants.fontMedium,
-            ),
-          ),
-          elevatedButtonTheme: ElevatedButtonThemeData(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppConstants.primaryGold,
-              foregroundColor: AppConstants.primaryBlack,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppConstants.radiusMedium),
+      child: Consumer<LanguageProvider>(
+        builder: (context, languageProvider, child) {
+          return MaterialApp(
+            debugShowCheckedModeBanner: false,
+            title: 'GenZFit',
+            locale: languageProvider.locale,
+            supportedLocales: const [
+              Locale('en', ''), // English
+              Locale('ur', ''), // Urdu
+            ],
+            localizationsDelegates: const [
+              AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            theme: ThemeData(
+              useMaterial3: true,
+              brightness: Brightness.dark,
+              scaffoldBackgroundColor: AppConstants.primaryBlack,
+              primaryColor: AppConstants.primaryGold,
+              colorScheme: const ColorScheme.dark(
+                primary: AppConstants.primaryGold,
+                secondary: AppConstants.accentGold,
+                surface: AppConstants.charcoalGray,
+                error: AppConstants.errorRed,
+              ),
+              appBarTheme: const AppBarTheme(
+                backgroundColor: AppConstants.primaryBlack,
+                elevation: 0,
+                centerTitle: true,
+                titleTextStyle: TextStyle(
+                  color: AppConstants.textWhite,
+                  fontSize: AppConstants.fontXLarge,
+                  fontWeight: FontWeight.bold,
+                ),
+                iconTheme: IconThemeData(color: AppConstants.textWhite),
+              ),
+              textTheme: const TextTheme(
+                displayLarge: TextStyle(
+                  color: AppConstants.textWhite,
+                  fontSize: 32,
+                  fontWeight: FontWeight.bold,
+                ),
+                displayMedium: TextStyle(
+                  color: AppConstants.textWhite,
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                ),
+                bodyLarge: TextStyle(
+                  color: AppConstants.textWhite,
+                  fontSize: AppConstants.fontLarge,
+                ),
+                bodyMedium: TextStyle(
+                  color: AppConstants.textGray,
+                  fontSize: AppConstants.fontMedium,
+                ),
+              ),
+              elevatedButtonTheme: ElevatedButtonThemeData(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppConstants.primaryGold,
+                  foregroundColor: AppConstants.primaryBlack,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppConstants.radiusMedium),
+                  ),
+                ),
               ),
             ),
-          ),
-        ),
-        initialRoute: '/',
-        routes: {
-          '/': (context) => const SplashScreen(),
-          '/role-selection': (context) => const RoleSelectionScreen(),
-          '/login': (context) => const LoginScreen(),
-          '/forgot-password': (context) => const ForgotPasswordScreen(),
-          '/client-home': (context) => const ClientHomeScreen(),
-          '/trainer-home': (context) => const TrainerHomeScreen(),
-          '/admin-dashboard': (context) => const PlaceholderScreen(title: 'Admin Dashboard'),
+            initialRoute: '/',
+            routes: {
+              '/': (context) => const SplashScreen(),
+              '/role-selection': (context) => const RoleSelectionScreen(),
+              '/login': (context) => const LoginScreen(),
+              '/forgot-password': (context) => const ForgotPasswordScreen(),
+              '/client-home': (context) => const ClientHomeScreen(),
+              '/trainer-home': (context) => const TrainerHomeScreen(),
+              '/admin-dashboard': (context) => const PlaceholderScreen(title: 'Admin Dashboard'),
+            },
+          );
         },
       ),
     );
