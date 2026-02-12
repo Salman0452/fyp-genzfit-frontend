@@ -127,6 +127,15 @@ class UserModel {
     );
   }
 
+  // Create UserModel from Firestore DocumentSnapshot
+  factory UserModel.fromFirestore(DocumentSnapshot doc) {
+    final data = doc.data() as Map<String, dynamic>;
+    return UserModel.fromMap({
+      ...data,
+      'id': doc.id, // Use document ID as user ID
+    });
+  }
+
   // Create a copy with updated fields
   UserModel copyWith({
     String? id,

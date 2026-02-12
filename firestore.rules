@@ -36,20 +36,21 @@ service cloud.firestore {
     
     // Users collection
     match /users/{userId} {
-      // Users can read their own document once authenticated
-      // Note: Firebase Auth succeeds before Firestore access
-      allow read: if isSignedIn() && (isOwner(userId) || isAdmin());
+      // Anyone authenticated can read user documents (for listing trainers, etc.)
+      // Admins can read all
+      allow read: if isSignedIn();
       
       // Users can create their own document during signup
       // Must be authenticated and creating their own document
       allow create: if isSignedIn() && request.auth.uid == userId;
       
       // Users can update their own document (except role and status)
-      allow update: if isSignedIn() && isOwner(userId) && 
+      // Admins can update any user
+      allow update: if (isSignedIn() && isOwner(userId) && 
         request.resource.data.role == resource.data.role &&
-        request.resource.data.status == resource.data.status;
+        request.resource.data.status == resource.data.status) || isAdmin();
       
-      // Only admins can delete users or change status
+      // Only admins can delete users
       allow delete: if isAdmin();
     }
     
@@ -70,11 +71,12 @@ service cloud.firestore {
     // Trainers collection
     match /trainers/{trainerId} {
       // Anyone can read verified trainer profiles
+      // Admins can read all (for verification dashboard)
       allow read: if true;
       
       // Trainers can create and update their own profile
       allow create: if isOwner(trainerId) && isTrainer();
-      allow update: if isOwner(trainerId) && isTrainer();
+      allow update: if isOwner(trainerId) && isTrainer() || isAdmin();
       
       // Only admins can delete trainer profiles
       allow delete: if isAdmin();
@@ -110,18 +112,21 @@ service cloud.firestore {
     // Sessions collection
     match /sessions/{sessionId} {
       // Users can read sessions they are part of
+      // Admins can read all sessions (for monitoring)
       allow read: if isSignedIn() && 
         (request.auth.uid == resource.data.clientId || 
-         request.auth.uid == resource.data.trainerId);
+         request.auth.uid == resource.data.trainerId || 
+         isAdmin());
       
       // Clients can create sessions
       allow create: if isClient() && 
         request.resource.data.clientId == request.auth.uid;
       
-      // Trainers and clients can update sessions
+      // Trainers, clients, and admins can update sessions
       allow update: if isSignedIn() && 
         (request.auth.uid == resource.data.clientId || 
-         request.auth.uid == resource.data.trainerId);
+         request.auth.uid == resource.data.trainerId || 
+         isAdmin());
     }
     
     // Recommendations collection

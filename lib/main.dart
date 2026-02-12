@@ -12,6 +12,7 @@ import 'screens/auth/login_screen.dart';
 import 'screens/auth/forgot_password_screen.dart';
 import 'screens/client/client_home_screen.dart';
 import 'screens/trainer/trainer_home_screen.dart';
+import 'screens/admin/admin_login_screen.dart';
 import 'utils/constants.dart';
 
 void main() async {
@@ -120,7 +121,7 @@ class GenZFitApp extends StatelessWidget {
               '/forgot-password': (context) => const ForgotPasswordScreen(),
               '/client-home': (context) => const ClientHomeScreen(),
               '/trainer-home': (context) => const TrainerHomeScreen(),
-              '/admin-dashboard': (context) => const PlaceholderScreen(title: 'Admin Dashboard'),
+              '/admin-login': (context) => const AdminLoginScreen(),
             },
           );
         },
