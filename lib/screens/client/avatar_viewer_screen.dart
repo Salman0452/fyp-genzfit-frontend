@@ -5,6 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../models/avatar_model.dart';
 import '../../models/measurement_model.dart';
 import '../../providers/auth_provider.dart';
+import 'body_scan_screen.dart';
 
 class AvatarViewerScreen extends StatefulWidget {
   const AvatarViewerScreen({super.key});
@@ -173,8 +174,12 @@ class _AvatarViewerScreenState extends State<AvatarViewerScreen> {
             const SizedBox(height: 32),
             ElevatedButton(
               onPressed: () {
-                Navigator.pop(context);
-                // Navigate to body scan
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const BodyScanScreen(),
+                  ),
+                ).then((_) => _loadData());
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.white,
