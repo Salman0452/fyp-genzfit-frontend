@@ -46,7 +46,8 @@ class Helpers {
   }
 
   // Show error dialog
-  static void showErrorDialog(BuildContext context, String title, String message) {
+  static void showErrorDialog(
+      BuildContext context, String title, String message) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -73,7 +74,8 @@ class Helpers {
   }
 
   // Show loading dialog
-  static void showLoadingDialog(BuildContext context, {String message = 'Loading...'}) {
+  static void showLoadingDialog(BuildContext context,
+      {String message = 'Loading...'}) {
     showDialog(
       context: context,
       barrierDismissible: false,

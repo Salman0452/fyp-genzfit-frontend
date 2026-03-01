@@ -11,14 +11,14 @@ class AppConstants {
   static const Color charcoalGray = Color(0xFF222831);
   static const Color slateGray = Color(0xFF393E46);
   static const Color accentGray = Color(0xFF4A5060);
-  
+
   static const Color primaryGold = Color(0xFF948979);
   static const Color accentGold = Color(0xFFB5A898);
-  
+
   static const Color errorRed = Color(0xFFE05555);
   static const Color successGreen = Color(0xFF5A9E6F);
   static const Color warningYellow = Color(0xFFCFAB6B);
-  
+
   static const Color textWhite = Color(0xFFDFD0B8);
   static const Color textGray = Color(0xFF948979);
   static const Color textDarkGray = Color(0xFF6B6258);
