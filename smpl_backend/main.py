@@ -112,6 +112,7 @@ async def generate_avatar(req: GenerateAvatarRequest):
             gender=req.gender,
             skin_tone=req.skin_tone or "medium",
             show_muscles=req.show_muscles,
+            measurements={**measurements, "weight": req.weight},
         )
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"Mesh generation failed: {exc}")
@@ -137,13 +138,17 @@ async def generate_avatar(req: GenerateAvatarRequest):
 
     elapsed_ms = (time.perf_counter() - t0) * 1000
 
+    pipeline = (
+        "SMPL-X" if _SMPLX_AVAILABLE else "ready-player-me"
+    )
+
     return GenerateAvatarResponse(
         user_id=req.user_id,
         model_base64=base64.b64encode(glb_bytes).decode("utf-8"),
         betas=betas,
         body_measurements=measurements,
         generation_time_ms=round(elapsed_ms, 1),
-        message=f"Avatar generated using {'SMPL-X' if _SMPLX_AVAILABLE else 'capsule-mesh'} pipeline. "
+        message=f"Avatar generated using {pipeline} pipeline. "
                 f"Body shape: {betas_to_description(betas, req.gender)}.",
     )
 
