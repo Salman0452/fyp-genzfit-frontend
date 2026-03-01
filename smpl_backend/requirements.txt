@@ -1,28 +1,33 @@
+# GenZFit SMPL-X Avatar Backend — Python 3.10+
+# Install CPU-only PyTorch first (no CUDA required):
+#   pip install torch==2.3.0 --index-url https://download.pytorch.org/whl/cpu
+# Then install remaining packages:
+#   pip install -r requirements.txt
+
+# --- Web framework ---
 fastapi==0.111.0
 uvicorn[standard]==0.30.1
 python-multipart==0.0.9
 pydantic==2.7.4
+
+# --- Scientific / numerics ---
 numpy==1.26.4
-scipy==1.13.1
 
-# 3D mesh processing
+# --- 3D mesh generation ---
 trimesh==4.4.1
-pyglet==2.0.15
 
-# GLB/GLTF export
-pygltflib==1.16.2
-
-# Image processing for textures
+# --- Image processing (UV texture application) ---
 Pillow==10.3.0
+opencv-python==4.10.0.82
 
-# Optional: SMPL-X support (install manually if you have the model files)
-# smplx==0.1.28
-# torch==2.3.0  # required by smplx
+# --- SMPL-X parametric body model ---
+# Requires the .pkl model files in models/smplx/
+# (SMPLX_MALE.pkl, SMPLX_FEMALE.pkl, SMPLX_NEUTRAL.pkl)
+smplx==0.1.28
 
-# Optional: Meshcapade API
-# requests already included via fastapi httpx
+# --- Deep learning runtime (CPU only) ---
+# Install separately with the --index-url flag shown above
+torch==2.3.0
 
-httpx==0.27.0
-
-# Development
+# --- Utilities ---
 python-dotenv==1.0.1
