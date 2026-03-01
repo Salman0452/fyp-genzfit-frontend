@@ -222,7 +222,7 @@ class _AvatarViewerScreenState extends State<AvatarViewerScreen>
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.rotate_3d, size: 64, color: Colors.white.withOpacity(0.3)),
+              Icon(Icons.threed_rotation, size: 64, color: Colors.white.withOpacity(0.3)),
               const SizedBox(height: 16),
               Text(
                 _statusMessage.isNotEmpty ? _statusMessage : 'No model loaded',
@@ -251,7 +251,7 @@ class _AvatarViewerScreenState extends State<AvatarViewerScreen>
           loading: Loading.eager,
           autoPlay: true,
           shadowIntensity: 1,
-          exposure: '1.0',
+          exposure: 1.0,
           cameraOrbit: '0deg 75deg 2.5m',
           minCameraOrbit: 'auto auto 0.5m',
           maxCameraOrbit: 'auto auto 5m',
@@ -522,7 +522,7 @@ class _AvatarViewerScreenState extends State<AvatarViewerScreen>
         children: [
           RotationTransition(
             turns: _spinCtrl,
-            child: const Icon(Icons.rotate_3d, size: 60, color: AppColors.accent),
+            child: const Icon(Icons.threed_rotation, size: 60, color: AppColors.accent),
           ),
           const SizedBox(height: 20),
           Text(message, style: const TextStyle(color: Colors.white70, fontSize: 16)),
