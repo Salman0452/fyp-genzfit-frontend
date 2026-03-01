@@ -32,8 +32,8 @@ try:
 except ImportError:          # noqa: BLE001
     _SMPLX_AVAILABLE = False
 
-# Path where SMPL-X model files should be placed
-SMPLX_MODEL_PATH = Path(os.getenv("SMPLX_MODEL_PATH", "./smpl_models"))
+# Path where SMPL-X model files are placed
+SMPLX_MODEL_PATH = Path(os.getenv("SMPLX_MODEL_PATH", str(Path(__file__).parent.parent / "models")))
 
 
 # ─── Public API ───────────────────────────────────────────────────────────────
