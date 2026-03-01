@@ -1,11 +1,13 @@
 import 'dart:io';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
-import 'package:genzfit/services/body_analysis_service.dart';
+import 'package:genzfit/models/measurement_model.dart';
 import 'package:genzfit/services/anthropometric_service.dart';
-import 'package:genzfit/widgets/pose_overlay_painter.dart';
+import 'package:genzfit/services/body_analysis_service.dart';
+import 'package:genzfit/services/smpl_avatar_service.dart';
 import 'package:genzfit/utils/constants.dart';
 import 'package:genzfit/widgets/custom_button.dart';
+import 'package:genzfit/widgets/pose_overlay_painter.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 import 'package:genzfit/providers/auth_provider.dart';
@@ -441,18 +443,47 @@ class _BodyScanScreenState extends State<BodyScanScreen> {
         userId: userId,
         height: height,
         weight: weight,
+        age: age,
+        gender: _selectedGender,
         bodyLandmarks: _analysisResult?['landmarks'] ?? {},
         photos: _capturedPhotos,
         estimatedMeasurements: allMeasurements,
         notes: _notesController.text.isNotEmpty ? _notesController.text : null,
       );
 
+      // ── Trigger SMPL avatar generation in the background ──────────────
+      if (mounted) {
+        // Fire and forget – user can see progress in the Avatar screen
+        final smplService = SmplAvatarService();
+        smplService.isBackendAvailable().then((available) {
+          if (available) {
+            // Rebuild a lightweight measurement model to pass to SMPL
+            final quickMeasurement = MeasurementModel(
+              id: 'pending',
+              userId: userId,
+              date: DateTime.now(),
+              height: height,
+              weight: weight,
+              age: age,
+              gender: _selectedGender,
+              bodyLandmarks: _analysisResult?['landmarks'] ?? {},
+              photoUrls: const [],
+              estimatedMeasurements: allMeasurements,
+            );
+            smplService.generateAvatar(
+              userId: userId,
+              measurement: quickMeasurement,
+            ).catchError((_) {}); // silent – errors visible in Avatar screen
+          }
+        });
+      }
+
       if (mounted) {
         Navigator.pop(context); // Close dialog
         Navigator.pop(context); // Close scan screen
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Measurement saved successfully!'),
+            content: Text('Measurement saved! Generating 3D avatar…'),
             backgroundColor: AppColors.success,
           ),
         );

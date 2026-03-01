@@ -6,6 +6,8 @@ class MeasurementModel {
   final DateTime date;
   final double height; // in cm
   final double weight; // in kg
+  final int? age;
+  final String? gender; // 'male' | 'female'
   final Map<String, dynamic> bodyLandmarks; // ML Kit pose landmarks
   final List<String> photoUrls;
   final Map<String, double> estimatedMeasurements; // chest, waist, hips, etc.
@@ -17,6 +19,8 @@ class MeasurementModel {
     required this.date,
     required this.height,
     required this.weight,
+    this.age,
+    this.gender,
     required this.bodyLandmarks,
     required this.photoUrls,
     required this.estimatedMeasurements,
@@ -30,6 +34,8 @@ class MeasurementModel {
       'date': Timestamp.fromDate(date),
       'height': height,
       'weight': weight,
+      'age': age,
+      'gender': gender,
       'bodyLandmarks': bodyLandmarks,
       'photoUrls': photoUrls,
       'estimatedMeasurements': estimatedMeasurements,
@@ -46,6 +52,8 @@ class MeasurementModel {
       date: (data['date'] as Timestamp).toDate(),
       height: (data['height'] ?? 0).toDouble(),
       weight: (data['weight'] ?? 0).toDouble(),
+      age: data['age'] as int?,
+      gender: data['gender'] as String?,
       bodyLandmarks: Map<String, dynamic>.from(data['bodyLandmarks'] ?? {}),
       photoUrls: List<String>.from(data['photoUrls'] ?? []),
       estimatedMeasurements: Map<String, double>.from(
@@ -65,6 +73,8 @@ class MeasurementModel {
       date: (data['date'] as Timestamp).toDate(),
       height: (data['height'] ?? 0).toDouble(),
       weight: (data['weight'] ?? 0).toDouble(),
+      age: data['age'] as int?,
+      gender: data['gender'] as String?,
       bodyLandmarks: Map<String, dynamic>.from(data['bodyLandmarks'] ?? {}),
       photoUrls: List<String>.from(data['photoUrls'] ?? []),
       estimatedMeasurements: Map<String, double>.from(
@@ -107,7 +117,8 @@ class MeasurementModel {
       weight: weight ?? this.weight,
       bodyLandmarks: bodyLandmarks ?? this.bodyLandmarks,
       photoUrls: photoUrls ?? this.photoUrls,
-      estimatedMeasurements: estimatedMeasurements ?? this.estimatedMeasurements,
+      estimatedMeasurements:
+          estimatedMeasurements ?? this.estimatedMeasurements,
       notes: notes ?? this.notes,
     );
   }

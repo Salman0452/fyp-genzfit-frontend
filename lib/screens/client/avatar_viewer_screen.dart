@@ -1,10 +1,16 @@
+// ignore_for_file: unused_import
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:model_viewer_plus/model_viewer_plus.dart';
 import 'package:provider/provider.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import '../../models/avatar_model.dart';
+
 import '../../models/measurement_model.dart';
 import '../../providers/auth_provider.dart';
+import '../../services/body_analysis_service.dart';
+import '../../services/smpl_avatar_service.dart';
+import '../../utils/constants.dart';
+import '../../widgets/avatar_progress_slider.dart';
 
 class AvatarViewerScreen extends StatefulWidget {
   const AvatarViewerScreen({super.key});
@@ -13,415 +19,635 @@ class AvatarViewerScreen extends StatefulWidget {
   State<AvatarViewerScreen> createState() => _AvatarViewerScreenState();
 }
 
-class _AvatarViewerScreenState extends State<AvatarViewerScreen> {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  Avatar3D? _avatar;
-  MeasurementModel? _latestMeasurement;
+class _AvatarViewerScreenState extends State<AvatarViewerScreen>
+    with SingleTickerProviderStateMixin {
+  final SmplAvatarService _smplService = SmplAvatarService();
+  final BodyAnalysisService _bodyService = BodyAnalysisService();
+
+  // ── State ──────────────────────────────────────────────────────────────────
+  List<AvatarSnapshot> _snapshots = [];
+  int _selectedIndex = 0;
+
+  String? _currentGlbPath;
   bool _isLoading = true;
+  bool _isGenerating = false;
+  bool _backendAvailable = false;
+  String _statusMessage = '';
+
+  late AnimationController _spinCtrl;
+
+  String _skinTone = 'medium';
+  bool _showMuscles = true;
 
   @override
   void initState() {
     super.initState();
-    _loadData();
+    _spinCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 2),
+    )..repeat();
+    _init();
   }
 
-  Future<void> _loadData() async {
-    try {
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      final userId = authProvider.user?.uid;
+  @override
+  void dispose() {
+    _spinCtrl.dispose();
+    _bodyService.dispose();
+    super.dispose();
+  }
 
-      if (userId == null) return;
+  // ── Initialisation ─────────────────────────────────────────────────────────
 
-      // Load latest measurement
-      final measurementSnapshot = await _firestore
-          .collection('measurements')
-          .where('userId', isEqualTo: userId)
-          .orderBy('date', descending: true)
-          .limit(1)
-          .get();
+  Future<void> _init() async {
+    setState(() {
+      _isLoading = true;
+      _statusMessage = 'Checking backend…';
+    });
 
-      if (measurementSnapshot.docs.isNotEmpty) {
-        _latestMeasurement = MeasurementModel.fromFirestore(measurementSnapshot.docs.first);
-      }
+    final userId = _userId;
+    if (userId == null) {
+      setState(() => _isLoading = false);
+      return;
+    }
 
-      // Load or create avatar
-      final avatarSnapshot = await _firestore
-          .collection('avatars')
-          .where('userId', isEqualTo: userId)
-          .limit(1)
-          .get();
+    _backendAvailable = await _smplService.isBackendAvailable();
+    _snapshots = await _smplService.getAvatarHistory(userId);
 
-      if (avatarSnapshot.docs.isNotEmpty) {
-        _avatar = Avatar3D.fromFirestore(avatarSnapshot.docs.first);
-      } else if (_latestMeasurement != null) {
-        // Create new avatar from measurements
-        await _createAvatar(userId, _latestMeasurement!);
-      }
+    if (_snapshots.isNotEmpty) {
+      _selectedIndex = _snapshots.length - 1;
+      await _loadGlbForSelected();
+    }
 
+    if (mounted) {
       setState(() {
         _isLoading = false;
-      });
-    } catch (e) {
-      print('Error loading avatar data: $e');
-      setState(() {
-        _isLoading = false;
+        _statusMessage = '';
       });
     }
   }
 
-  Future<void> _createAvatar(String userId, MeasurementModel measurement) async {
+  Future<void> _loadGlbForSelected() async {
+    if (_snapshots.isEmpty) return;
+    final snap = _snapshots[_selectedIndex];
+    setState(() => _statusMessage = 'Loading model…');
     try {
-      final avatarData = {
-        'userId': userId,
-        'modelUrl': _getDefaultModelUrl(),
-        'measurements': measurement.estimatedMeasurements ?? {},
-        'createdAt': Timestamp.now(),
-      };
-
-      final doc = await _firestore.collection('avatars').add(avatarData);
-      final avatarDoc = await doc.get();
-      _avatar = Avatar3D.fromFirestore(avatarDoc);
+      final path = await _smplService.getGlbPath(
+        userId: _userId!,
+        snapDate: snap.date,
+        fallbackSkinTone: _skinTone,
+      );
+      if (mounted) setState(() { _currentGlbPath = path; _statusMessage = ''; });
     } catch (e) {
-      print('Error creating avatar: $e');
+      if (mounted) setState(() => _statusMessage = 'Could not load model for ${snap.date}');
     }
   }
 
-  String _getDefaultModelUrl() {
-    // For now, use a placeholder 3D model URL
-    // In production, this would be dynamically generated based on measurements
-    return 'https://modelviewer.dev/shared-assets/models/Astronaut.glb';
+  Future<void> _generateNewAvatar() async {
+    if (!_backendAvailable) {
+      _showSnack('SMPL backend is not reachable. Start the Python server first.');
+      return;
+    }
+    final userId = _userId;
+    if (userId == null) return;
+
+    MeasurementModel? latest;
+    try { latest = await _bodyService.getLatestMeasurement(userId); } catch (_) {}
+
+    if (latest == null) {
+      _showSnack('No body scan found. Complete a body scan first.');
+      return;
+    }
+
+    setState(() { _isGenerating = true; _statusMessage = 'Generating SMPL avatar…'; });
+
+    try {
+      final avatar = await _smplService.generateAvatar(
+        userId: userId,
+        measurement: latest,
+        skinTone: _skinTone,
+        showMuscles: _showMuscles,
+      );
+      _snapshots = await _smplService.getAvatarHistory(userId);
+      _selectedIndex = _snapshots.length - 1;
+      if (mounted) {
+        setState(() { _currentGlbPath = avatar.modelUrl; _isGenerating = false; _statusMessage = ''; });
+        _showSnack('3D avatar generated successfully!', success: true);
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() { _isGenerating = false; _statusMessage = 'Generation failed'; });
+        _showSnack(e.toString());
+      }
+    }
   }
+
+  // ── Build ──────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
-      appBar: AppBar(
-        backgroundColor: Colors.black,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text(
-          '3D Body Avatar',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
+      appBar: _buildAppBar(),
+      body: _isLoading
+          ? _buildLoadingView('Loading avatar data…')
+          : _snapshots.isEmpty && !_isGenerating
+              ? _buildNoDataView()
+              : _buildMainContent(),
+      floatingActionButton: _buildFab(),
+    );
+  }
+
+  AppBar _buildAppBar() {
+    return AppBar(
+      backgroundColor: Colors.black,
+      elevation: 0,
+      leading: IconButton(
+        icon: const Icon(Icons.arrow_back, color: Colors.white),
+        onPressed: () => Navigator.pop(context),
+      ),
+      title: const Text(
+        '3D Body Avatar',
+        style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+      ),
+      actions: [
+        Padding(
+          padding: const EdgeInsets.only(right: 4),
+          child: Center(
+            child: Container(
+              width: 10, height: 10,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: _backendAvailable ? Colors.greenAccent : Colors.redAccent,
+              ),
+            ),
           ),
         ),
-        actions: [
-          if (_avatar != null)
-            IconButton(
-              icon: const Icon(Icons.refresh, color: Colors.white),
-              onPressed: _loadData,
+        IconButton(icon: const Icon(Icons.tune, color: Colors.white), onPressed: _showAppearanceSheet),
+        IconButton(icon: const Icon(Icons.refresh, color: Colors.white), onPressed: _init),
+      ],
+    );
+  }
+
+  Widget _buildMainContent() {
+    return Column(
+      children: [
+        Expanded(
+          flex: 5,
+          child: _isGenerating ? _buildLoadingView(_statusMessage) : _build3DViewer(),
+        ),
+        if (_snapshots.isNotEmpty)
+          Container(
+            color: Colors.grey[900],
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            child: AvatarProgressSlider(
+              snapshots: _snapshots,
+              selectedIndex: _selectedIndex,
+              onSnapshotSelected: (i) async {
+                setState(() => _selectedIndex = i);
+                await _loadGlbForSelected();
+              },
             ),
-        ],
+          ),
+        if (_snapshots.isNotEmpty)
+          Expanded(flex: 3, child: _buildMeasurementsPanel()),
+      ],
+    );
+  }
+
+  Widget _build3DViewer() {
+    if (_currentGlbPath == null || _currentGlbPath!.isEmpty) {
+      return Container(
+        color: Colors.grey[900],
+        child: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.rotate_3d, size: 64, color: Colors.white.withOpacity(0.3)),
+              const SizedBox(height: 16),
+              Text(
+                _statusMessage.isNotEmpty ? _statusMessage : 'No model loaded',
+                style: TextStyle(color: Colors.white.withOpacity(0.6)),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    final src = _currentGlbPath!.startsWith('http')
+        ? _currentGlbPath!
+        : 'file://$_currentGlbPath';
+
+    return Stack(
+      children: [
+        ModelViewer(
+          src: src,
+          alt: '3D Body Avatar',
+          ar: false,
+          autoRotate: true,
+          autoRotateDelay: 1000,
+          cameraControls: true,
+          backgroundColor: Colors.black,
+          loading: Loading.eager,
+          autoPlay: true,
+          shadowIntensity: 1,
+          exposure: '1.0',
+          cameraOrbit: '0deg 75deg 2.5m',
+          minCameraOrbit: 'auto auto 0.5m',
+          maxCameraOrbit: 'auto auto 5m',
+        ),
+        if (_snapshots.isNotEmpty)
+          Positioned(
+            top: 12, right: 12,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.black.withOpacity(0.6),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: Colors.white24),
+              ),
+              child: Text(
+                _snapshots[_selectedIndex].date,
+                style: const TextStyle(color: Colors.white70, fontSize: 12),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildMeasurementsPanel() {
+    final snap = _snapshots.isNotEmpty ? _snapshots[_selectedIndex] : null;
+    final meas = snap?.measurements ?? {};
+    final height = (meas['height'] as num?)?.toDouble() ?? 0;
+    final weight = (meas['weight'] as num?)?.toDouble() ?? snap?.weight ?? 0;
+
+    final bmi = (height > 0 && weight > 0)
+        ? weight / ((height / 100) * (height / 100))
+        : null;
+
+    final bmiLabel = bmi == null
+        ? '—'
+        : bmi < 18.5
+            ? 'Underweight'
+            : bmi < 25
+                ? 'Normal'
+                : bmi < 30
+                    ? 'Overweight'
+                    : 'Obese';
+
+    final bmiColor = bmi == null
+        ? Colors.grey
+        : bmi < 18.5
+            ? Colors.blue
+            : bmi < 25
+                ? Colors.green
+                : bmi < 30
+                    ? Colors.orange
+                    : Colors.red;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.grey[900],
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      body: _isLoading
-          ? const Center(
-              child: CircularProgressIndicator(color: Colors.white),
-            )
-          : _avatar == null && _latestMeasurement == null
-              ? _buildNoDataView()
-              : Column(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Text(
+                  'Body Measurements',
+                  style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                const Spacer(),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: AppColors.accent.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: AppColors.accent.withOpacity(0.4)),
+                  ),
+                  child: Text(
+                    _backendAvailable ? 'SMPL pipeline' : 'cached',
+                    style: const TextStyle(color: AppColors.accent, fontSize: 10),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            GridView.count(
+              crossAxisCount: 2,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              childAspectRatio: 2.8,
+              crossAxisSpacing: 10,
+              mainAxisSpacing: 10,
+              children: [
+                _measCard('Height',    '${height.toStringAsFixed(0)} cm',  Icons.height),
+                _measCard('Weight',    '${weight.toStringAsFixed(1)} kg',  Icons.monitor_weight_outlined),
+                _measCard('Chest',     _fmt(meas['chest']),                Icons.accessibility),
+                _measCard('Waist',     _fmt(meas['waist']),                Icons.accessibility_new),
+                _measCard('Hips',      _fmt(meas['hips']),                 Icons.accessibility),
+                _measCard('Shoulders', _fmt(meas['shoulderWidth']),        Icons.open_in_full),
+              ],
+            ),
+            if (bmi != null) ...[
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: bmiColor.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: bmiColor.withOpacity(0.3)),
+                ),
+                child: Row(
                   children: [
-                    Expanded(
-                      flex: 3,
-                      child: _build3DViewer(),
+                    Text(
+                      bmi.toStringAsFixed(1),
+                      style: TextStyle(color: bmiColor, fontSize: 28, fontWeight: FontWeight.bold),
                     ),
-                    Expanded(
-                      flex: 2,
-                      child: _buildMeasurementsPanel(),
+                    const SizedBox(width: 6),
+                    Text('kg/m²', style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 13)),
+                    const Spacer(),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(color: bmiColor, borderRadius: BorderRadius.circular(10)),
+                      child: Text(bmiLabel, style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
                     ),
                   ],
                 ),
+              ),
+            ],
+            if ((snap?.betas ?? []).isNotEmpty) ...[
+              const SizedBox(height: 16),
+              _buildBetaBar(snap!.betas),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _measCard(String label, String value, IconData icon) {
+    return Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(color: Colors.grey[850], borderRadius: BorderRadius.circular(10)),
+      child: Row(
+        children: [
+          Icon(icon, color: Colors.white54, size: 18),
+          const SizedBox(width: 8),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(label, style: const TextStyle(color: Colors.white54, fontSize: 10)),
+              Text(value, style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600)),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBetaBar(List<double> betas) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('SMPL Shape Parameters (β₀…β₉)',
+            style: TextStyle(color: Colors.white54, fontSize: 11)),
+        const SizedBox(height: 6),
+        SizedBox(
+          height: 36,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: List.generate(betas.length, (i) {
+              final v = betas[i];
+              final frac = ((v + 3) / 6).clamp(0.0, 1.0);
+              return Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 2),
+                  child: Tooltip(
+                    message: 'β$i: ${v.toStringAsFixed(2)}',
+                    child: Container(
+                      height: 36 * frac + 4,
+                      decoration: BoxDecoration(
+                        color: frac > 0.5
+                            ? AppColors.accent.withOpacity(0.8)
+                            : Colors.blueGrey.withOpacity(0.6),
+                        borderRadius: BorderRadius.circular(3),
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            }),
+          ),
+        ),
+      ],
     );
   }
 
   Widget _buildNoDataView() {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(32.0),
+        padding: const EdgeInsets.all(32),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.person_outline,
-              size: 100,
-              color: Colors.white.withOpacity(0.3),
-            ),
+            Icon(Icons.person_outline, size: 100, color: Colors.white.withOpacity(0.2)),
             const SizedBox(height: 24),
-            const Text(
-              'No Body Scan Data',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 16),
+            const Text('No 3D Avatar Yet',
+                style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 12),
             Text(
-              'Complete a body scan to view your 3D avatar',
+              _backendAvailable
+                  ? 'Complete a body scan, then tap ＋ to generate your personalised SMPL avatar.'
+                  : 'The SMPL backend is not running.\nStart the Python server and try again.',
               textAlign: TextAlign.center,
-              style: TextStyle(
-                color: Colors.white.withOpacity(0.7),
-                fontSize: 16,
-              ),
+              style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 15),
             ),
-            const SizedBox(height: 32),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pop(context);
-                // Navigate to body scan
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.white,
-                foregroundColor: Colors.black,
-                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                shape: RoundedRectangleBorder(
+            if (!_backendAvailable) ...[
+              const SizedBox(height: 20),
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.grey[850],
                   borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.orange.withOpacity(0.4)),
                 ),
-              ),
-              child: const Text(
-                'Start Body Scan',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _build3DViewer() {
-    if (_avatar?.modelUrl == null) {
-      return Container(
-        color: Colors.grey[900],
-        child: const Center(
-          child: Text(
-            'Generating 3D Model...',
-            style: TextStyle(color: Colors.white),
-          ),
-        ),
-      );
-    }
-
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            Colors.grey[900]!,
-            Colors.black,
-          ],
-        ),
-      ),
-      child: ModelViewer(
-        src: _avatar!.modelUrl!,
-        alt: "3D Body Avatar",
-        ar: true,
-        autoRotate: true,
-        cameraControls: true,
-        backgroundColor: Colors.black,
-        loading: Loading.eager,
-        autoPlay: true,
-      ),
-    );
-  }
-
-  Widget _buildMeasurementsPanel() {
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: Colors.grey[900],
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Body Measurements',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 20),
-            _buildMeasurementGrid(),
-            const SizedBox(height: 20),
-            _buildBMICard(),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildMeasurementGrid() {
-    final measurements = _avatar?.measurements ?? _latestMeasurement?.estimatedMeasurements ?? {};
-    final height = _latestMeasurement?.height ?? 0;
-    final weight = _latestMeasurement?.weight ?? 0;
-
-    final items = [
-      {'label': 'Height', 'value': '${height.toStringAsFixed(0)} cm', 'icon': Icons.height},
-      {'label': 'Weight', 'value': '${weight.toStringAsFixed(1)} kg', 'icon': Icons.monitor_weight},
-      {'label': 'Chest', 'value': '${(measurements['chest'] ?? 0).toStringAsFixed(0)} cm', 'icon': Icons.accessibility},
-      {'label': 'Waist', 'value': '${(measurements['waist'] ?? 0).toStringAsFixed(0)} cm', 'icon': Icons.accessibility_new},
-      {'label': 'Hips', 'value': '${(measurements['hips'] ?? 0).toStringAsFixed(0)} cm', 'icon': Icons.accessibility},
-      {'label': 'Shoulders', 'value': '${(measurements['shoulderWidth'] ?? 0).toStringAsFixed(0)} cm', 'icon': Icons.open_in_full},
-    ];
-
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        childAspectRatio: 2.5,
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
-      ),
-      itemCount: items.length,
-      itemBuilder: (context, index) {
-        final item = items[index];
-        return Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: Colors.grey[850],
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Row(
-            children: [
-              Icon(
-                item['icon'] as IconData,
-                color: Colors.white.withOpacity(0.7),
-                size: 20,
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Column(
+                child: const Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
+                    Row(children: [
+                      Icon(Icons.terminal, color: Colors.orange, size: 16),
+                      SizedBox(width: 8),
+                      Text('Quick Start', style: TextStyle(color: Colors.orange, fontWeight: FontWeight.bold, fontSize: 13)),
+                    ]),
+                    SizedBox(height: 8),
                     Text(
-                      item['label'] as String,
-                      style: TextStyle(
-                        color: Colors.white.withOpacity(0.6),
-                        fontSize: 11,
-                      ),
-                    ),
-                    Text(
-                      item['value'] as String,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                      ),
+                      'cd smpl_backend\n'
+                      'pip install -r requirements.txt\n'
+                      'uvicorn main:app --host 0.0.0.0 --port 8000',
+                      style: TextStyle(color: Colors.white70, fontSize: 11, fontFamily: 'monospace'),
                     ),
                   ],
                 ),
               ),
             ],
-          ),
-        );
-      },
+            const SizedBox(height: 32),
+            ElevatedButton.icon(
+              onPressed: () => Navigator.pop(context),
+              icon: const Icon(Icons.camera_alt),
+              label: const Text('Go to Body Scan'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.accent,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
-  Widget _buildBMICard() {
-    final bmi = _latestMeasurement?.bmi ?? _avatar?.bmi;
-    if (bmi == null) return const SizedBox.shrink();
-
-    String category;
-    Color color;
-
-    if (bmi < 18.5) {
-      category = 'Underweight';
-      color = Colors.blue;
-    } else if (bmi < 25) {
-      category = 'Normal';
-      color = Colors.green;
-    } else if (bmi < 30) {
-      category = 'Overweight';
-      color = Colors.orange;
-    } else {
-      category = 'Obese';
-      color = Colors.red;
-    }
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            color.withOpacity(0.2),
-            color.withOpacity(0.1),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.3)),
-      ),
+  Widget _buildLoadingView(String message) {
+    return Center(
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                'Body Mass Index (BMI)',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                decoration: BoxDecoration(
-                  color: color,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  category,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ],
+          RotationTransition(
+            turns: _spinCtrl,
+            child: const Icon(Icons.rotate_3d, size: 60, color: AppColors.accent),
           ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Text(
-                bmi.toStringAsFixed(1),
-                style: TextStyle(
-                  color: color,
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                'kg/m²',
-                style: TextStyle(
-                  color: Colors.white.withOpacity(0.6),
-                  fontSize: 14,
-                ),
-              ),
-            ],
-          ),
+          const SizedBox(height: 20),
+          Text(message, style: const TextStyle(color: Colors.white70, fontSize: 16)),
         ],
       ),
     );
   }
+
+  Widget? _buildFab() {
+    if (_isLoading || _isGenerating) return null;
+    return FloatingActionButton.extended(
+      onPressed: _generateNewAvatar,
+      backgroundColor: _backendAvailable ? AppColors.accent : Colors.grey[700],
+      icon: const Icon(Icons.auto_awesome, color: Colors.white),
+      label: const Text('Generate Avatar', style: TextStyle(color: Colors.white)),
+    );
+  }
+
+  void _showAppearanceSheet() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.grey[900],
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (_) => StatefulBuilder(
+        builder: (ctx, setSheet) => Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Appearance',
+                  style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 20),
+              const Text('Skin Tone', style: TextStyle(color: Colors.white70, fontSize: 14)),
+              const SizedBox(height: 10),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  for (final tone in ['light', 'medium', 'brown', 'dark'])
+                    _SkinToneButton(
+                      tone: tone,
+                      selected: _skinTone == tone,
+                      onTap: () => setSheet(() => _skinTone = tone),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              Row(
+                children: [
+                  const Text('Muscle Overlay', style: TextStyle(color: Colors.white70, fontSize: 14)),
+                  const Spacer(),
+                  Switch(value: _showMuscles, activeColor: AppColors.accent,
+                      onChanged: (v) => setSheet(() => _showMuscles = v)),
+                ],
+              ),
+              const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () { Navigator.pop(ctx); setState(() {}); _generateNewAvatar(); },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.accent,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  child: const Text('Regenerate Avatar',
+                      style: TextStyle(color: Colors.white, fontSize: 16)),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  String? get _userId =>
+      Provider.of<AuthProvider>(context, listen: false).user?.uid;
+
+  String _fmt(dynamic v) {
+    if (v == null) return '—';
+    return '${(v as num).toStringAsFixed(0)} cm';
+  }
+
+  void _showSnack(String msg, {bool success = false}) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(msg),
+      backgroundColor: success ? Colors.greenAccent[700] : AppColors.error,
+      behavior: SnackBarBehavior.floating,
+    ));
+  }
 }
+
+// ─── Skin tone selector ───────────────────────────────────────────────────────
+
+class _SkinToneButton extends StatelessWidget {
+  final String tone;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _SkinToneButton({required this.tone, required this.selected, required this.onTap});
+
+  static const _colors = {
+    'light':  Color(0xFFFFE0C4),
+    'medium': Color(0xFFD2A078),
+    'brown':  Color(0xFFA5694B),
+    'dark':   Color(0xFF644128),
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    final color = _colors[tone] ?? Colors.grey;
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        width: 56, height: 56,
+        decoration: BoxDecoration(
+          color: color, shape: BoxShape.circle,
+          border: Border.all(color: selected ? Colors.white : Colors.transparent, width: 3),
+        ),
+        child: selected ? const Icon(Icons.check, color: Colors.white, size: 22) : null,
+      ),
+    );
+  }
+}
+

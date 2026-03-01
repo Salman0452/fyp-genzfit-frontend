@@ -3,10 +3,20 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class Avatar3D {
   final String id;
   final String userId;
+
+  /// Local file path (file://…) or remote https:// URL.
+  /// model_viewer_plus accepts both.
   final String? modelUrl;
+
   final Map<String, dynamic> measurements;
   final DateTime createdAt;
   final DateTime? updatedAt;
+
+  /// SMPL / SMPL-X shape parameters β₀ … β₉
+  final List<double> betaValues;
+
+  /// Human-readable description of the generation pipeline used.
+  final String generationMethod;
 
   Avatar3D({
     required this.id,
@@ -15,7 +25,9 @@ class Avatar3D {
     required this.measurements,
     required this.createdAt,
     this.updatedAt,
-  });
+    List<double>? betaValues,
+    this.generationMethod = 'capsule-mesh',
+  }) : betaValues = betaValues ?? List<double>.filled(10, 0.0);
 
   factory Avatar3D.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
@@ -25,8 +37,14 @@ class Avatar3D {
       modelUrl: data['modelUrl'],
       measurements: data['measurements'] ?? {},
       createdAt: (data['createdAt'] as Timestamp).toDate(),
-      updatedAt:
-          data['updatedAt'] != null ? (data['updatedAt'] as Timestamp).toDate() : null,
+      updatedAt: data['updatedAt'] != null
+          ? (data['updatedAt'] as Timestamp).toDate()
+          : null,
+      betaValues: (data['betaValues'] as List<dynamic>?)
+              ?.map((e) => (e as num).toDouble())
+              .toList() ??
+          List<double>.filled(10, 0.0),
+      generationMethod: data['generationMethod'] as String? ?? 'capsule-mesh',
     );
   }
 
@@ -37,6 +55,8 @@ class Avatar3D {
       'measurements': measurements,
       'createdAt': Timestamp.fromDate(createdAt),
       'updatedAt': updatedAt != null ? Timestamp.fromDate(updatedAt!) : null,
+      'betaValues': betaValues,
+      'generationMethod': generationMethod,
     };
   }
 
@@ -47,6 +67,8 @@ class Avatar3D {
     Map<String, dynamic>? measurements,
     DateTime? createdAt,
     DateTime? updatedAt,
+    List<double>? betaValues,
+    String? generationMethod,
   }) {
     return Avatar3D(
       id: id ?? this.id,
@@ -55,6 +77,8 @@ class Avatar3D {
       measurements: measurements ?? this.measurements,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      betaValues: betaValues ?? this.betaValues,
+      generationMethod: generationMethod ?? this.generationMethod,
     );
   }
 
@@ -89,7 +113,7 @@ class Avatar3D {
   // Get body type based on measurements
   String get bodyType {
     if (measurements.isEmpty) return 'Unknown';
-    
+
     final bmiValue = bmi;
     if (bmiValue == null) return 'Unknown';
 
