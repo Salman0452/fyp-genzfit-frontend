@@ -101,11 +101,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF1C1C1E),
+        backgroundColor: const Color(0xFF171917),
         elevation: 0,
         title: Row(
           children: [
-            const Icon(Icons.admin_panel_settings, color: Color(0xFF00D4FF)),
+            const Icon(Icons.admin_panel_settings, color: Color(0xFF83BCB5)),
             const SizedBox(width: 12),
             Text(
               'Admin Dashboard',
@@ -126,7 +126,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           const SizedBox(width: 8),
           PopupMenuButton<String>(
             icon: CircleAvatar(
-              backgroundColor: const Color(0xFF00D4FF),
+              backgroundColor: const Color(0xFF83BCB5),
               child: Text(
                 widget.admin.name[0].toUpperCase(),
                 style: GoogleFonts.poppins(
@@ -135,7 +135,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 ),
               ),
             ),
-            color: const Color(0xFF1C1C1E),
+            color: const Color(0xFF171917),
             onSelected: (value) async {
               if (value == 'logout') {
                 await FirebaseAuth.instance.signOut();
@@ -179,12 +179,12 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       ),
       body: _isLoading
           ? const Center(
-              child: CircularProgressIndicator(color: Color(0xFF00D4FF)),
+              child: CircularProgressIndicator(color: Color(0xFF83BCB5)),
             )
           : RefreshIndicator(
               onRefresh: _loadDashboardData,
-              color: const Color(0xFF00D4FF),
-              backgroundColor: const Color(0xFF1C1C1E),
+              color: const Color(0xFF83BCB5),
+              backgroundColor: const Color(0xFF171917),
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 padding: const EdgeInsets.all(24),
@@ -210,7 +210,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Color(0xFF00D4FF), Color(0xFF0066FF)],
+          colors: [Color(0xFF83BCB5), Color(0xFF7FFA88)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -273,14 +273,14 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   label: 'Total Users',
                   value: _totalUsers.toString(),
                   subtitle: '$_totalClients Clients • $_totalTrainers Trainers',
-                  color: const Color(0xFF00D4FF),
+                  color: const Color(0xFF83BCB5),
                 ),
                 _buildStatCard(
                   icon: Icons.pending_actions,
                   label: 'Pending Verifications',
                   value: _pendingVerifications.toString(),
                   subtitle: 'Trainers awaiting approval',
-                  color: const Color(0xFFFF9800),
+                  color: const Color(0xFFFFD166),
                   onTap: () => _navigateToVerification(),
                 ),
                 _buildStatCard(
@@ -288,7 +288,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   label: 'Active Sessions',
                   value: _activeSessions.toString(),
                   subtitle: 'Ongoing training sessions',
-                  color: const Color(0xFF00C853),
+                  color: const Color(0xFF7FFA88),
                 ),
                 _buildStatCard(
                   icon: Icons.attach_money,
@@ -319,7 +319,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: const Color(0xFF1C1C1E),
+          color: const Color(0xFF171917),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: color.withOpacity(0.3)),
         ),
@@ -401,21 +401,21 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   icon: Icons.verified_user,
                   title: 'Verify Trainers',
                   description: '$_pendingVerifications pending',
-                  color: const Color(0xFFFF9800),
+                  color: const Color(0xFFFFD166),
                   onTap: _navigateToVerification,
                 ),
                 _buildActionCard(
                   icon: Icons.manage_accounts,
                   title: 'Manage Users',
                   description: '$_totalUsers total users',
-                  color: const Color(0xFF00D4FF),
+                  color: const Color(0xFF83BCB5),
                   onTap: _navigateToUserManagement,
                 ),
                 _buildActionCard(
                   icon: Icons.event_note,
                   title: 'Monitor Sessions',
                   description: '$_activeSessions active',
-                  color: const Color(0xFF00C853),
+                  color: const Color(0xFF7FFA88),
                   onTap: _navigateToSessionMonitoring,
                 ),
                 _buildActionCard(
@@ -436,7 +436,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   icon: Icons.attach_money,
                   title: 'Finances',
                   description: 'Payouts & refunds',
-                  color: const Color(0xFF00C853),
+                  color: const Color(0xFF7FFA88),
                   onTap: _navigateToFinances,
                 ),
                 _buildActionCard(
@@ -467,7 +467,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: const Color(0xFF1C1C1E),
+          color: const Color(0xFF171917),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: color.withOpacity(0.3)),
         ),
@@ -541,7 +541,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               return Container(
                 padding: const EdgeInsets.all(32),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF1C1C1E),
+                  color: const Color(0xFF171917),
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: Center(
@@ -555,7 +555,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
             return Container(
               decoration: BoxDecoration(
-                color: const Color(0xFF1C1C1E),
+                color: const Color(0xFF171917),
                 borderRadius: BorderRadius.circular(16),
               ),
               child: ListView.separated(
@@ -588,11 +588,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
     switch (status) {
       case 'requested':
-        statusColor = const Color(0xFFFF9800);
+        statusColor = const Color(0xFFFFD166);
         statusIcon = Icons.pending;
         break;
       case 'active':
-        statusColor = const Color(0xFF00C853);
+        statusColor = const Color(0xFF7FFA88);
         statusIcon = Icons.check_circle;
         break;
       case 'completed':

@@ -55,15 +55,15 @@ class GenZFitAdminApp extends StatelessWidget {
           useMaterial3: true,
           brightness: Brightness.dark,
           scaffoldBackgroundColor: Colors.black,
-          primaryColor: const Color(0xFF00D4FF),
+          primaryColor: const Color(0xFF83BCB5),
           colorScheme: const ColorScheme.dark(
-            primary: Color(0xFF00D4FF),
-            secondary: Color(0xFF0066FF),
-            surface: Color(0xFF1C1C1E),
+            primary: Color(0xFF83BCB5),
+            secondary: Color(0xFF7FFA88),
+            surface: Color(0xFF171917),
             error: Colors.red,
           ),
           appBarTheme: const AppBarTheme(
-            backgroundColor: Color(0xFF1C1C1E),
+            backgroundColor: Color(0xFF171917),
             elevation: 0,
             centerTitle: true,
             titleTextStyle: TextStyle(
@@ -95,7 +95,7 @@ class GenZFitAdminApp extends StatelessWidget {
           ),
           elevatedButtonTheme: ElevatedButtonThemeData(
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF00D4FF),
+              backgroundColor: const Color(0xFF83BCB5),
               foregroundColor: Colors.black,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),

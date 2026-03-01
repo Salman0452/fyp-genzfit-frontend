@@ -85,7 +85,7 @@ class _FinancialManagementScreenState extends State<FinancialManagementScreen> w
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF1C1C1E),
+        backgroundColor: const Color(0xFF171917),
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
@@ -101,8 +101,8 @@ class _FinancialManagementScreenState extends State<FinancialManagementScreen> w
         ),
         bottom: TabBar(
           controller: _tabController,
-          indicatorColor: const Color(0xFF00D4FF),
-          labelColor: const Color(0xFF00D4FF),
+          indicatorColor: const Color(0xFF83BCB5),
+          labelColor: const Color(0xFF83BCB5),
           unselectedLabelColor: Colors.white60,
           labelStyle: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 13),
           tabs: const [
@@ -133,7 +133,7 @@ class _FinancialManagementScreenState extends State<FinancialManagementScreen> w
   Widget _buildFinancialSummary() {
     return Container(
       padding: const EdgeInsets.all(16),
-      color: const Color(0xFF1C1C1E),
+      color: const Color(0xFF171917),
       child: Row(
         children: [
           Expanded(
@@ -141,7 +141,7 @@ class _FinancialManagementScreenState extends State<FinancialManagementScreen> w
               'Total Revenue',
               '\$${_totalRevenue.toStringAsFixed(2)}',
               Icons.attach_money,
-              const Color(0xFF00C853),
+              const Color(0xFF7FFA88),
             ),
           ),
           const SizedBox(width: 12),
@@ -150,7 +150,7 @@ class _FinancialManagementScreenState extends State<FinancialManagementScreen> w
               'Platform Share',
               '\$${_platformRevenue.toStringAsFixed(2)}',
               Icons.account_balance,
-              const Color(0xFF00D4FF),
+              const Color(0xFF83BCB5),
             ),
           ),
           const SizedBox(width: 12),
@@ -225,7 +225,7 @@ class _FinancialManagementScreenState extends State<FinancialManagementScreen> w
 
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(
-            child: CircularProgressIndicator(color: Color(0xFF00D4FF)),
+            child: CircularProgressIndicator(color: Color(0xFF83BCB5)),
           );
         }
 
@@ -274,7 +274,7 @@ class _FinancialManagementScreenState extends State<FinancialManagementScreen> w
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: const Color(0xFF1C1C1E),
+        color: const Color(0xFF171917),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.orange.withOpacity(0.3)),
       ),
@@ -325,7 +325,7 @@ class _FinancialManagementScreenState extends State<FinancialManagementScreen> w
                       style: GoogleFonts.poppins(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
-                        color: const Color(0xFF00C853),
+                        color: const Color(0xFF7FFA88),
                       ),
                     ),
                     Text(
@@ -366,14 +366,14 @@ class _FinancialManagementScreenState extends State<FinancialManagementScreen> w
                         'Platform (${(_commissionRate * 100).toInt()}%): \$${platformAmount.toStringAsFixed(2)}',
                         style: GoogleFonts.inter(
                           fontSize: 13,
-                          color: const Color(0xFF00D4FF),
+                          color: const Color(0xFF83BCB5),
                         ),
                       ),
                       Text(
                         'Trainer (${((1 - _commissionRate) * 100).toInt()}%): \$${trainerAmount.toStringAsFixed(2)}',
                         style: GoogleFonts.inter(
                           fontSize: 13,
-                          color: const Color(0xFF00C853),
+                          color: const Color(0xFF7FFA88),
                         ),
                       ),
                     ],
@@ -412,7 +412,7 @@ class _FinancialManagementScreenState extends State<FinancialManagementScreen> w
                 style: GoogleFonts.inter(fontWeight: FontWeight.bold),
               ),
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF00C853),
+                backgroundColor: const Color(0xFF7FFA88),
                 foregroundColor: Colors.white,
                 minimumSize: const Size(double.infinity, 44),
                 shape: RoundedRectangleBorder(
@@ -445,7 +445,7 @@ class _FinancialManagementScreenState extends State<FinancialManagementScreen> w
 
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(
-            child: CircularProgressIndicator(color: Color(0xFF00D4FF)),
+            child: CircularProgressIndicator(color: Color(0xFF83BCB5)),
           );
         }
 
@@ -470,7 +470,7 @@ class _FinancialManagementScreenState extends State<FinancialManagementScreen> w
                   onPressed: () => _createTestRefund(),
                   icon: const Icon(Icons.add),
                   label: const Text('Create Test Refund'),
-                  style: TextButton.styleFrom(foregroundColor: const Color(0xFF00D4FF)),
+                  style: TextButton.styleFrom(foregroundColor: const Color(0xFF83BCB5)),
                 ),
               ],
             ),
@@ -500,7 +500,7 @@ class _FinancialManagementScreenState extends State<FinancialManagementScreen> w
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: const Color(0xFF1C1C1E),
+        color: const Color(0xFF171917),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.red.withOpacity(0.3)),
       ),
@@ -598,7 +598,7 @@ class _FinancialManagementScreenState extends State<FinancialManagementScreen> w
                       style: GoogleFonts.inter(fontWeight: FontWeight.bold),
                     ),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF00C853),
+                      backgroundColor: const Color(0xFF7FFA88),
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
@@ -654,7 +654,7 @@ class _FinancialManagementScreenState extends State<FinancialManagementScreen> w
 
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(
-            child: CircularProgressIndicator(color: Color(0xFF00D4FF)),
+            child: CircularProgressIndicator(color: Color(0xFF83BCB5)),
           );
         }
 
@@ -683,7 +683,7 @@ class _FinancialManagementScreenState extends State<FinancialManagementScreen> w
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: const Color(0xFF1C1C1E),
+        color: const Color(0xFF171917),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Padding(
@@ -693,10 +693,10 @@ class _FinancialManagementScreenState extends State<FinancialManagementScreen> w
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: const Color(0xFF00C853).withOpacity(0.1),
+                color: const Color(0xFF7FFA88).withOpacity(0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: const Icon(Icons.attach_money, color: Color(0xFF00C853), size: 20),
+              child: const Icon(Icons.attach_money, color: Color(0xFF7FFA88), size: 20),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -730,14 +730,14 @@ class _FinancialManagementScreenState extends State<FinancialManagementScreen> w
                   style: GoogleFonts.poppins(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
-                    color: const Color(0xFF00D4FF),
+                    color: const Color(0xFF83BCB5),
                   ),
                 ),
                 Text(
                   isPaid ? 'Paid' : 'Pending',
                   style: GoogleFonts.inter(
                     fontSize: 11,
-                    color: isPaid ? const Color(0xFF00C853) : Colors.orange,
+                    color: isPaid ? const Color(0xFF7FFA88) : Colors.orange,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -753,7 +753,7 @@ class _FinancialManagementScreenState extends State<FinancialManagementScreen> w
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF1C1C1E),
+        backgroundColor: const Color(0xFF171917),
         title: Text(
           'Process Payout',
           style: GoogleFonts.poppins(color: Colors.white),
@@ -769,7 +769,7 @@ class _FinancialManagementScreenState extends State<FinancialManagementScreen> w
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF00C853)),
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF7FFA88)),
             child: Text('Confirm', style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
           ),
         ],
@@ -792,7 +792,7 @@ class _FinancialManagementScreenState extends State<FinancialManagementScreen> w
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Payout processed successfully'),
-              backgroundColor: Color(0xFF00C853),
+              backgroundColor: Color(0xFF7FFA88),
             ),
           );
         }
@@ -822,7 +822,7 @@ class _FinancialManagementScreenState extends State<FinancialManagementScreen> w
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Refund processed successfully'),
-            backgroundColor: Color(0xFF00C853),
+            backgroundColor: Color(0xFF7FFA88),
           ),
         );
       }
@@ -849,7 +849,7 @@ class _FinancialManagementScreenState extends State<FinancialManagementScreen> w
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Refund rejected'),
-            backgroundColor: Color(0xFF00C853),
+            backgroundColor: Color(0xFF7FFA88),
           ),
         );
       }
@@ -880,7 +880,7 @@ class _FinancialManagementScreenState extends State<FinancialManagementScreen> w
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Test refund created'),
-            backgroundColor: Color(0xFF00C853),
+            backgroundColor: Color(0xFF7FFA88),
           ),
         );
       }

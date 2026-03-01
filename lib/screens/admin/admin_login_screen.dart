@@ -92,7 +92,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 450),
             child: Card(
-              color: const Color(0xFF1C1C1E),
+              color: const Color(0xFF171917),
               elevation: 8,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(24),
@@ -108,13 +108,13 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                       Container(
                         padding: const EdgeInsets.all(20),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF00D4FF).withOpacity(0.1),
+                          color: const Color(0xFF83BCB5).withOpacity(0.1),
                           shape: BoxShape.circle,
                         ),
                         child: const Icon(
                           Icons.admin_panel_settings,
                           size: 64,
-                          color: Color(0xFF00D4FF),
+                          color: Color(0xFF83BCB5),
                         ),
                       ),
                       const SizedBox(height: 24),
@@ -146,9 +146,9 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                         decoration: InputDecoration(
                           labelText: 'Admin Email',
                           labelStyle: const TextStyle(color: Colors.white60),
-                          prefixIcon: const Icon(Icons.email, color: Color(0xFF00D4FF)),
+                          prefixIcon: const Icon(Icons.email, color: Color(0xFF83BCB5)),
                           filled: true,
-                          fillColor: const Color(0xFF2C2C2E),
+                          fillColor: const Color(0xFF1F2120),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                             borderSide: BorderSide.none,
@@ -159,7 +159,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(color: Color(0xFF00D4FF)),
+                            borderSide: const BorderSide(color: Color(0xFF83BCB5)),
                           ),
                         ),
                         validator: (value) {
@@ -182,7 +182,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                         decoration: InputDecoration(
                           labelText: 'Password',
                           labelStyle: const TextStyle(color: Colors.white60),
-                          prefixIcon: const Icon(Icons.lock, color: Color(0xFF00D4FF)),
+                          prefixIcon: const Icon(Icons.lock, color: Color(0xFF83BCB5)),
                           suffixIcon: IconButton(
                             icon: Icon(
                               _obscurePassword ? Icons.visibility : Icons.visibility_off,
@@ -193,7 +193,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                             },
                           ),
                           filled: true,
-                          fillColor: const Color(0xFF2C2C2E),
+                          fillColor: const Color(0xFF1F2120),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                             borderSide: BorderSide.none,
@@ -204,7 +204,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(color: Color(0xFF00D4FF)),
+                            borderSide: const BorderSide(color: Color(0xFF83BCB5)),
                           ),
                         ),
                         validator: (value) {
@@ -226,7 +226,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                         child: ElevatedButton(
                           onPressed: _isLoading ? null : _login,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF00D4FF),
+                            backgroundColor: const Color(0xFF83BCB5),
                             foregroundColor: Colors.black,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),

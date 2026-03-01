@@ -125,7 +125,7 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Settings saved successfully'),
-            backgroundColor: Color(0xFF00C853),
+            backgroundColor: Color(0xFF7FFA88),
           ),
         );
       }
@@ -148,7 +148,7 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF1C1C1E),
+        backgroundColor: const Color(0xFF171917),
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
@@ -171,7 +171,7 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
                   width: 20,
                   height: 20,
                   child: CircularProgressIndicator(
-                    color: Color(0xFF00D4FF),
+                    color: Color(0xFF83BCB5),
                     strokeWidth: 2,
                   ),
                 ),
@@ -180,14 +180,14 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
           else
             IconButton(
               onPressed: _saveSettings,
-              icon: const Icon(Icons.save, color: Color(0xFF00D4FF)),
+              icon: const Icon(Icons.save, color: Color(0xFF83BCB5)),
               tooltip: 'Save Settings',
             ),
         ],
       ),
       body: _isLoading
           ? const Center(
-              child: CircularProgressIndicator(color: Color(0xFF00D4FF)),
+              child: CircularProgressIndicator(color: Color(0xFF83BCB5)),
             )
           : SingleChildScrollView(
               padding: const EdgeInsets.all(24),
@@ -211,7 +211,7 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: const Color(0xFF1C1C1E),
+        color: const Color(0xFF171917),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
@@ -219,7 +219,7 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
         children: [
           Row(
             children: [
-              const Icon(Icons.account_balance, color: Color(0xFF00D4FF), size: 24),
+              const Icon(Icons.account_balance, color: Color(0xFF83BCB5), size: 24),
               const SizedBox(width: 12),
               Text(
                 'Commission Settings',
@@ -251,12 +251,12 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
                   style: const TextStyle(color: Colors.white),
                   decoration: InputDecoration(
                     suffixText: '%',
-                    suffixStyle: const TextStyle(color: Color(0xFF00D4FF)),
+                    suffixStyle: const TextStyle(color: Color(0xFF83BCB5)),
                     filled: true,
                     fillColor: Colors.black,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
-                      borderSide: const BorderSide(color: Color(0xFF00D4FF)),
+                      borderSide: const BorderSide(color: Color(0xFF83BCB5)),
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
@@ -264,7 +264,7 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
-                      borderSide: const BorderSide(color: Color(0xFF00D4FF)),
+                      borderSide: const BorderSide(color: Color(0xFF83BCB5)),
                     ),
                   ),
                   onChanged: (value) {
@@ -285,7 +285,7 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
                       'Trainer receives: ${((1 - _commissionRate) * 100).toStringAsFixed(0)}%',
                       style: GoogleFonts.inter(
                         fontSize: 13,
-                        color: const Color(0xFF00C853),
+                        color: const Color(0xFF7FFA88),
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -294,7 +294,7 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
                       'Platform takes: ${(_commissionRate * 100).toStringAsFixed(0)}%',
                       style: GoogleFonts.inter(
                         fontSize: 13,
-                        color: const Color(0xFF00D4FF),
+                        color: const Color(0xFF83BCB5),
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -307,13 +307,13 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: const Color(0xFF00D4FF).withOpacity(0.1),
+              color: const Color(0xFF83BCB5).withOpacity(0.1),
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: const Color(0xFF00D4FF).withOpacity(0.3)),
+              border: Border.all(color: const Color(0xFF83BCB5).withOpacity(0.3)),
             ),
             child: Row(
               children: [
-                const Icon(Icons.info_outline, color: Color(0xFF00D4FF), size: 20),
+                const Icon(Icons.info_outline, color: Color(0xFF83BCB5), size: 20),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
@@ -336,7 +336,7 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: const Color(0xFF1C1C1E),
+        color: const Color(0xFF171917),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
@@ -344,7 +344,7 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
         children: [
           Row(
             children: [
-              const Icon(Icons.toggle_on, color: Color(0xFF00D4FF), size: 24),
+              const Icon(Icons.toggle_on, color: Color(0xFF83BCB5), size: 24),
               const SizedBox(width: 12),
               Text(
                 'Feature Toggles',
@@ -415,12 +415,12 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
         Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: (isWarning ? Colors.orange : const Color(0xFF00D4FF)).withOpacity(0.1),
+            color: (isWarning ? Colors.orange : const Color(0xFF83BCB5)).withOpacity(0.1),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Icon(
             icon,
-            color: isWarning ? Colors.orange : const Color(0xFF00D4FF),
+            color: isWarning ? Colors.orange : const Color(0xFF83BCB5),
             size: 20,
           ),
         ),
@@ -452,7 +452,7 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
         Switch(
           value: value,
           onChanged: onChanged,
-          activeColor: isWarning ? Colors.orange : const Color(0xFF00D4FF),
+          activeColor: isWarning ? Colors.orange : const Color(0xFF83BCB5),
         ),
       ],
     );
@@ -462,7 +462,7 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: const Color(0xFF1C1C1E),
+        color: const Color(0xFF171917),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
@@ -470,7 +470,7 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
         children: [
           Row(
             children: [
-              const Icon(Icons.payment, color: Color(0xFF00D4FF), size: 24),
+              const Icon(Icons.payment, color: Color(0xFF83BCB5), size: 24),
               const SizedBox(width: 12),
               Text(
                 'Payment Settings',
@@ -501,7 +501,7 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
               fillColor: Colors.black,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
-                borderSide: const BorderSide(color: Color(0xFF00D4FF)),
+                borderSide: const BorderSide(color: Color(0xFF83BCB5)),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
@@ -553,12 +553,12 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
               controller: TextEditingController(text: _refundWindowDays.toString()),
               decoration: InputDecoration(
                 suffixText: 'days',
-                suffixStyle: const TextStyle(color: Color(0xFF00D4FF)),
+                suffixStyle: const TextStyle(color: Color(0xFF83BCB5)),
                 filled: true,
                 fillColor: Colors.black,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
-                  borderSide: const BorderSide(color: Color(0xFF00D4FF)),
+                  borderSide: const BorderSide(color: Color(0xFF83BCB5)),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
@@ -582,7 +582,7 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: const Color(0xFF1C1C1E),
+        color: const Color(0xFF171917),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.red.withOpacity(0.3)),
       ),

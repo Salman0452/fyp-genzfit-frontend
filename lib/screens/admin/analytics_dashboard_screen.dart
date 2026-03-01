@@ -4,18 +4,19 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'dart:convert';
 import 'package:flutter/foundation.dart' show kIsWeb;
-import 'dart:html' as html;
+import '../../utils/download_helper.dart';
 
 class AnalyticsDashboardScreen extends StatefulWidget {
   const AnalyticsDashboardScreen({super.key});
 
   @override
-  State<AnalyticsDashboardScreen> createState() => _AnalyticsDashboardScreenState();
+  State<AnalyticsDashboardScreen> createState() =>
+      _AnalyticsDashboardScreenState();
 }
 
 class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  
+
   List<Map<String, dynamic>> _userGrowthData = [];
   List<Map<String, dynamic>> _revenueData = [];
   List<Map<String, dynamic>> _sessionStatsData = [];
@@ -54,10 +55,10 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen> {
 
       // Load user growth data
       await _loadUserGrowthData(startDate);
-      
+
       // Load revenue data
       await _loadRevenueData(startDate);
-      
+
       // Load session statistics
       await _loadSessionStats(startDate);
 
@@ -69,25 +70,25 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen> {
   }
 
   Future<void> _loadUserGrowthData(DateTime startDate) async {
-    final usersSnapshot = await _firestore
-        .collection('users')
-        .get();
+    final usersSnapshot = await _firestore.collection('users').get();
 
     // Group by date
     Map<String, Map<String, int>> dailyGrowth = {};
-    
+
     for (var doc in usersSnapshot.docs) {
       final data = doc.data();
       final createdAt = (data['createdAt'] as Timestamp?)?.toDate();
       if (createdAt != null && createdAt.isAfter(startDate)) {
         final dateKey = DateFormat('yyyy-MM-dd').format(createdAt);
         dailyGrowth[dateKey] ??= {'clients': 0, 'trainers': 0, 'total': 0};
-        
+
         final role = data['role'] as String?;
         if (role == 'client') {
-          dailyGrowth[dateKey]!['clients'] = dailyGrowth[dateKey]!['clients']! + 1;
+          dailyGrowth[dateKey]!['clients'] =
+              dailyGrowth[dateKey]!['clients']! + 1;
         } else if (role == 'trainer') {
-          dailyGrowth[dateKey]!['trainers'] = dailyGrowth[dateKey]!['trainers']! + 1;
+          dailyGrowth[dateKey]!['trainers'] =
+              dailyGrowth[dateKey]!['trainers']! + 1;
         }
         dailyGrowth[dateKey]!['total'] = dailyGrowth[dateKey]!['total']! + 1;
       }
@@ -107,12 +108,12 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen> {
 
     // Group by date
     Map<String, double> dailyRevenue = {};
-    
+
     for (var doc in sessionsSnapshot.docs) {
       final data = doc.data();
       final completedAt = (data['completedAt'] as Timestamp?)?.toDate();
       final amount = (data['amount'] as num?)?.toDouble() ?? 0.0;
-      
+
       if (completedAt != null && completedAt.isAfter(startDate)) {
         final dateKey = DateFormat('yyyy-MM-dd').format(completedAt);
         dailyRevenue[dateKey] = (dailyRevenue[dateKey] ?? 0.0) + amount;
@@ -126,18 +127,16 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen> {
   }
 
   Future<void> _loadSessionStats(DateTime startDate) async {
-    final sessionsSnapshot = await _firestore
-        .collection('sessions')
-        .get();
+    final sessionsSnapshot = await _firestore.collection('sessions').get();
 
     // Group by status and date
     Map<String, Map<String, int>> dailyStats = {};
-    
+
     for (var doc in sessionsSnapshot.docs) {
       final data = doc.data();
       final createdAt = (data['createdAt'] as Timestamp?)?.toDate();
       final status = data['status'] as String?;
-      
+
       if (createdAt != null && createdAt.isAfter(startDate) && status != null) {
         final dateKey = DateFormat('yyyy-MM-dd').format(createdAt);
         dailyStats[dateKey] ??= {
@@ -147,7 +146,7 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen> {
           'cancelled': 0,
           'total': 0,
         };
-        
+
         dailyStats[dateKey]![status] = (dailyStats[dateKey]![status] ?? 0) + 1;
         dailyStats[dateKey]!['total'] = dailyStats[dateKey]!['total']! + 1;
       }
@@ -162,50 +161,51 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen> {
   Future<void> _exportToCSV() async {
     try {
       final csvData = StringBuffer();
-      
+
       // Header
-      csvData.writeln('GenZFit Analytics Report - ${DateFormat('yyyy-MM-dd HH:mm').format(DateTime.now())}');
+      csvData.writeln(
+          'GenZFit Analytics Report - ${DateFormat('yyyy-MM-dd HH:mm').format(DateTime.now())}');
       csvData.writeln();
-      
+
       // User Growth Section
       csvData.writeln('User Growth');
       csvData.writeln('Date,Clients,Trainers,Total');
       for (var data in _userGrowthData) {
-        csvData.writeln('${data['date']},${data['clients']},${data['trainers']},${data['total']}');
+        csvData.writeln(
+            '${data['date']},${data['clients']},${data['trainers']},${data['total']}');
       }
       csvData.writeln();
-      
+
       // Revenue Section
       csvData.writeln('Revenue');
       csvData.writeln('Date,Revenue');
       for (var data in _revenueData) {
-        csvData.writeln('${data['date']},\$${data['revenue'].toStringAsFixed(2)}');
+        csvData
+            .writeln('${data['date']},\$${data['revenue'].toStringAsFixed(2)}');
       }
       csvData.writeln();
-      
+
       // Session Stats Section
       csvData.writeln('Session Statistics');
       csvData.writeln('Date,Requested,Active,Completed,Cancelled,Total');
       for (var data in _sessionStatsData) {
-        csvData.writeln('${data['date']},${data['requested']},${data['active']},${data['completed']},${data['cancelled']},${data['total']}');
+        csvData.writeln(
+            '${data['date']},${data['requested']},${data['active']},${data['completed']},${data['cancelled']},${data['total']}');
       }
 
       // Download file
       if (kIsWeb) {
-        final bytes = utf8.encode(csvData.toString());
-        final blob = html.Blob([bytes]);
-        final url = html.Url.createObjectUrlFromBlob(blob);
-        final anchor = html.AnchorElement(href: url)
-          ..setAttribute('download', 'genzfit_analytics_${DateFormat('yyyy-MM-dd').format(DateTime.now())}.csv')
-          ..click();
-        html.Url.revokeObjectUrl(url);
+        downloadCsvFile(
+          csvData.toString(),
+          'genzfit_analytics_${DateFormat('yyyy-MM-dd').format(DateTime.now())}.csv',
+        );
       }
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Analytics report exported successfully'),
-            backgroundColor: Color(0xFF00C853),
+            backgroundColor: Color(0xFF7FFA88),
           ),
         );
       }
@@ -227,7 +227,7 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen> {
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF1C1C1E),
+        backgroundColor: const Color(0xFF171917),
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
@@ -243,8 +243,8 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen> {
         ),
         actions: [
           PopupMenuButton<String>(
-            icon: const Icon(Icons.file_download, color: Color(0xFF00D4FF)),
-            color: const Color(0xFF1C1C1E),
+            icon: const Icon(Icons.file_download, color: Color(0xFF83BCB5)),
+            color: const Color(0xFF171917),
             onSelected: (value) {
               if (value == 'csv') _exportToCSV();
             },
@@ -253,7 +253,7 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen> {
                 value: 'csv',
                 child: Row(
                   children: [
-                    const Icon(Icons.table_chart, color: Color(0xFF00D4FF)),
+                    const Icon(Icons.table_chart, color: Color(0xFF83BCB5)),
                     const SizedBox(width: 12),
                     Text(
                       'Export CSV',
@@ -269,7 +269,7 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen> {
       ),
       body: _isLoading
           ? const Center(
-              child: CircularProgressIndicator(color: Color(0xFF00D4FF)),
+              child: CircularProgressIndicator(color: Color(0xFF83BCB5)),
             )
           : SingleChildScrollView(
               padding: const EdgeInsets.all(24),
@@ -293,7 +293,7 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen> {
     return Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: const Color(0xFF1C1C1E),
+        color: const Color(0xFF171917),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -319,7 +319,7 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen> {
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
           decoration: BoxDecoration(
-            color: isSelected ? const Color(0xFF00D4FF) : Colors.transparent,
+            color: isSelected ? const Color(0xFF83BCB5) : Colors.transparent,
             borderRadius: BorderRadius.circular(10),
           ),
           child: Text(
@@ -337,14 +337,17 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen> {
   }
 
   Widget _buildUserGrowthChart() {
-    final totalUsers = _userGrowthData.fold<int>(0, (sum, data) => sum + (data['total'] as int));
-    final totalClients = _userGrowthData.fold<int>(0, (sum, data) => sum + (data['clients'] as int));
-    final totalTrainers = _userGrowthData.fold<int>(0, (sum, data) => sum + (data['trainers'] as int));
+    final totalUsers = _userGrowthData.fold<int>(
+        0, (sum, data) => sum + (data['total'] as int));
+    final totalClients = _userGrowthData.fold<int>(
+        0, (sum, data) => sum + (data['clients'] as int));
+    final totalTrainers = _userGrowthData.fold<int>(
+        0, (sum, data) => sum + (data['trainers'] as int));
 
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: const Color(0xFF1C1C1E),
+        color: const Color(0xFF171917),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
@@ -362,15 +365,16 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen> {
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF00D4FF).withOpacity(0.1),
+                  color: const Color(0xFF83BCB5).withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
                   'Total: $totalUsers',
                   style: GoogleFonts.inter(
-                    color: const Color(0xFF00D4FF),
+                    color: const Color(0xFF83BCB5),
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -404,12 +408,13 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen> {
   }
 
   Widget _buildRevenueChart() {
-    final totalRevenue = _revenueData.fold<double>(0, (sum, data) => sum + (data['revenue'] as double));
+    final totalRevenue = _revenueData.fold<double>(
+        0, (sum, data) => sum + (data['revenue'] as double));
 
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: const Color(0xFF1C1C1E),
+        color: const Color(0xFF171917),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
@@ -427,15 +432,16 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen> {
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF00C853).withOpacity(0.1),
+                  color: const Color(0xFF7FFA88).withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
                   '\$${totalRevenue.toStringAsFixed(2)}',
                   style: GoogleFonts.inter(
-                    color: const Color(0xFF00C853),
+                    color: const Color(0xFF7FFA88),
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -461,14 +467,17 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen> {
   }
 
   Widget _buildSessionStatsChart() {
-    final totalSessions = _sessionStatsData.fold<int>(0, (sum, data) => sum + (data['total'] as int));
-    final completed = _sessionStatsData.fold<int>(0, (sum, data) => sum + (data['completed'] as int? ?? 0));
-    final cancelled = _sessionStatsData.fold<int>(0, (sum, data) => sum + (data['cancelled'] as int? ?? 0));
+    final totalSessions = _sessionStatsData.fold<int>(
+        0, (sum, data) => sum + (data['total'] as int));
+    final completed = _sessionStatsData.fold<int>(
+        0, (sum, data) => sum + (data['completed'] as int? ?? 0));
+    final cancelled = _sessionStatsData.fold<int>(
+        0, (sum, data) => sum + (data['cancelled'] as int? ?? 0));
 
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: const Color(0xFF1C1C1E),
+        color: const Color(0xFF171917),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
@@ -486,7 +495,8 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen> {
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
                   color: Colors.purple.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8),
@@ -504,7 +514,7 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen> {
           const SizedBox(height: 24),
           Row(
             children: [
-              _buildLegendItem(const Color(0xFF00C853), 'Completed', completed),
+              _buildLegendItem(const Color(0xFF7FFA88), 'Completed', completed),
               const SizedBox(width: 24),
               _buildLegendItem(Colors.red, 'Cancelled', cancelled),
             ],
@@ -550,7 +560,8 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen> {
     );
   }
 
-  Widget _buildSimpleBarChart(List<Map<String, dynamic>> data, String valueKey, double height) {
+  Widget _buildSimpleBarChart(
+      List<Map<String, dynamic>> data, String valueKey, double height) {
     if (data.isEmpty) return const SizedBox();
 
     final maxValue = data.fold<num>(0, (max, item) {
@@ -569,7 +580,7 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen> {
           final value = (item[valueKey] as num).toDouble();
           final percentage = maxValue > 0 ? value / maxValue : 0;
           final date = DateTime.parse(item['date'] as String);
-          
+
           return Container(
             width: 60,
             margin: const EdgeInsets.only(right: 12),
@@ -577,7 +588,7 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen> {
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 Text(
-                  valueKey == 'revenue' 
+                  valueKey == 'revenue'
                       ? '\$${value.toStringAsFixed(0)}'
                       : value.toStringAsFixed(0),
                   style: GoogleFonts.inter(
@@ -596,13 +607,14 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen> {
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           colors: [
-                            const Color(0xFF00D4FF),
-                            const Color(0xFF0066FF),
+                            const Color(0xFF83BCB5),
+                            const Color(0xFF7FFA88),
                           ],
                           begin: Alignment.topCenter,
                           end: Alignment.bottomCenter,
                         ),
-                        borderRadius: const BorderRadius.vertical(top: Radius.circular(6)),
+                        borderRadius: const BorderRadius.vertical(
+                            top: Radius.circular(6)),
                       ),
                     ),
                   ),

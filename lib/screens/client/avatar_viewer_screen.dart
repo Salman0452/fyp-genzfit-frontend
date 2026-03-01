@@ -103,12 +103,23 @@ class _AvatarViewerScreenState extends State<AvatarViewerScreen>
         snapDate: snap.date,
         baseAvatarUrl: _baseAvatarUrl!,
       );
+<<<<<<< HEAD
       if (mounted) setState(() { _currentGlbUrl = path; _statusMessage = ''; });
+=======
+      if (mounted)
+        setState(() {
+          _currentGlbPath = path;
+          _statusMessage = '';
+        });
+>>>>>>> d569dc186443a80b28cb0b4bedb9244948328b83
     } catch (e) {
-      if (mounted) setState(() => _statusMessage = 'Could not load model for ${snap.date}');
+      if (mounted)
+        setState(
+            () => _statusMessage = 'Could not load model for ${snap.date}');
     }
   }
 
+<<<<<<< HEAD
   // ── Avatar creation flow ───────────────────────────────────────────────────
 
   Future<void> _openCreator() async {
@@ -120,6 +131,13 @@ class _AvatarViewerScreenState extends State<AvatarViewerScreen>
       setState(() => _baseAvatarUrl = url);
       _showSnack('Avatar created! Generating your first snapshot…', success: true);
       await _generateSnapshot();
+=======
+  Future<void> _generateNewAvatar() async {
+    if (!_backendAvailable) {
+      _showSnack(
+          'SMPL backend is not reachable. Start the Python server first.');
+      return;
+>>>>>>> d569dc186443a80b28cb0b4bedb9244948328b83
     }
   }
 
@@ -128,7 +146,9 @@ class _AvatarViewerScreenState extends State<AvatarViewerScreen>
     if (userId == null || _baseAvatarUrl == null) return;
 
     MeasurementModel? latest;
-    try { latest = await _bodyService.getLatestMeasurement(userId); } catch (_) {}
+    try {
+      latest = await _bodyService.getLatestMeasurement(userId);
+    } catch (_) {}
 
     if (latest == null) {
       _showSnack('No body scan found. Complete a body scan first.');
@@ -137,7 +157,11 @@ class _AvatarViewerScreenState extends State<AvatarViewerScreen>
 
     setState(() {
       _isGenerating = true;
+<<<<<<< HEAD
       _statusMessage = _backendAvailable ? 'Morphing avatar to your measurements…' : 'Downloading avatar…';
+=======
+      _statusMessage = 'Generating SMPL avatar…';
+>>>>>>> d569dc186443a80b28cb0b4bedb9244948328b83
     });
 
     try {
@@ -149,12 +173,24 @@ class _AvatarViewerScreenState extends State<AvatarViewerScreen>
       _snapshots = await _rpmService.getAvatarHistory(userId);
       _selectedIndex = _snapshots.length - 1;
       if (mounted) {
+<<<<<<< HEAD
         setState(() { _currentGlbUrl = path; _isGenerating = false; _statusMessage = ''; });
         _showSnack('Avatar snapshot saved!', success: true);
+=======
+        setState(() {
+          _currentGlbPath = avatar.modelUrl;
+          _isGenerating = false;
+          _statusMessage = '';
+        });
+        _showSnack('3D avatar generated successfully!', success: true);
+>>>>>>> d569dc186443a80b28cb0b4bedb9244948328b83
       }
     } catch (e) {
       if (mounted) {
-        setState(() { _isGenerating = false; _statusMessage = 'Generation failed'; });
+        setState(() {
+          _isGenerating = false;
+          _statusMessage = 'Generation failed';
+        });
         _showSnack(e.toString());
       }
     }
@@ -188,21 +224,25 @@ class _AvatarViewerScreenState extends State<AvatarViewerScreen>
       ),
       title: const Text(
         '3D Body Avatar',
-        style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+        style: TextStyle(
+            color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
       ),
       actions: [
         Padding(
           padding: const EdgeInsets.only(right: 4),
           child: Center(
             child: Container(
-              width: 10, height: 10,
+              width: 10,
+              height: 10,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: _backendAvailable ? Colors.greenAccent : Colors.redAccent,
+                color:
+                    _backendAvailable ? Colors.greenAccent : Colors.redAccent,
               ),
             ),
           ),
         ),
+<<<<<<< HEAD
         if (_baseAvatarUrl != null)
           IconButton(
             icon: const Icon(Icons.person_pin_outlined, color: Colors.white70),
@@ -210,6 +250,14 @@ class _AvatarViewerScreenState extends State<AvatarViewerScreen>
             onPressed: _openCreator,
           ),
         IconButton(icon: const Icon(Icons.refresh, color: Colors.white), onPressed: _init),
+=======
+        IconButton(
+            icon: const Icon(Icons.tune, color: Colors.white),
+            onPressed: _showAppearanceSheet),
+        IconButton(
+            icon: const Icon(Icons.refresh, color: Colors.white),
+            onPressed: _init),
+>>>>>>> d569dc186443a80b28cb0b4bedb9244948328b83
       ],
     );
   }
@@ -219,7 +267,9 @@ class _AvatarViewerScreenState extends State<AvatarViewerScreen>
       children: [
         Expanded(
           flex: 5,
-          child: _isGenerating ? _buildLoadingView(_statusMessage) : _build3DViewer(),
+          child: _isGenerating
+              ? _buildLoadingView(_statusMessage)
+              : _build3DViewer(),
         ),
         if (_snapshots.isNotEmpty)
           Container(
@@ -254,7 +304,8 @@ class _AvatarViewerScreenState extends State<AvatarViewerScreen>
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.threed_rotation, size: 64, color: Colors.white.withOpacity(0.3)),
+              Icon(Icons.threed_rotation,
+                  size: 64, color: Colors.white.withOpacity(0.3)),
               const SizedBox(height: 16),
               Text(
                 _statusMessage.isNotEmpty ? _statusMessage : 'No model loaded',
@@ -268,6 +319,16 @@ class _AvatarViewerScreenState extends State<AvatarViewerScreen>
 
     return Stack(
       children: [
+        // Gradient background so the WebView scene blends naturally
+        Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [Color(0xFF0A0B0A), Color(0xFF0A0B0A)],
+            ),
+          ),
+        ),
         ModelViewer(
           src: src,
           alt: '3D Body Avatar',
@@ -275,18 +336,23 @@ class _AvatarViewerScreenState extends State<AvatarViewerScreen>
           autoRotate: true,
           autoRotateDelay: 1500,
           cameraControls: true,
-          backgroundColor: const Color(0xFF111111),
+<<<<<<< HEAD
+          backgroundColor: const Color(0xFF0A0B0A),
+=======
+          backgroundColor: Colors.transparent,
+>>>>>>> d569dc186443a80b28cb0b4bedb9244948328b83
           loading: Loading.eager,
           autoPlay: true,
-          shadowIntensity: 1,
-          exposure: 1.0,
+          shadowIntensity: 0.8,
+          exposure: 1.2,
           cameraOrbit: '0deg 75deg 2.5m',
           minCameraOrbit: 'auto auto 0.5m',
           maxCameraOrbit: 'auto auto 5m',
         ),
         if (_snapshots.isNotEmpty)
           Positioned(
-            top: 12, right: 12,
+            top: 12,
+            right: 12,
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
@@ -367,19 +433,30 @@ class _AvatarViewerScreenState extends State<AvatarViewerScreen>
               children: [
                 const Text(
                   'Body Measurements',
-                  style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold),
                 ),
                 const Spacer(),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
                     color: AppColors.accent.withOpacity(0.15),
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: AppColors.accent.withOpacity(0.4)),
+                    border:
+                        Border.all(color: AppColors.accent.withOpacity(0.4)),
                   ),
                   child: Text(
+<<<<<<< HEAD
                     _backendAvailable ? 'morphed • RPM' : 'RPM base',
                     style: const TextStyle(color: AppColors.accent, fontSize: 10),
+=======
+                    _backendAvailable ? 'SMPL pipeline' : 'cached',
+                    style:
+                        const TextStyle(color: AppColors.accent, fontSize: 10),
+>>>>>>> d569dc186443a80b28cb0b4bedb9244948328b83
                   ),
                 ),
               ],
@@ -393,12 +470,16 @@ class _AvatarViewerScreenState extends State<AvatarViewerScreen>
               crossAxisSpacing: 10,
               mainAxisSpacing: 10,
               children: [
-                _measCard('Height',    '${height.toStringAsFixed(0)} cm',  Icons.height),
-                _measCard('Weight',    '${weight.toStringAsFixed(1)} kg',  Icons.monitor_weight_outlined),
-                _measCard('Chest',     _fmt(meas['chest']),                Icons.accessibility),
-                _measCard('Waist',     _fmt(meas['waist']),                Icons.accessibility_new),
-                _measCard('Hips',      _fmt(meas['hips']),                 Icons.accessibility),
-                _measCard('Shoulders', _fmt(meas['shoulderWidth']),        Icons.open_in_full),
+                _measCard(
+                    'Height', '${height.toStringAsFixed(0)} cm', Icons.height),
+                _measCard('Weight', '${weight.toStringAsFixed(1)} kg',
+                    Icons.monitor_weight_outlined),
+                _measCard('Chest', _fmt(meas['chest']), Icons.accessibility),
+                _measCard(
+                    'Waist', _fmt(meas['waist']), Icons.accessibility_new),
+                _measCard('Hips', _fmt(meas['hips']), Icons.accessibility),
+                _measCard('Shoulders', _fmt(meas['shoulderWidth']),
+                    Icons.open_in_full),
               ],
             ),
             if (bmi != null) ...[
@@ -414,15 +495,28 @@ class _AvatarViewerScreenState extends State<AvatarViewerScreen>
                   children: [
                     Text(
                       bmi.toStringAsFixed(1),
-                      style: TextStyle(color: bmiColor, fontSize: 28, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                          color: bmiColor,
+                          fontSize: 28,
+                          fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(width: 6),
-                    Text('kg/m²', style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 13)),
+                    Text('kg/m²',
+                        style: TextStyle(
+                            color: Colors.white.withOpacity(0.6),
+                            fontSize: 13)),
                     const Spacer(),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(color: bmiColor, borderRadius: BorderRadius.circular(10)),
-                      child: Text(bmiLabel, style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                          color: bmiColor,
+                          borderRadius: BorderRadius.circular(10)),
+                      child: Text(bmiLabel,
+                          style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold)),
                     ),
                   ],
                 ),
@@ -484,7 +578,8 @@ class _AvatarViewerScreenState extends State<AvatarViewerScreen>
   Widget _measCard(String label, String value, IconData icon) {
     return Container(
       padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(color: Colors.grey[850], borderRadius: BorderRadius.circular(10)),
+      decoration: BoxDecoration(
+          color: Colors.grey[850], borderRadius: BorderRadius.circular(10)),
       child: Row(
         children: [
           Icon(icon, color: Colors.white54, size: 18),
@@ -493,8 +588,13 @@ class _AvatarViewerScreenState extends State<AvatarViewerScreen>
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text(label, style: const TextStyle(color: Colors.white54, fontSize: 10)),
-              Text(value, style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600)),
+              Text(label,
+                  style: const TextStyle(color: Colors.white54, fontSize: 10)),
+              Text(value,
+                  style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600)),
             ],
           ),
         ],
@@ -509,6 +609,7 @@ class _AvatarViewerScreenState extends State<AvatarViewerScreen>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+<<<<<<< HEAD
             Container(
               width: 120, height: 120,
               decoration: BoxDecoration(
@@ -521,11 +622,22 @@ class _AvatarViewerScreenState extends State<AvatarViewerScreen>
             const SizedBox(height: 28),
             const Text('Create Your 3D Avatar',
                 style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
+=======
+            Icon(Icons.person_outline,
+                size: 100, color: Colors.white.withOpacity(0.2)),
+            const SizedBox(height: 24),
+            const Text('No 3D Avatar Yet',
+                style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold)),
+>>>>>>> d569dc186443a80b28cb0b4bedb9244948328b83
             const SizedBox(height: 12),
             Text(
               'Design a fully realistic avatar — choose your face, skin tone, hair, and outfit. '
               'Your body shape will automatically update as your measurements change over time.',
               textAlign: TextAlign.center,
+<<<<<<< HEAD
               style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 15, height: 1.5),
             ),
             const SizedBox(height: 16),
@@ -551,6 +663,43 @@ class _AvatarViewerScreenState extends State<AvatarViewerScreen>
                   backgroundColor: AppColors.accent,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+=======
+              style:
+                  TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 15),
+            ),
+            if (!_backendAvailable) ...[
+              const SizedBox(height: 20),
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.grey[850],
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.orange.withOpacity(0.4)),
+                ),
+                child: const Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(children: [
+                      Icon(Icons.terminal, color: Colors.orange, size: 16),
+                      SizedBox(width: 8),
+                      Text('Quick Start',
+                          style: TextStyle(
+                              color: Colors.orange,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13)),
+                    ]),
+                    SizedBox(height: 8),
+                    Text(
+                      'cd smpl_backend\n'
+                      'pip install -r requirements.txt\n'
+                      'uvicorn main:app --host 0.0.0.0 --port 8000',
+                      style: TextStyle(
+                          color: Colors.white70,
+                          fontSize: 11,
+                          fontFamily: 'monospace'),
+                    ),
+                  ],
+>>>>>>> d569dc186443a80b28cb0b4bedb9244948328b83
                 ),
               ),
             ),
@@ -586,8 +735,10 @@ class _AvatarViewerScreenState extends State<AvatarViewerScreen>
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.accent,
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
               ),
             ),
           ],
@@ -603,10 +754,12 @@ class _AvatarViewerScreenState extends State<AvatarViewerScreen>
         children: [
           RotationTransition(
             turns: _spinCtrl,
-            child: const Icon(Icons.threed_rotation, size: 60, color: AppColors.accent),
+            child: const Icon(Icons.threed_rotation,
+                size: 60, color: AppColors.accent),
           ),
           const SizedBox(height: 20),
-          Text(message, style: const TextStyle(color: Colors.white70, fontSize: 16)),
+          Text(message,
+              style: const TextStyle(color: Colors.white70, fontSize: 16)),
         ],
       ),
     );
@@ -615,11 +768,90 @@ class _AvatarViewerScreenState extends State<AvatarViewerScreen>
   Widget? _buildFab() {
     if (_isLoading || _isGenerating || _baseAvatarUrl == null) return null;
     return FloatingActionButton.extended(
+<<<<<<< HEAD
       onPressed: _generateSnapshot,
       backgroundColor: AppColors.accent,
       icon: const Icon(Icons.sync, color: Colors.black),
       label: const Text('Update Avatar',
           style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+=======
+      onPressed: _generateNewAvatar,
+      backgroundColor: _backendAvailable ? AppColors.accent : Colors.grey[700],
+      icon: const Icon(Icons.auto_awesome, color: Colors.white),
+      label:
+          const Text('Generate Avatar', style: TextStyle(color: Colors.white)),
+    );
+  }
+
+  void _showAppearanceSheet() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.grey[900],
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (_) => StatefulBuilder(
+        builder: (ctx, setSheet) => Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Appearance',
+                  style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold)),
+              const SizedBox(height: 20),
+              const Text('Skin Tone',
+                  style: TextStyle(color: Colors.white70, fontSize: 14)),
+              const SizedBox(height: 10),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  for (final tone in ['light', 'medium', 'brown', 'dark'])
+                    _SkinToneButton(
+                      tone: tone,
+                      selected: _skinTone == tone,
+                      onTap: () => setSheet(() => _skinTone = tone),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              Row(
+                children: [
+                  const Text('Muscle Overlay',
+                      style: TextStyle(color: Colors.white70, fontSize: 14)),
+                  const Spacer(),
+                  Switch(
+                      value: _showMuscles,
+                      activeColor: AppColors.accent,
+                      onChanged: (v) => setSheet(() => _showMuscles = v)),
+                ],
+              ),
+              const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(ctx);
+                    setState(() {});
+                    _generateNewAvatar();
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.accent,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
+                  ),
+                  child: const Text('Regenerate Avatar',
+                      style: TextStyle(color: Colors.white, fontSize: 16)),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+>>>>>>> d569dc186443a80b28cb0b4bedb9244948328b83
     );
   }
 
@@ -647,6 +879,7 @@ class _FeatureChip extends StatelessWidget {
   final IconData icon;
   final String label;
 
+<<<<<<< HEAD
   const _FeatureChip({required this.icon, required this.label});
 
   @override
@@ -665,8 +898,37 @@ class _FeatureChip extends StatelessWidget {
           const SizedBox(width: 5),
           Text(label, style: const TextStyle(color: Colors.white70, fontSize: 11)),
         ],
+=======
+  const _SkinToneButton(
+      {required this.tone, required this.selected, required this.onTap});
+
+  static const _colors = {
+    'light': Color(0xFFFFE0C4),
+    'medium': Color(0xFFD2A078),
+    'brown': Color(0xFFA5694B),
+    'dark': Color(0xFF644128),
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    final color = _colors[tone] ?? Colors.grey;
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        width: 56,
+        height: 56,
+        decoration: BoxDecoration(
+          color: color,
+          shape: BoxShape.circle,
+          border: Border.all(
+              color: selected ? Colors.white : Colors.transparent, width: 3),
+        ),
+        child: selected
+            ? const Icon(Icons.check, color: Colors.white, size: 22)
+            : null,
+>>>>>>> d569dc186443a80b28cb0b4bedb9244948328b83
       ),
     );
   }
 }
-

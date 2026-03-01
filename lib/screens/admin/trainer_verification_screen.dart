@@ -20,7 +20,7 @@ class _TrainerVerificationScreenState extends State<TrainerVerificationScreen> {
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF1C1C1E),
+        backgroundColor: const Color(0xFF171917),
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
@@ -76,11 +76,11 @@ class _TrainerVerificationScreenState extends State<TrainerVerificationScreen> {
       onSelected: (selected) {
         setState(() => _filterStatus = value);
       },
-      backgroundColor: const Color(0xFF1C1C1E),
-      selectedColor: const Color(0xFF00D4FF),
+      backgroundColor: const Color(0xFF171917),
+      selectedColor: const Color(0xFF83BCB5),
       checkmarkColor: Colors.black,
       side: BorderSide(
-        color: isSelected ? const Color(0xFF00D4FF) : Colors.white24,
+        color: isSelected ? const Color(0xFF83BCB5) : Colors.white24,
       ),
     );
   }
@@ -99,7 +99,7 @@ class _TrainerVerificationScreenState extends State<TrainerVerificationScreen> {
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(
-            child: CircularProgressIndicator(color: Color(0xFF00D4FF)),
+            child: CircularProgressIndicator(color: Color(0xFF83BCB5)),
           );
         }
 
@@ -141,14 +141,14 @@ class _TrainerVerificationScreenState extends State<TrainerVerificationScreen> {
 
   Widget _buildTrainerCard(UserModel trainer) {
     return Card(
-      color: const Color(0xFF1C1C1E),
+      color: const Color(0xFF171917),
       margin: const EdgeInsets.only(bottom: 16),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
         side: BorderSide(
           color: trainer.verified == true
-              ? const Color(0xFF00C853).withOpacity(0.3)
-              : const Color(0xFFFF9800).withOpacity(0.3),
+              ? const Color(0xFF7FFA88).withOpacity(0.3)
+              : const Color(0xFFFFD166).withOpacity(0.3),
         ),
       ),
       child: ExpansionTile(
@@ -161,7 +161,7 @@ class _TrainerVerificationScreenState extends State<TrainerVerificationScreen> {
               backgroundImage: trainer.avatarUrl != null
                   ? NetworkImage(trainer.avatarUrl!)
                   : null,
-              backgroundColor: const Color(0xFF2C2C2E),
+              backgroundColor: const Color(0xFF1F2120),
               child: trainer.avatarUrl == null
                   ? Text(
                       trainer.name[0].toUpperCase(),
@@ -180,7 +180,7 @@ class _TrainerVerificationScreenState extends State<TrainerVerificationScreen> {
                 child: Container(
                   padding: const EdgeInsets.all(2),
                   decoration: const BoxDecoration(
-                    color: Color(0xFF00C853),
+                    color: Color(0xFF7FFA88),
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(
@@ -211,11 +211,11 @@ class _TrainerVerificationScreenState extends State<TrainerVerificationScreen> {
                   style: GoogleFonts.inter(
                     fontSize: 10,
                     fontWeight: FontWeight.bold,
-                    color: const Color(0xFF00C853),
+                    color: const Color(0xFF7FFA88),
                   ),
                 ),
-                backgroundColor: const Color(0xFF00C853).withOpacity(0.1),
-                side: BorderSide(color: const Color(0xFF00C853).withOpacity(0.3)),
+                backgroundColor: const Color(0xFF7FFA88).withOpacity(0.1),
+                side: BorderSide(color: const Color(0xFF7FFA88).withOpacity(0.3)),
                 padding: EdgeInsets.zero,
                 visualDensity: VisualDensity.compact,
               )
@@ -226,11 +226,11 @@ class _TrainerVerificationScreenState extends State<TrainerVerificationScreen> {
                   style: GoogleFonts.inter(
                     fontSize: 10,
                     fontWeight: FontWeight.bold,
-                    color: const Color(0xFFFF9800),
+                    color: const Color(0xFFFFD166),
                   ),
                 ),
-                backgroundColor: const Color(0xFFFF9800).withOpacity(0.1),
-                side: BorderSide(color: const Color(0xFFFF9800).withOpacity(0.3)),
+                backgroundColor: const Color(0xFFFFD166).withOpacity(0.1),
+                side: BorderSide(color: const Color(0xFFFFD166).withOpacity(0.3)),
                 padding: EdgeInsets.zero,
                 visualDensity: VisualDensity.compact,
               ),
@@ -266,10 +266,10 @@ class _TrainerVerificationScreenState extends State<TrainerVerificationScreen> {
                       exp,
                       style: GoogleFonts.inter(
                         fontSize: 10,
-                        color: const Color(0xFF00D4FF),
+                        color: const Color(0xFF83BCB5),
                       ),
                     ),
-                    backgroundColor: const Color(0xFF00D4FF).withOpacity(0.1),
+                    backgroundColor: const Color(0xFF83BCB5).withOpacity(0.1),
                     side: BorderSide.none,
                     padding: EdgeInsets.zero,
                     visualDensity: VisualDensity.compact,
@@ -384,12 +384,12 @@ class _TrainerVerificationScreenState extends State<TrainerVerificationScreen> {
                   child: Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF2C2C2E),
+                      color: const Color(0xFF1F2120),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Row(
                       children: [
-                        const Icon(Icons.play_circle_outline, color: Color(0xFF00D4FF)),
+                        const Icon(Icons.play_circle_outline, color: Color(0xFF83BCB5)),
                         const SizedBox(width: 12),
                         Expanded(
                           child: Text(
@@ -419,7 +419,7 @@ class _TrainerVerificationScreenState extends State<TrainerVerificationScreen> {
                     style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
                   ),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF00C853),
+                    backgroundColor: const Color(0xFF7FFA88),
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     shape: RoundedRectangleBorder(
@@ -461,8 +461,8 @@ class _TrainerVerificationScreenState extends State<TrainerVerificationScreen> {
                     style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
                   ),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: const Color(0xFFFF9800),
-                    side: const BorderSide(color: Color(0xFFFF9800)),
+                    foregroundColor: const Color(0xFFFFD166),
+                    side: const BorderSide(color: Color(0xFFFFD166)),
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
@@ -499,7 +499,7 @@ class _TrainerVerificationScreenState extends State<TrainerVerificationScreen> {
   Widget _buildStatItem(IconData icon, String label, String value) {
     return Column(
       children: [
-        Icon(icon, color: const Color(0xFF00D4FF), size: 24),
+        Icon(icon, color: const Color(0xFF83BCB5), size: 24),
         const SizedBox(height: 8),
         Text(
           value,
@@ -529,7 +529,7 @@ class _TrainerVerificationScreenState extends State<TrainerVerificationScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             AppBar(
-              backgroundColor: const Color(0xFF1C1C1E),
+              backgroundColor: const Color(0xFF171917),
               leading: IconButton(
                 icon: const Icon(Icons.close),
                 onPressed: () => Navigator.pop(context),
@@ -543,7 +543,7 @@ class _TrainerVerificationScreenState extends State<TrainerVerificationScreen> {
                 loadingBuilder: (context, child, loadingProgress) {
                   if (loadingProgress == null) return child;
                   return const Center(
-                    child: CircularProgressIndicator(color: Color(0xFF00D4FF)),
+                    child: CircularProgressIndicator(color: Color(0xFF83BCB5)),
                   );
                 },
               ),
@@ -558,11 +558,11 @@ class _TrainerVerificationScreenState extends State<TrainerVerificationScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF1C1C1E),
+        backgroundColor: const Color(0xFF171917),
         title: Text('Video Link', style: GoogleFonts.poppins(color: Colors.white)),
         content: SelectableText(
           videoUrl,
-          style: GoogleFonts.inter(color: const Color(0xFF00D4FF)),
+          style: GoogleFonts.inter(color: const Color(0xFF83BCB5)),
         ),
         actions: [
           TextButton(
@@ -585,7 +585,7 @@ class _TrainerVerificationScreenState extends State<TrainerVerificationScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('${trainer.name} has been approved!'),
-            backgroundColor: const Color(0xFF00C853),
+            backgroundColor: const Color(0xFF7FFA88),
           ),
         );
       }
@@ -605,7 +605,7 @@ class _TrainerVerificationScreenState extends State<TrainerVerificationScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF1C1C1E),
+        backgroundColor: const Color(0xFF171917),
         title: Text('Reject Trainer?', style: GoogleFonts.poppins(color: Colors.white)),
         content: Text(
           'This will keep ${trainer.name} unverified. They can resubmit later.',
@@ -640,7 +640,7 @@ class _TrainerVerificationScreenState extends State<TrainerVerificationScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF1C1C1E),
+        backgroundColor: const Color(0xFF171917),
         title: Text('Revoke Verification?', style: GoogleFonts.poppins(color: Colors.white)),
         content: Text(
           'This will remove verification status from ${trainer.name}.',
@@ -653,7 +653,7 @@ class _TrainerVerificationScreenState extends State<TrainerVerificationScreen> {
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: Text('Revoke', style: GoogleFonts.inter(color: const Color(0xFFFF9800))),
+            child: Text('Revoke', style: GoogleFonts.inter(color: const Color(0xFFFFD166))),
           ),
         ],
       ),
@@ -670,7 +670,7 @@ class _TrainerVerificationScreenState extends State<TrainerVerificationScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Verification revoked for ${trainer.name}'),
-              backgroundColor: const Color(0xFFFF9800),
+              backgroundColor: const Color(0xFFFFD166),
             ),
           );
         }
@@ -691,7 +691,7 @@ class _TrainerVerificationScreenState extends State<TrainerVerificationScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF1C1C1E),
+        backgroundColor: const Color(0xFF171917),
         title: Text('Suspend Trainer?', style: GoogleFonts.poppins(color: Colors.white)),
         content: Text(
           'This will suspend ${trainer.name}\'s account. They won\'t be able to accept new clients.',

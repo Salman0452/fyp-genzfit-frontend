@@ -29,7 +29,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF1C1C1E),
+        backgroundColor: const Color(0xFF171917),
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
@@ -68,7 +68,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
             decoration: InputDecoration(
               hintText: 'Search by name or email...',
               hintStyle: const TextStyle(color: Colors.white38),
-              prefixIcon: const Icon(Icons.search, color: Color(0xFF00D4FF)),
+              prefixIcon: const Icon(Icons.search, color: Color(0xFF83BCB5)),
               suffixIcon: _searchQuery.isNotEmpty
                   ? IconButton(
                       icon: const Icon(Icons.clear, color: Colors.white38),
@@ -79,7 +79,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                     )
                   : null,
               filled: true,
-              fillColor: const Color(0xFF1C1C1E),
+              fillColor: const Color(0xFF171917),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide.none,
@@ -120,11 +120,11 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
       onSelected: (selected) {
         setState(() => _roleFilter = value);
       },
-      backgroundColor: const Color(0xFF1C1C1E),
-      selectedColor: const Color(0xFF00D4FF),
+      backgroundColor: const Color(0xFF171917),
+      selectedColor: const Color(0xFF83BCB5),
       checkmarkColor: Colors.black,
       side: BorderSide(
-        color: isSelected ? const Color(0xFF00D4FF) : Colors.white24,
+        color: isSelected ? const Color(0xFF83BCB5) : Colors.white24,
       ),
     );
   }
@@ -141,7 +141,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(
-            child: CircularProgressIndicator(color: Color(0xFF00D4FF)),
+            child: CircularProgressIndicator(color: Color(0xFF83BCB5)),
           );
         }
 
@@ -202,7 +202,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
 
   Widget _buildUserCard(UserModel user) {
     return Card(
-      color: const Color(0xFF1C1C1E),
+      color: const Color(0xFF171917),
       margin: const EdgeInsets.only(bottom: 12),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
@@ -222,7 +222,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
               backgroundImage: user.avatarUrl != null
                   ? NetworkImage(user.avatarUrl!)
                   : null,
-              backgroundColor: const Color(0xFF2C2C2E),
+              backgroundColor: const Color(0xFF1F2120),
               child: user.avatarUrl == null
                   ? Text(
                       user.name[0].toUpperCase(),
@@ -271,13 +271,13 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                   fontSize: 10,
                   fontWeight: FontWeight.bold,
                   color: user.role == UserRole.client
-                      ? const Color(0xFF00D4FF)
-                      : const Color(0xFFFF9800),
+                      ? const Color(0xFF83BCB5)
+                      : const Color(0xFFFFD166),
                 ),
               ),
               backgroundColor: (user.role == UserRole.client
-                      ? const Color(0xFF00D4FF)
-                      : const Color(0xFFFF9800))
+                      ? const Color(0xFF83BCB5)
+                      : const Color(0xFFFFD166))
                   .withOpacity(0.1),
               side: BorderSide.none,
               padding: EdgeInsets.zero,
@@ -396,7 +396,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                     style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
                   ),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF00C853),
+                    backgroundColor: const Color(0xFF7FFA88),
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     shape: RoundedRectangleBorder(
@@ -484,7 +484,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF1C1C1E),
+        backgroundColor: const Color(0xFF171917),
         title: Text('Suspend User?', style: GoogleFonts.poppins(color: Colors.white)),
         content: Text(
           'This will suspend ${user.name}\'s account. They won\'t be able to access the app.',
@@ -542,7 +542,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('${user.name} has been activated'),
-            backgroundColor: const Color(0xFF00C853),
+            backgroundColor: const Color(0xFF7FFA88),
           ),
         );
       }
@@ -562,7 +562,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF1C1C1E),
+        backgroundColor: const Color(0xFF171917),
         title: Text('Delete User?', style: GoogleFonts.poppins(color: Colors.white)),
         content: Text(
           'This will permanently delete ${user.name}\'s account and all associated data. This action cannot be undone.',

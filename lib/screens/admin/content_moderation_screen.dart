@@ -31,7 +31,7 @@ class _ContentModerationScreenState extends State<ContentModerationScreen> with 
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF1C1C1E),
+        backgroundColor: const Color(0xFF171917),
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
@@ -47,8 +47,8 @@ class _ContentModerationScreenState extends State<ContentModerationScreen> with 
         ),
         bottom: TabBar(
           controller: _tabController,
-          indicatorColor: const Color(0xFF00D4FF),
-          labelColor: const Color(0xFF00D4FF),
+          indicatorColor: const Color(0xFF83BCB5),
+          labelColor: const Color(0xFF83BCB5),
           unselectedLabelColor: Colors.white60,
           labelStyle: GoogleFonts.inter(fontWeight: FontWeight.bold),
           tabs: const [
@@ -86,7 +86,7 @@ class _ContentModerationScreenState extends State<ContentModerationScreen> with 
 
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(
-            child: CircularProgressIndicator(color: Color(0xFF00D4FF)),
+            child: CircularProgressIndicator(color: Color(0xFF83BCB5)),
           );
         }
 
@@ -136,7 +136,7 @@ class _ContentModerationScreenState extends State<ContentModerationScreen> with 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: const Color(0xFF1C1C1E),
+        color: const Color(0xFF171917),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.red.withOpacity(0.3)),
       ),
@@ -235,7 +235,7 @@ class _ContentModerationScreenState extends State<ContentModerationScreen> with 
                       style: GoogleFonts.inter(fontWeight: FontWeight.bold),
                     ),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF00D4FF),
+                      backgroundColor: const Color(0xFF83BCB5),
                       foregroundColor: Colors.black,
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
@@ -268,12 +268,12 @@ class _ContentModerationScreenState extends State<ContentModerationScreen> with 
                   onPressed: () => _dismissReport(reportId),
                   style: OutlinedButton.styleFrom(
                     padding: const EdgeInsets.all(14),
-                    side: const BorderSide(color: Color(0xFF00D4FF)),
+                    side: const BorderSide(color: Color(0xFF83BCB5)),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),
                   ),
-                  child: const Icon(Icons.close, color: Color(0xFF00D4FF)),
+                  child: const Icon(Icons.close, color: Color(0xFF83BCB5)),
                 ),
               ],
             ),
@@ -332,7 +332,7 @@ class _ContentModerationScreenState extends State<ContentModerationScreen> with 
 
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(
-            child: CircularProgressIndicator(color: Color(0xFF00D4FF)),
+            child: CircularProgressIndicator(color: Color(0xFF83BCB5)),
           );
         }
 
@@ -381,7 +381,7 @@ class _ContentModerationScreenState extends State<ContentModerationScreen> with 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: const Color(0xFF1C1C1E),
+        color: const Color(0xFF171917),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.orange.withOpacity(0.3)),
       ),
@@ -470,7 +470,7 @@ class _ContentModerationScreenState extends State<ContentModerationScreen> with 
                       style: GoogleFonts.inter(fontWeight: FontWeight.bold),
                     ),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF00D4FF),
+                      backgroundColor: const Color(0xFF83BCB5),
                       foregroundColor: Colors.black,
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
@@ -503,12 +503,12 @@ class _ContentModerationScreenState extends State<ContentModerationScreen> with 
                   onPressed: () => _dismissReport(reportId),
                   style: OutlinedButton.styleFrom(
                     padding: const EdgeInsets.all(14),
-                    side: const BorderSide(color: Color(0xFF00D4FF)),
+                    side: const BorderSide(color: Color(0xFF83BCB5)),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),
                   ),
-                  child: const Icon(Icons.close, color: Color(0xFF00D4FF)),
+                  child: const Icon(Icons.close, color: Color(0xFF83BCB5)),
                 ),
               ],
             ),
@@ -538,7 +538,7 @@ class _ContentModerationScreenState extends State<ContentModerationScreen> with 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('View $contentType: $contentId'),
-        backgroundColor: const Color(0xFF00D4FF),
+        backgroundColor: const Color(0xFF83BCB5),
       ),
     );
   }
@@ -548,7 +548,7 @@ class _ContentModerationScreenState extends State<ContentModerationScreen> with 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('View chat: $chatId'),
-        backgroundColor: const Color(0xFF00D4FF),
+        backgroundColor: const Color(0xFF83BCB5),
       ),
     );
   }
@@ -557,7 +557,7 @@ class _ContentModerationScreenState extends State<ContentModerationScreen> with 
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF1C1C1E),
+        backgroundColor: const Color(0xFF171917),
         title: Text(
           'Remove Content & Ban User',
           style: GoogleFonts.poppins(color: Colors.white),
@@ -602,7 +602,7 @@ class _ContentModerationScreenState extends State<ContentModerationScreen> with 
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Content removed and user banned'),
-              backgroundColor: Color(0xFF00C853),
+              backgroundColor: Color(0xFF7FFA88),
             ),
           );
         }
@@ -639,7 +639,7 @@ class _ContentModerationScreenState extends State<ContentModerationScreen> with 
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('User has been warned'),
-            backgroundColor: Color(0xFF00C853),
+            backgroundColor: Color(0xFF7FFA88),
           ),
         );
       }
@@ -666,7 +666,7 @@ class _ContentModerationScreenState extends State<ContentModerationScreen> with 
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Report dismissed'),
-            backgroundColor: Color(0xFF00C853),
+            backgroundColor: Color(0xFF7FFA88),
           ),
         );
       }

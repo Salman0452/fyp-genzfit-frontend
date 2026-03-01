@@ -89,7 +89,7 @@ class _TrainerDashboardScreenState extends State<TrainerDashboardScreen> {
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF1C1C1E),
+        backgroundColor: const Color(0xFF171917),
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
@@ -112,12 +112,12 @@ class _TrainerDashboardScreenState extends State<TrainerDashboardScreen> {
       ),
       body: _isLoading
           ? const Center(
-              child: CircularProgressIndicator(color: Color(0xFF00D4FF)),
+              child: CircularProgressIndicator(color: Color(0xFF83BCB5)),
             )
           : RefreshIndicator(
               onRefresh: _loadDashboardData,
-              color: const Color(0xFF00D4FF),
-              backgroundColor: const Color(0xFF1C1C1E),
+              color: const Color(0xFF83BCB5),
+              backgroundColor: const Color(0xFF171917),
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 padding: const EdgeInsets.all(16),
@@ -158,7 +158,7 @@ class _TrainerDashboardScreenState extends State<TrainerDashboardScreen> {
                 icon: Icons.people,
                 label: 'Total Clients',
                 value: _totalClients.toString(),
-                color: const Color(0xFF00D4FF),
+                color: const Color(0xFF83BCB5),
               ),
             ),
             const SizedBox(width: 12),
@@ -167,7 +167,7 @@ class _TrainerDashboardScreenState extends State<TrainerDashboardScreen> {
                 icon: Icons.fitness_center,
                 label: 'Active Sessions',
                 value: _activeSessions.toString(),
-                color: const Color(0xFF0066FF),
+                color: const Color(0xFF7FFA88),
               ),
             ),
           ],
@@ -180,7 +180,7 @@ class _TrainerDashboardScreenState extends State<TrainerDashboardScreen> {
                 icon: Icons.attach_money,
                 label: 'Total Earnings',
                 value: '\$${_totalEarnings.toStringAsFixed(0)}',
-                color: const Color(0xFF00C853),
+                color: const Color(0xFF7FFA88),
               ),
             ),
             const SizedBox(width: 12),
@@ -189,7 +189,7 @@ class _TrainerDashboardScreenState extends State<TrainerDashboardScreen> {
                 icon: Icons.pending_actions,
                 label: 'Pending Requests',
                 value: _pendingRequests.toString(),
-                color: const Color(0xFFFF9800),
+                color: const Color(0xFFFFD166),
               ),
             ),
           ],
@@ -207,7 +207,7 @@ class _TrainerDashboardScreenState extends State<TrainerDashboardScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF1C1C1E),
+        color: const Color(0xFF171917),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: color.withOpacity(0.3)),
       ),
@@ -263,7 +263,7 @@ class _TrainerDashboardScreenState extends State<TrainerDashboardScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFF9800),
+                  color: const Color(0xFFFFD166),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
@@ -295,7 +295,7 @@ class _TrainerDashboardScreenState extends State<TrainerDashboardScreen> {
               return Container(
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF1C1C1E),
+                  color: const Color(0xFF171917),
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: Center(
@@ -335,9 +335,9 @@ class _TrainerDashboardScreenState extends State<TrainerDashboardScreen> {
           margin: const EdgeInsets.only(bottom: 12),
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: const Color(0xFF1C1C1E),
+            color: const Color(0xFF171917),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: const Color(0xFFFF9800).withOpacity(0.3)),
+            border: Border.all(color: const Color(0xFFFFD166).withOpacity(0.3)),
           ),
           child: Row(
             children: [
@@ -346,7 +346,7 @@ class _TrainerDashboardScreenState extends State<TrainerDashboardScreen> {
                 backgroundImage: clientAvatar != null
                     ? NetworkImage(clientAvatar)
                     : null,
-                backgroundColor: const Color(0xFF2C2C2E),
+                backgroundColor: const Color(0xFF1F2120),
                 child: clientAvatar == null
                     ? Text(
                         clientName[0].toUpperCase(),
@@ -383,7 +383,7 @@ class _TrainerDashboardScreenState extends State<TrainerDashboardScreen> {
               Row(
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.check_circle, color: Color(0xFF00C853)),
+                    icon: const Icon(Icons.check_circle, color: Color(0xFF7FFA88)),
                     onPressed: () => _acceptRequest(session),
                   ),
                   IconButton(
@@ -423,7 +423,7 @@ class _TrainerDashboardScreenState extends State<TrainerDashboardScreen> {
               return Container(
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF1C1C1E),
+                  color: const Color(0xFF171917),
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: Center(
@@ -462,7 +462,7 @@ class _TrainerDashboardScreenState extends State<TrainerDashboardScreen> {
           margin: const EdgeInsets.only(bottom: 12),
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: const Color(0xFF1C1C1E),
+            color: const Color(0xFF171917),
             borderRadius: BorderRadius.circular(16),
           ),
           child: Row(
@@ -472,7 +472,7 @@ class _TrainerDashboardScreenState extends State<TrainerDashboardScreen> {
                 backgroundImage: clientAvatar != null
                     ? NetworkImage(clientAvatar)
                     : null,
-                backgroundColor: const Color(0xFF2C2C2E),
+                backgroundColor: const Color(0xFF1F2120),
                 child: clientAvatar == null
                     ? Text(
                         clientName[0].toUpperCase(),
@@ -507,7 +507,7 @@ class _TrainerDashboardScreenState extends State<TrainerDashboardScreen> {
                 ),
               ),
               IconButton(
-                icon: const Icon(Icons.chat_bubble_outline, color: Color(0xFF00D4FF)),
+                icon: const Icon(Icons.chat_bubble_outline, color: Color(0xFF83BCB5)),
                 onPressed: () {
                   // Navigate to chat
                 },
@@ -544,7 +544,7 @@ class _TrainerDashboardScreenState extends State<TrainerDashboardScreen> {
               return Container(
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF1C1C1E),
+                  color: const Color(0xFF171917),
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: Center(
@@ -574,7 +574,7 @@ class _TrainerDashboardScreenState extends State<TrainerDashboardScreen> {
 
     switch (session.status) {
       case SessionStatus.active:
-        statusColor = const Color(0xFF00C853);
+        statusColor = const Color(0xFF7FFA88);
         statusIcon = Icons.check_circle;
         break;
       case SessionStatus.completed:
@@ -582,7 +582,7 @@ class _TrainerDashboardScreenState extends State<TrainerDashboardScreen> {
         statusIcon = Icons.done_all;
         break;
       case SessionStatus.requested:
-        statusColor = const Color(0xFFFF9800);
+        statusColor = const Color(0xFFFFD166);
         statusIcon = Icons.pending;
         break;
       case SessionStatus.rejected:
@@ -596,7 +596,7 @@ class _TrainerDashboardScreenState extends State<TrainerDashboardScreen> {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF1C1C1E),
+        color: const Color(0xFF171917),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: statusColor.withOpacity(0.3)),
       ),
@@ -658,7 +658,7 @@ class _TrainerDashboardScreenState extends State<TrainerDashboardScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Request accepted!'),
-          backgroundColor: const Color(0xFF00C853),
+          backgroundColor: const Color(0xFF7FFA88),
         ),
       );
 

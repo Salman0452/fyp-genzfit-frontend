@@ -131,7 +131,7 @@ class _AICoachScreenState extends State<AICoachScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF1C1C1E),
+        backgroundColor: const Color(0xFF171917),
         title: Text(
           'Clear Conversation',
           style: GoogleFonts.poppins(color: Colors.white),
@@ -164,7 +164,7 @@ class _AICoachScreenState extends State<AICoachScreen> {
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF1C1C1E),
+        backgroundColor: const Color(0xFF171917),
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
@@ -177,7 +177,7 @@ class _AICoachScreenState extends State<AICoachScreen> {
               height: 40,
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
-                  colors: [Color(0xFF00D4FF), Color(0xFF0066FF)],
+                  colors: [Color(0xFF83BCB5), Color(0xFF7FFA88)],
                 ),
                 borderRadius: BorderRadius.circular(20),
               ),
@@ -219,7 +219,7 @@ class _AICoachScreenState extends State<AICoachScreen> {
             child: _isLoadingHistory
                 ? const Center(
                     child: CircularProgressIndicator(
-                      color: Color(0xFF00D4FF),
+                      color: Color(0xFF83BCB5),
                     ),
                   )
                 : _messages.isEmpty
@@ -241,7 +241,7 @@ class _AICoachScreenState extends State<AICoachScreen> {
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF1C1C1E),
+                      color: const Color(0xFF171917),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Row(
@@ -287,7 +287,7 @@ class _AICoachScreenState extends State<AICoachScreen> {
             height: 120,
             decoration: BoxDecoration(
               gradient: const LinearGradient(
-                colors: [Color(0xFF00D4FF), Color(0xFF0066FF)],
+                colors: [Color(0xFF83BCB5), Color(0xFF7FFA88)],
               ),
               borderRadius: BorderRadius.circular(60),
             ),
@@ -316,10 +316,10 @@ class _AICoachScreenState extends State<AICoachScreen> {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: const Color(0xFF1C1C1E),
+              color: const Color(0xFF171917),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: const Color(0xFF00D4FF).withOpacity(0.3),
+                color: const Color(0xFF83BCB5).withOpacity(0.3),
               ),
             ),
             child: Column(
@@ -327,7 +327,7 @@ class _AICoachScreenState extends State<AICoachScreen> {
               children: [
                 Row(
                   children: [
-                    const Icon(Icons.check_circle, color: Color(0xFF00C853), size: 20),
+                    const Icon(Icons.check_circle, color: Color(0xFF7FFA88), size: 20),
                     const SizedBox(width: 8),
                     Text(
                       'AI has access to:',
@@ -370,10 +370,10 @@ class _AICoachScreenState extends State<AICoachScreen> {
                       vertical: 12,
                     ),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF1C1C1E),
+                      color: const Color(0xFF171917),
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
-                        color: const Color(0xFF00D4FF).withOpacity(0.3),
+                        color: const Color(0xFF83BCB5).withOpacity(0.3),
                       ),
                     ),
                     child: Text(
@@ -403,7 +403,7 @@ class _AICoachScreenState extends State<AICoachScreen> {
             width: 4,
             height: 4,
             decoration: const BoxDecoration(
-              color: Color(0xFF00D4FF),
+              color: Color(0xFF83BCB5),
               shape: BoxShape.circle,
             ),
           ),
@@ -437,7 +437,7 @@ class _AICoachScreenState extends State<AICoachScreen> {
               height: 32,
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
-                  colors: [Color(0xFF00D4FF), Color(0xFF0066FF)],
+                  colors: [Color(0xFF83BCB5), Color(0xFF7FFA88)],
                 ),
                 borderRadius: BorderRadius.circular(16),
               ),
@@ -453,8 +453,8 @@ class _AICoachScreenState extends State<AICoachScreen> {
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     color: isUser 
-                        ? const Color(0xFF0066FF)
-                        : const Color(0xFF1C1C1E),
+                        ? const Color(0xFF7FFA88)
+                        : const Color(0xFF171917),
                     borderRadius: BorderRadius.only(
                       topLeft: const Radius.circular(20),
                       topRight: const Radius.circular(20),
@@ -489,7 +489,7 @@ class _AICoachScreenState extends State<AICoachScreen> {
               backgroundImage: widget.user.avatarUrl != null
                   ? NetworkImage(widget.user.avatarUrl!)
                   : null,
-              backgroundColor: const Color(0xFF1C1C1E),
+              backgroundColor: const Color(0xFF171917),
               child: widget.user.avatarUrl == null
                   ? Text(
                       widget.user.name[0].toUpperCase(),
@@ -511,9 +511,9 @@ class _AICoachScreenState extends State<AICoachScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: const BoxDecoration(
-        color: Color(0xFF1C1C1E),
+        color: Color(0xFF171917),
         border: Border(
-          top: BorderSide(color: Color(0xFF2C2C2E)),
+          top: BorderSide(color: Color(0xFF1F2120)),
         ),
       ),
       child: SafeArea(
@@ -523,7 +523,7 @@ class _AICoachScreenState extends State<AICoachScreen> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF2C2C2E),
+                  color: const Color(0xFF1F2120),
                   borderRadius: BorderRadius.circular(24),
                 ),
                 child: TextField(
@@ -544,7 +544,7 @@ class _AICoachScreenState extends State<AICoachScreen> {
             Container(
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
-                  colors: [Color(0xFF00D4FF), Color(0xFF0066FF)],
+                  colors: [Color(0xFF83BCB5), Color(0xFF7FFA88)],
                 ),
                 borderRadius: BorderRadius.circular(24),
               ),

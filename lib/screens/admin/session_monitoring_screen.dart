@@ -21,7 +21,7 @@ class _SessionMonitoringScreenState extends State<SessionMonitoringScreen> {
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF1C1C1E),
+        backgroundColor: const Color(0xFF171917),
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
@@ -57,9 +57,9 @@ class _SessionMonitoringScreenState extends State<SessionMonitoringScreen> {
           children: [
             _buildFilterChip('All', 'all', Colors.white),
             const SizedBox(width: 8),
-            _buildFilterChip('Requested', 'requested', const Color(0xFFFF9800)),
+            _buildFilterChip('Requested', 'requested', const Color(0xFFFFD166)),
             const SizedBox(width: 8),
-            _buildFilterChip('Active', 'active', const Color(0xFF00C853)),
+            _buildFilterChip('Active', 'active', const Color(0xFF7FFA88)),
             const SizedBox(width: 8),
             _buildFilterChip('Completed', 'completed', Colors.blue),
             const SizedBox(width: 8),
@@ -84,7 +84,7 @@ class _SessionMonitoringScreenState extends State<SessionMonitoringScreen> {
       onSelected: (selected) {
         setState(() => _statusFilter = value);
       },
-      backgroundColor: const Color(0xFF1C1C1E),
+      backgroundColor: const Color(0xFF171917),
       selectedColor: color,
       checkmarkColor: Colors.black,
       side: BorderSide(
@@ -107,7 +107,7 @@ class _SessionMonitoringScreenState extends State<SessionMonitoringScreen> {
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(
-            child: CircularProgressIndicator(color: Color(0xFF00D4FF)),
+            child: CircularProgressIndicator(color: Color(0xFF83BCB5)),
           );
         }
 
@@ -153,11 +153,11 @@ class _SessionMonitoringScreenState extends State<SessionMonitoringScreen> {
 
     switch (session.status) {
       case SessionStatus.requested:
-        statusColor = const Color(0xFFFF9800);
+        statusColor = const Color(0xFFFFD166);
         statusIcon = Icons.pending;
         break;
       case SessionStatus.active:
-        statusColor = const Color(0xFF00C853);
+        statusColor = const Color(0xFF7FFA88);
         statusIcon = Icons.check_circle;
         break;
       case SessionStatus.completed:
@@ -172,7 +172,7 @@ class _SessionMonitoringScreenState extends State<SessionMonitoringScreen> {
     }
 
     return Card(
-      color: const Color(0xFF1C1C1E),
+      color: const Color(0xFF171917),
       margin: const EdgeInsets.only(bottom: 12),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
@@ -234,7 +234,7 @@ class _SessionMonitoringScreenState extends State<SessionMonitoringScreen> {
                 'Amount: \$${session.amount!.toStringAsFixed(2)}',
                 style: GoogleFonts.inter(
                   fontSize: 12,
-                  color: const Color(0xFF00C853),
+                  color: const Color(0xFF7FFA88),
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -298,7 +298,7 @@ class _SessionMonitoringScreenState extends State<SessionMonitoringScreen> {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: const Color(0xFF2C2C2E),
+              color: const Color(0xFF1F2120),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text(
@@ -335,7 +335,7 @@ class _SessionMonitoringScreenState extends State<SessionMonitoringScreen> {
               ),
               const SizedBox(height: 8),
               const CircularProgressIndicator(
-                color: Color(0xFF00D4FF),
+                color: Color(0xFF83BCB5),
                 strokeWidth: 2,
               ),
             ],
@@ -384,7 +384,7 @@ class _SessionMonitoringScreenState extends State<SessionMonitoringScreen> {
                   backgroundImage: user.avatarUrl != null
                       ? NetworkImage(user.avatarUrl!)
                       : null,
-                  backgroundColor: const Color(0xFF2C2C2E),
+                  backgroundColor: const Color(0xFF1F2120),
                   child: user.avatarUrl == null
                       ? Text(
                           user.name[0].toUpperCase(),
@@ -478,7 +478,7 @@ class _SessionMonitoringScreenState extends State<SessionMonitoringScreen> {
                   style: GoogleFonts.inter(fontSize: 12),
                 ),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF00C853),
+                  backgroundColor: const Color(0xFF7FFA88),
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   shape: RoundedRectangleBorder(
@@ -545,8 +545,8 @@ class _SessionMonitoringScreenState extends State<SessionMonitoringScreen> {
                 style: GoogleFonts.inter(fontSize: 12),
               ),
               style: OutlinedButton.styleFrom(
-                foregroundColor: const Color(0xFF00D4FF),
-                side: const BorderSide(color: Color(0xFF00D4FF)),
+                foregroundColor: const Color(0xFF83BCB5),
+                side: const BorderSide(color: Color(0xFF83BCB5)),
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
@@ -577,7 +577,7 @@ class _SessionMonitoringScreenState extends State<SessionMonitoringScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Session activated'),
-              backgroundColor: Color(0xFF00C853),
+              backgroundColor: Color(0xFF7FFA88),
             ),
           );
         }
@@ -673,7 +673,7 @@ class _SessionMonitoringScreenState extends State<SessionMonitoringScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF1C1C1E),
+        backgroundColor: const Color(0xFF171917),
         title: Text('Session Details', style: GoogleFonts.poppins(color: Colors.white)),
         content: SingleChildScrollView(
           child: Column(
@@ -731,7 +731,7 @@ class _SessionMonitoringScreenState extends State<SessionMonitoringScreen> {
     return showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF1C1C1E),
+        backgroundColor: const Color(0xFF171917),
         title: Text(title, style: GoogleFonts.poppins(color: Colors.white)),
         content: Text(message, style: GoogleFonts.inter(color: Colors.white70)),
         actions: [
@@ -741,7 +741,7 @@ class _SessionMonitoringScreenState extends State<SessionMonitoringScreen> {
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: Text('Confirm', style: GoogleFonts.inter(color: const Color(0xFF00D4FF))),
+            child: Text('Confirm', style: GoogleFonts.inter(color: const Color(0xFF83BCB5))),
           ),
         ],
       ),

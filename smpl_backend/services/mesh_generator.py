@@ -6,9 +6,9 @@ Generates a 3D body mesh from SMPL beta values.
 Strategy (in priority order):
   1. SMPL-X Python package  – highest quality, requires model files from
        https://smpl-x.is.tue.mpg.de  (free academic registration)
-  2. trimesh + icosphere    – always-available fallback that creates a
-       body-shaped capsule mesh sized from the beta parameters. Suitable
-       for FYP demo when SMPL-X is not set up.
+  2. Ready Player Me REST API – full humanoid GLB with skin/clothes/face/hair,
+       no local model files needed. Set RPM_APP_ID in .env.
+  3. trimesh capsule mesh    – last-resort fallback (geometric primitives).
 """
 
 from __future__ import annotations
@@ -24,6 +24,8 @@ from typing import List, Optional, Tuple
 import numpy as np
 import trimesh
 from trimesh import transformations
+
+from services.rpm_avatar_service import generate_rpm_avatar
 
 # ─── SMPL-X availability detection ────────────────────────────────────────────
 try:
@@ -46,18 +48,40 @@ def generate_mesh(
     gender: str,
     skin_tone: str = "medium",
     show_muscles: bool = True,
+    measurements: Optional[dict] = None,
 ) -> bytes:
     """
-    Generate a GLB body mesh from SMPL betas.
+    Generate a GLB body mesh.
 
-    Returns raw GLB bytes ready to be served as application/octet-stream
-    or encoded to base64.
+    Priority:
+      1. SMPL-X (if package + model files present)
+      2. Ready Player Me REST API  ← full humanoid avatar
+      3. Capsule/cylinder fallback (last resort)
+
+    Returns raw GLB bytes.
     """
 
+    # ── Tier 1: SMPL-X ────────────────────────────────────────────────────
     if _SMPLX_AVAILABLE and (SMPLX_MODEL_PATH / "smplx").exists():
         return _generate_smplx_glb(betas, height_cm, gender, skin_tone, show_muscles)
-    else:
-        return _generate_capsule_glb(betas, height_cm, gender, skin_tone, show_muscles)
+
+    # ── Tier 2: Ready Player Me ────────────────────────────────────────────
+    try:
+        return generate_rpm_avatar(
+            height_cm=height_cm,
+            weight_kg=measurements.get("weight", 70.0) if measurements else 70.0,
+            gender=gender,
+            skin_tone=skin_tone,
+            measurements=measurements,
+        )
+    except Exception as rpm_err:
+        import logging
+        logging.getLogger(__name__).warning(
+            "RPM avatar generation failed (%s) – falling back to capsule mesh.", rpm_err
+        )
+
+    # ── Tier 3: Capsule fallback ───────────────────────────────────────────
+    return _generate_capsule_glb(betas, height_cm, gender, skin_tone, show_muscles)
 
 
 # ─── SMPL-X path ──────────────────────────────────────────────────────────────
