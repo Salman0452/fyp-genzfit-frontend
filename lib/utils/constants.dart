@@ -5,23 +5,23 @@ class AppConstants {
   static const String appName = 'GenZFit';
   static const String appVersion = '1.0.0';
 
-  // Colors - Warm dark theme
-  static const Color primaryBlack = Color(0xFF222831);
-  static const Color darkGray = Color(0xFF1C2028);
-  static const Color charcoalGray = Color(0xFF222831);
-  static const Color slateGray = Color(0xFF393E46);
-  static const Color accentGray = Color(0xFF4A5060);
+// Colors - Dark neon fitness theme
+  static const Color primaryBlack = Color(0xFF0A0B0A);
+  static const Color darkGray = Color(0xFF0D0E0D);
+  static const Color charcoalGray = Color(0xFF171917);
+  static const Color slateGray = Color(0xFF1F2120);
+  static const Color accentGray = Color(0xFF2A2D2B);
 
-  static const Color primaryGold = Color(0xFF948979);
-  static const Color accentGold = Color(0xFFB5A898);
+  static const Color primaryGold = Color(0xFF7FFA88);
+  static const Color accentGold = Color(0xFF83BCB5);
 
-  static const Color errorRed = Color(0xFFE05555);
-  static const Color successGreen = Color(0xFF5A9E6F);
-  static const Color warningYellow = Color(0xFFCFAB6B);
+  static const Color errorRed = Color(0xFFFF5C5C);
+  static const Color successGreen = Color(0xFF7FFA88);
+  static const Color warningYellow = Color(0xFFFFD166);
 
-  static const Color textWhite = Color(0xFFDFD0B8);
-  static const Color textGray = Color(0xFF948979);
-  static const Color textDarkGray = Color(0xFF6B6258);
+  static const Color textWhite = Color(0xFFFFFFFF);
+  static const Color textGray = Color(0xFF5E625F);
+  static const Color textDarkGray = Color(0xFF3D4040);
 
   // Firebase Collections
   static const String usersCollection = 'users';
@@ -94,16 +94,18 @@ class AppConstants {
 
 // Simplified color constants for new screens
 class AppColors {
-  static const Color background = Color(0xFF222831);
-  static const Color surface = Color(0xFF393E46);
-  static const Color charcoal = Color(0xFF2D333B);
-  static const Color accent = Color(0xFF948979);
-  static const Color textPrimary = Color(0xFFDFD0B8);
-  static const Color textSecondary = Color(0xFF948979);
-  static const Color error = Color(0xFFE05555);
-  static const Color success = Color(0xFF5A9E6F);
-  static const Color warning = Color(0xFFCFAB6B);
-  static const Color info = Color(0xFF7A9EC0);
+  static const Color background = Color(0xFF0A0B0A);
+  static const Color surface = Color(0xFF171917);
+  static const Color charcoal = Color(0xFF1F2120);
+  static const Color accent = Color(0xFF7FFA88);
+  static const Color accentTeal = Color(0xFF83BCB5);
+  static const Color muted = Color(0xFF5E625F);
+  static const Color textPrimary = Color(0xFFFFFFFF);
+  static const Color textSecondary = Color(0xFF5E625F);
+  static const Color error = Color(0xFFFF5C5C);
+  static const Color success = Color(0xFF7FFA88);
+  static const Color warning = Color(0xFFFFD166);
+  static const Color info = Color(0xFF83BCB5);
 }
 
 class AppSizes {

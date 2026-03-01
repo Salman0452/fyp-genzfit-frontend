@@ -51,21 +51,21 @@ class Helpers {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF393E46),
+        backgroundColor: const Color(0xFF171917),
         title: Text(
           title,
-          style: const TextStyle(color: Color(0xFFDFD0B8)),
+          style: const TextStyle(color: Color(0xFFFFFFFF)),
         ),
         content: Text(
           message,
-          style: const TextStyle(color: Color(0xFF948979)),
+          style: const TextStyle(color: Color(0xFF5E625F)),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: const Text(
               'OK',
-              style: TextStyle(color: Color(0xFF948979)),
+              style: TextStyle(color: Color(0xFF7FFA88)),
             ),
           ),
         ],
@@ -80,16 +80,16 @@ class Helpers {
       context: context,
       barrierDismissible: false,
       builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF393E46),
+        backgroundColor: const Color(0xFF171917),
         content: Row(
           children: [
             const CircularProgressIndicator(
-              valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF948979)),
+              valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF7FFA88)),
             ),
             const SizedBox(width: 20),
             Text(
               message,
-              style: const TextStyle(color: Color(0xFFDFD0B8)),
+              style: const TextStyle(color: Color(0xFFFFFFFF)),
             ),
           ],
         ),
@@ -124,12 +124,12 @@ class Helpers {
   // Generate random color
   static Color getRandomColor() {
     final colors = [
-      const Color(0xFF948979),
-      const Color(0xFFB5A898),
-      const Color(0xFF5A9E6F),
-      const Color(0xFF7A9EC0),
-      const Color(0xFF9E7AB5),
-      const Color(0xFFE05555),
+      const Color(0xFF7FFA88),
+      const Color(0xFF83BCB5),
+      const Color(0xFF5E625F),
+      const Color(0xFFFFD166),
+      const Color(0xFFB5A8FF),
+      const Color(0xFFFF5C5C),
     ];
     return colors[DateTime.now().millisecond % colors.length];
   }
