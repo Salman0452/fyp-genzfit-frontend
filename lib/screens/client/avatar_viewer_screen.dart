@@ -7,9 +7,7 @@ import 'package:provider/provider.dart';
 
 import '../../models/measurement_model.dart';
 import '../../providers/auth_provider.dart';
-import '../../screens/client/avatar_creator_screen.dart';
 import '../../services/body_analysis_service.dart';
-import '../../services/ready_player_me_service.dart';
 import '../../services/smpl_avatar_service.dart';
 import '../../utils/constants.dart';
 import '../../widgets/avatar_progress_slider.dart';
@@ -23,15 +21,13 @@ class AvatarViewerScreen extends StatefulWidget {
 
 class _AvatarViewerScreenState extends State<AvatarViewerScreen>
     with SingleTickerProviderStateMixin {
-  final ReadyPlayerMeService _rpmService = ReadyPlayerMeService();
+  final SmplAvatarService _smplService = SmplAvatarService();
   final BodyAnalysisService _bodyService = BodyAnalysisService();
 
   // ── State ──────────────────────────────────────────────────────────────────
-  String? _baseAvatarUrl; // RPM base avatar URL (null = not created yet)
   List<AvatarSnapshot> _snapshots = [];
   int _selectedIndex = 0;
-
-  String? _currentGlbUrl;
+  String? _currentGlbPath; // absolute local path for ModelViewer
   bool _isLoading = true;
   bool _isGenerating = false;
   bool _backendAvailable = false;
@@ -61,7 +57,7 @@ class _AvatarViewerScreenState extends State<AvatarViewerScreen>
   Future<void> _init() async {
     setState(() {
       _isLoading = true;
-      _statusMessage = 'Loading your avatar…';
+      _statusMessage = 'Loading avatar history…';
     });
 
     final userId = _userId;
@@ -71,14 +67,12 @@ class _AvatarViewerScreenState extends State<AvatarViewerScreen>
     }
 
     final results = await Future.wait([
-      _rpmService.getBaseAvatarUrl(userId),
-      _rpmService.getAvatarHistory(userId),
-      SmplAvatarService().isBackendAvailable(),
+      _smplService.getAvatarHistory(userId),
+      _smplService.isBackendAvailable(),
     ]);
 
-    _baseAvatarUrl = results[0] as String?;
-    _snapshots = results[1] as List<AvatarSnapshot>;
-    _backendAvailable = results[2] as bool;
+    _snapshots = results[0] as List<AvatarSnapshot>;
+    _backendAvailable = results[1] as bool;
 
     if (_snapshots.isNotEmpty) {
       _selectedIndex = _snapshots.length - 1;
@@ -94,18 +88,17 @@ class _AvatarViewerScreenState extends State<AvatarViewerScreen>
   }
 
   Future<void> _loadGlbForSelected() async {
-    if (_snapshots.isEmpty || _baseAvatarUrl == null) return;
+    if (_snapshots.isEmpty) return;
     final snap = _snapshots[_selectedIndex];
     setState(() => _statusMessage = 'Loading model…');
     try {
-      final path = await _rpmService.getGlbUrl(
+      final path = await _smplService.getGlbPath(
         userId: _userId!,
         snapDate: snap.date,
-        baseAvatarUrl: _baseAvatarUrl!,
       );
       if (mounted)
         setState(() {
-          _currentGlbUrl = path;
+          _currentGlbPath = path;
           _statusMessage = '';
         });
     } catch (e) {
@@ -115,24 +108,11 @@ class _AvatarViewerScreenState extends State<AvatarViewerScreen>
     }
   }
 
-  // ── Avatar creation flow ───────────────────────────────────────────────────
+  // ── Avatar generation ─────────────────────────────────────────────────────
 
-  Future<void> _openCreator() async {
-    final url = await Navigator.push<String>(
-      context,
-      MaterialPageRoute(builder: (_) => const AvatarCreatorScreen()),
-    );
-    if (url != null && url.isNotEmpty) {
-      setState(() => _baseAvatarUrl = url);
-      _showSnack('Avatar created! Generating your first snapshot…',
-          success: true);
-      await _generateSnapshot();
-    }
-  }
-
-  Future<void> _generateSnapshot() async {
+  Future<void> _generateAvatar() async {
     final userId = _userId;
-    if (userId == null || _baseAvatarUrl == null) return;
+    if (userId == null) return;
 
     MeasurementModel? latest;
     try {
@@ -146,26 +126,23 @@ class _AvatarViewerScreenState extends State<AvatarViewerScreen>
 
     setState(() {
       _isGenerating = true;
-      _statusMessage = _backendAvailable
-          ? 'Morphing avatar to your measurements…'
-          : 'Downloading avatar…';
+      _statusMessage = 'Generating SMPL-X avatar…';
     });
 
     try {
-      final path = await _rpmService.generateSnapshot(
+      final path = await _smplService.generateAvatar(
         userId: userId,
-        baseAvatarUrl: _baseAvatarUrl!,
         measurement: latest,
       );
-      _snapshots = await _rpmService.getAvatarHistory(userId);
+      _snapshots = await _smplService.getAvatarHistory(userId);
       _selectedIndex = _snapshots.length - 1;
       if (mounted) {
         setState(() {
-          _currentGlbUrl = path;
+          _currentGlbPath = path;
           _isGenerating = false;
           _statusMessage = '';
         });
-        _showSnack('Avatar snapshot saved!', success: true);
+        _showSnack('Avatar generated!', success: true);
       }
     } catch (e) {
       if (mounted) {
@@ -187,11 +164,9 @@ class _AvatarViewerScreenState extends State<AvatarViewerScreen>
       appBar: _buildAppBar(),
       body: _isLoading
           ? _buildLoadingView('Loading avatar data…')
-          : _baseAvatarUrl == null
+          : _snapshots.isEmpty && !_isGenerating
               ? _buildNoAvatarView()
-              : _snapshots.isEmpty && !_isGenerating
-                  ? _buildNoSnapshotView()
-                  : _buildMainContent(),
+              : _buildMainContent(),
       floatingActionButton: _buildFab(),
     );
   }
@@ -224,12 +199,6 @@ class _AvatarViewerScreenState extends State<AvatarViewerScreen>
             ),
           ),
         ),
-        if (_baseAvatarUrl != null)
-          IconButton(
-            icon: const Icon(Icons.person_pin_outlined, color: Colors.white70),
-            tooltip: 'Recreate avatar',
-            onPressed: _openCreator,
-          ),
         IconButton(
             icon: const Icon(Icons.refresh, color: Colors.white),
             onPressed: _init),
@@ -266,11 +235,11 @@ class _AvatarViewerScreenState extends State<AvatarViewerScreen>
   }
 
   Widget _build3DViewer() {
-    final String? src = _currentGlbUrl != null
-        ? _currentGlbUrl!
-        : (_baseAvatarUrl != null
-            ? _rpmService.buildDirectGlbUrl(_baseAvatarUrl!)
-            : null);
+    final String? src = _currentGlbPath != null
+        ? (_currentGlbPath!.startsWith('/') || _currentGlbPath!.contains(':\\')
+            ? 'file://$_currentGlbPath'
+            : _currentGlbPath)
+        : null;
 
     if (src == null || src.isEmpty) {
       return Container(
@@ -349,9 +318,9 @@ class _AvatarViewerScreenState extends State<AvatarViewerScreen>
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.verified, size: 11, color: AppColors.accent),
+                Icon(Icons.view_in_ar, size: 11, color: AppColors.accent),
                 const SizedBox(width: 4),
-                const Text('Ready Player Me',
+                const Text('SMPL-X',
                     style: TextStyle(
                         color: Colors.white60,
                         fontSize: 10,
@@ -424,7 +393,7 @@ class _AvatarViewerScreenState extends State<AvatarViewerScreen>
                         Border.all(color: AppColors.accent.withOpacity(0.4)),
                   ),
                   child: Text(
-                    _backendAvailable ? 'morphed • RPM' : 'RPM base',
+                    _backendAvailable ? 'SMPL-X morphed' : 'cached',
                     style:
                         const TextStyle(color: AppColors.accent, fontSize: 10),
                   ),
@@ -591,34 +560,60 @@ class _AvatarViewerScreenState extends State<AvatarViewerScreen>
                 border: Border.all(
                     color: AppColors.accent.withOpacity(0.4), width: 2),
               ),
-              child: Icon(Icons.person_add_outlined,
+              child: Icon(Icons.view_in_ar,
                   size: 60, color: AppColors.accent.withOpacity(0.8)),
             ),
             const SizedBox(height: 28),
-            const Text('Create Your 3D Avatar',
+            const Text('Generate Your 3D Avatar',
                 style: TextStyle(
                     color: Colors.white,
                     fontSize: 24,
                     fontWeight: FontWeight.bold)),
             const SizedBox(height: 12),
             Text(
-              'Design a fully realistic avatar — choose your face, skin tone, hair, and outfit. '
-              'Your body shape will automatically update as your measurements change over time.',
+              'Your body measurements will be used to generate a realistic SMPL-X avatar. '
+              'Complete a body scan first, then tap the button below.',
               textAlign: TextAlign.center,
               style: TextStyle(
                   color: Colors.white.withOpacity(0.6),
                   fontSize: 15,
                   height: 1.5),
             ),
+            if (!_backendAvailable) ...[
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.redAccent.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.redAccent.withOpacity(0.4)),
+                ),
+                child: const Row(
+                  children: [
+                    Icon(Icons.warning_amber,
+                        color: Colors.redAccent, size: 18),
+                    SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'SMPL-X backend is offline. Start the backend server to generate avatars.',
+                        style: TextStyle(color: Colors.redAccent, fontSize: 13),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
             const SizedBox(height: 16),
-            Wrap(
+            const Wrap(
               alignment: WrapAlignment.center,
               spacing: 8,
               runSpacing: 8,
-              children: const [
-                _FeatureChip(icon: Icons.face, label: 'Realistic face'),
-                _FeatureChip(icon: Icons.checkroom, label: 'Full outfit'),
-                _FeatureChip(icon: Icons.spa, label: 'Hair & skin'),
+              children: [
+                _FeatureChip(
+                    icon: Icons.accessibility_new, label: 'Body shape'),
+                _FeatureChip(
+                    icon: Icons.straighten, label: 'Real measurements'),
+                _FeatureChip(icon: Icons.science, label: 'SMPL-X model'),
                 _FeatureChip(
                     icon: Icons.trending_up, label: 'Updates with progress'),
               ],
@@ -627,15 +622,16 @@ class _AvatarViewerScreenState extends State<AvatarViewerScreen>
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
-                onPressed: _openCreator,
+                onPressed: _backendAvailable ? _generateAvatar : null,
                 icon: const Icon(Icons.auto_awesome, color: Colors.black),
-                label: const Text('Create My Avatar',
+                label: const Text('Generate My Avatar',
                     style: TextStyle(
                         color: Colors.black,
                         fontSize: 16,
                         fontWeight: FontWeight.bold)),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.accent,
+                  disabledBackgroundColor: AppColors.accent.withOpacity(0.4),
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14)),
@@ -712,9 +708,9 @@ class _AvatarViewerScreenState extends State<AvatarViewerScreen>
   }
 
   Widget? _buildFab() {
-    if (_isLoading || _isGenerating || _baseAvatarUrl == null) return null;
+    if (_isLoading || _isGenerating || !_backendAvailable) return null;
     return FloatingActionButton.extended(
-      onPressed: _generateSnapshot,
+      onPressed: _generateAvatar,
       backgroundColor: AppColors.accent,
       icon: const Icon(Icons.sync, color: Colors.black),
       label: const Text('Update Avatar',
