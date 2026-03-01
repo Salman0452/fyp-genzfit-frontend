@@ -246,7 +246,8 @@ class AvatarSnapshot {
   final String date; // "YYYY-MM-DD"
   final List<double> betas;
   final Map<String, dynamic> measurements;
-  final String? localGlbPath;
+  final String? localGlbPath;       // legacy – kept for old snapshots
+  final String? cloudinaryGlbUrl;   // Cloudinary HTTPS URL (new)
 
   const AvatarSnapshot({
     required this.id,
@@ -255,6 +256,7 @@ class AvatarSnapshot {
     required this.betas,
     required this.measurements,
     this.localGlbPath,
+    this.cloudinaryGlbUrl,
   });
 
   factory AvatarSnapshot.fromFirestore(DocumentSnapshot doc) {
@@ -266,6 +268,7 @@ class AvatarSnapshot {
       betas: (d['betas'] as List).map((e) => (e as num).toDouble()).toList(),
       measurements: Map<String, dynamic>.from(d['measurements'] as Map? ?? {}),
       localGlbPath: d['localGlbPath'] as String?,
+      cloudinaryGlbUrl: d['cloudinaryGlbUrl'] as String?,
     );
   }
 

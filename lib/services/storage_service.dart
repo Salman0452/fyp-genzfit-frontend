@@ -1,5 +1,9 @@
+import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
+
 import 'package:cloudinary_public/cloudinary_public.dart';
+import 'package:http/http.dart' as http;
 import 'package:uuid/uuid.dart';
 
 class StorageService {
@@ -81,6 +85,35 @@ class StorageService {
   // Upload chat video
   Future<String> uploadChatVideo(File file, String chatId) async {
     return await uploadVideo(file, 'chat_videos/$chatId');
+  }
+
+  /// Upload raw GLB bytes directly to Cloudinary (resource_type=raw).
+  /// [folder] e.g. 'avatars/uid123', [publicId] e.g. '2026-03-01'
+  Future<String> uploadGlbBytes(
+    Uint8List bytes,
+    String folder,
+    String publicId,
+  ) async {
+    final uri = Uri.parse(
+        'https://api.cloudinary.com/v1_1/$_cloudName/raw/upload');
+    final request = http.MultipartRequest('POST', uri)
+      ..fields['upload_preset'] = _uploadPreset
+      ..fields['folder'] = folder
+      ..fields['public_id'] = publicId
+      ..files.add(http.MultipartFile.fromBytes(
+        'file',
+        bytes,
+        filename: '$publicId.glb',
+      ));
+    final streamed =
+        await request.send().timeout(const Duration(seconds: 120));
+    final body = await http.Response.fromStream(streamed);
+    if (streamed.statusCode == 200) {
+      final data = jsonDecode(body.body) as Map<String, dynamic>;
+      return data['secure_url'] as String;
+    }
+    throw Exception(
+        'Cloudinary GLB upload failed (${streamed.statusCode}): ${body.body}');
   }
 
   // Delete file by URL (Cloudinary requires API key/secret for deletion)

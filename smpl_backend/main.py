@@ -22,7 +22,7 @@ from pathlib import Path
 from typing import Dict, List, Optional
 
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, UploadFile, Form, File
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
 
@@ -34,6 +34,7 @@ from models.request_models import (
 from services.landmark_mapper import extract_proportions
 from services.beta_converter import measurements_to_betas, betas_to_description
 from services.mesh_generator import generate_mesh, _SMPLX_AVAILABLE
+from services.rpm_morpher import morph_rpm_avatar
 
 load_dotenv()
 
@@ -186,6 +187,41 @@ def download_glb(user_id: str, snap_date: str):
         content=glb_path.read_bytes(),
         media_type="model/gltf-binary",
         headers={"Content-Disposition": f'attachment; filename="{user_id}_{snap_date}.glb"'},
+    )
+
+
+@app.post("/morph-avatar")
+async def morph_avatar(
+    glb: UploadFile = File(..., description="Base RPM .glb file"),
+    height: float   = Form(..., description="User height in cm"),
+    weight: float   = Form(..., description="User weight in kg"),
+    age:    int     = Form(25,  description="User age"),
+    gender: str     = Form("male", description="male | female"),
+):
+    """
+    Accept an RPM fullbody .glb + biometric measurements.
+    Returns a new .glb with body shape scaled to match the measurements.
+
+    This endpoint is called by the Flutter app after each body scan.
+    It deforms the avatar's body geometry so the avatar reflects the
+    user's actual body proportions (height, BMI, weight distribution).
+    """
+    raw_bytes = await glb.read()
+    if not raw_bytes:
+        raise HTTPException(status_code=400, detail="Empty GLB file.")
+
+    morphed = morph_rpm_avatar(
+        glb_bytes=raw_bytes,
+        height_cm=height,
+        weight_kg=weight,
+        age=age,
+        gender=gender,
+    )
+
+    return Response(
+        content=morphed,
+        media_type="model/gltf-binary",
+        headers={"Content-Disposition": "attachment; filename=\"avatar_morphed.glb\""},
     )
 
 
