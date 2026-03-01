@@ -47,3 +47,17 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# SMPL backend – large model files and virtual environment
+smpl_backend/models/smplx/
+smpl_backend/models/smpl/
+smpl_backend/models/*.npz
+smpl_backend/models/*.pkl
+smpl_backend/uv/
+smpl_backend/models/uv/
+smpl_backend/.venv/
+smpl_backend/venv/
+smpl_backend/__pycache__/
+smpl_backend/**/__pycache__/
+smpl_backend/cache/
+smpl_backend/*.egg-info/
