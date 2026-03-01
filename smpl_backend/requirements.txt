@@ -15,12 +15,12 @@ pygltflib==1.16.2
 # Image processing for textures
 Pillow==10.3.0
 
-# Optional: SMPL-X support (install manually if you have the model files)
-# smplx==0.1.28
-# torch==2.3.0  # required by smplx
+# SMPL-X body model (requires model files from https://smpl-x.is.tue.mpg.de)
+smplx==0.1.28
 
-# Optional: Meshcapade API
-# requests already included via fastapi httpx
+# PyTorch – CPU-only build (smaller, works on any machine for FYP demo)
+# Install with: pip3 install torch --index-url https://download.pytorch.org/whl/cpu
+torch>=2.1.0
 
 httpx==0.27.0
 

@@ -44,6 +44,7 @@ class BetaValues(BaseModel):
 
 class GenerateAvatarResponse(BaseModel):
     """Response from POST /generate-avatar"""
+    model_config = {'protected_namespaces': ()}
 
     user_id: str
     model_url: Optional[str] = None  # URL to download .glb (when hosted)
