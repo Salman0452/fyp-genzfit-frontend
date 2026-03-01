@@ -41,6 +41,8 @@ class AnthropometricService {
     } else {
       measurements['shoulderWidth'] = _predictShoulderWidth(height, isMale, frameSize);
     }
+    // Keep a 'shoulders' alias so both avatar builder and UI can find the value
+    measurements['shoulders'] = measurements['shoulderWidth']!;
     
     // Neck circumference
     measurements['neck'] = _predictNeck(height, weight, isMale);

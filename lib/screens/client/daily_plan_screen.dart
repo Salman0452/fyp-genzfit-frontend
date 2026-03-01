@@ -1,30 +1,29 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../models/user_model.dart';
-import '../../models/measurement_model.dart';
-import '../../models/recommendation_model.dart';
 import '../../models/progress_tracking_model.dart';
 import '../../services/recommendation_service.dart';
 import '../../services/body_analysis_service.dart';
 import '../../providers/auth_provider.dart';
 
 class DailyPlanScreen extends StatefulWidget {
-  const DailyPlanScreen({Key? key}) : super(key: key);
+  const DailyPlanScreen({super.key});
 
   @override
   State<DailyPlanScreen> createState() => _DailyPlanScreenState();
 }
 
-class _DailyPlanScreenState extends State<DailyPlanScreen> with SingleTickerProviderStateMixin {
+class _DailyPlanScreenState extends State<DailyPlanScreen>
+    with SingleTickerProviderStateMixin {
   final RecommendationService _recommendationService = RecommendationService();
   final BodyAnalysisService _bodyAnalysisService = BodyAnalysisService();
-  
+
   late TabController _tabController;
   bool _isLoading = false;
-  
+
   List<MealCompletion> _todayMeals = [];
   List<ExerciseCompletion> _todayExercises = [];
-  
+
   int _completedMeals = 0;
   int _completedExercises = 0;
 
@@ -43,16 +42,18 @@ class _DailyPlanScreenState extends State<DailyPlanScreen> with SingleTickerProv
 
   Future<void> _loadTodayPlan() async {
     setState(() => _isLoading = true);
-    
+
     try {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       final user = authProvider.currentUser;
-      
+
       if (user == null) return;
 
       // Check if we already have today's plan
       final existingMeals = await _recommendationService.getTodayMeals(user.id);
-      final existingExercises = await _recommendationService.getTodayExercises(user.id);
+      final existingExercises = await _recommendationService.getTodayExercises(
+        user.id,
+      );
 
       if (existingMeals.isEmpty || existingExercises.isEmpty) {
         // Generate new daily plan with AI
@@ -67,9 +68,9 @@ class _DailyPlanScreenState extends State<DailyPlanScreen> with SingleTickerProv
       }
     } catch (e) {
       print('Error loading today\'s plan: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error loading plan: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error loading plan: $e')));
     } finally {
       setState(() => _isLoading = false);
     }
@@ -78,8 +79,11 @@ class _DailyPlanScreenState extends State<DailyPlanScreen> with SingleTickerProv
   Future<void> _generateNewDailyPlan(UserModel user) async {
     try {
       // Get latest measurements
-      final measurements = await _bodyAnalysisService.getUserMeasurements(user.id);
-      final latestMeasurement = measurements.isNotEmpty ? measurements.first : null;
+      final measurements = await _bodyAnalysisService.getUserMeasurements(
+        user.id,
+      );
+      final latestMeasurement =
+          measurements.isNotEmpty ? measurements.first : null;
 
       // Generate today's meals and exercises with AI
       final meals = await _recommendationService.generateDailyMeals(
@@ -94,7 +98,9 @@ class _DailyPlanScreenState extends State<DailyPlanScreen> with SingleTickerProv
 
       // Reload from Firestore to get completion objects
       final todayMeals = await _recommendationService.getTodayMeals(user.id);
-      final todayExercises = await _recommendationService.getTodayExercises(user.id);
+      final todayExercises = await _recommendationService.getTodayExercises(
+        user.id,
+      );
 
       setState(() {
         _todayMeals = todayMeals;
@@ -115,15 +121,19 @@ class _DailyPlanScreenState extends State<DailyPlanScreen> with SingleTickerProv
   }
 
   void _updateCompletionCounts() {
-    _completedMeals = _todayMeals.where((m) => m.status == CompletionStatus.completed).length;
-    _completedExercises = _todayExercises.where((e) => e.status == CompletionStatus.completed).length;
+    _completedMeals =
+        _todayMeals.where((m) => m.status == CompletionStatus.completed).length;
+    _completedExercises =
+        _todayExercises
+            .where((e) => e.status == CompletionStatus.completed)
+            .length;
   }
 
   Future<void> _completeMeal(MealCompletion meal) async {
     try {
       await _recommendationService.completeMeal(meal.id);
       await _loadTodayPlan();
-      
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('✅ Completed: ${meal.mealName}'),
@@ -140,7 +150,7 @@ class _DailyPlanScreenState extends State<DailyPlanScreen> with SingleTickerProv
     try {
       await _recommendationService.completeExercise(exercise.id);
       await _loadTodayPlan();
-      
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('✅ Completed: ${exercise.exerciseName}'),
@@ -156,8 +166,17 @@ class _DailyPlanScreenState extends State<DailyPlanScreen> with SingleTickerProv
   @override
   Widget build(BuildContext context) {
     final today = DateTime.now();
-    final dayName = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'][today.weekday - 1];
-    
+    final dayName =
+        [
+          'Monday',
+          'Tuesday',
+          'Wednesday',
+          'Thursday',
+          'Friday',
+          'Saturday',
+          'Sunday',
+        ][today.weekday - 1];
+
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
@@ -175,44 +194,46 @@ class _DailyPlanScreenState extends State<DailyPlanScreen> with SingleTickerProv
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
-            onPressed: () => _generateNewDailyPlan(
-              Provider.of<AuthProvider>(context, listen: false).currentUser!,
-            ),
+            onPressed:
+                () => _generateNewDailyPlan(
+                  Provider.of<AuthProvider>(
+                    context,
+                    listen: false,
+                  ).currentUser!,
+                ),
             tooltip: 'Regenerate Plan',
           ),
         ],
         bottom: TabBar(
           controller: _tabController,
           indicatorColor: Colors.white,
-          tabs: const [
-            Tab(text: 'Meals'),
-            Tab(text: 'Workouts'),
-          ],
+          tabs: const [Tab(text: 'Meals'), Tab(text: 'Workouts')],
         ),
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: Colors.white))
-          : Column(
-              children: [
-                _buildStatsCard(),
-                Expanded(
-                  child: TabBarView(
-                    controller: _tabController,
-                    children: [
-                      _buildMealsList(),
-                      _buildExercisesList(),
-                    ],
+      body:
+          _isLoading
+              ? const Center(
+                child: CircularProgressIndicator(color: Colors.white),
+              )
+              : Column(
+                children: [
+                  _buildStatsCard(),
+                  Expanded(
+                    child: TabBarView(
+                      controller: _tabController,
+                      children: [_buildMealsList(), _buildExercisesList()],
+                    ),
                   ),
-                ),
-              ],
-            ),
+                ],
+              ),
     );
   }
 
   Widget _buildStatsCard() {
     final totalTasks = _todayMeals.length + _todayExercises.length;
     final completedTasks = _completedMeals + _completedExercises;
-    final completionPercent = totalTasks > 0 ? (completedTasks / totalTasks * 100).toInt() : 0;
+    final completionPercent =
+        totalTasks > 0 ? (completedTasks / totalTasks * 100).toInt() : 0;
 
     return Container(
       margin: const EdgeInsets.all(16),
@@ -227,8 +248,16 @@ class _DailyPlanScreenState extends State<DailyPlanScreen> with SingleTickerProv
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
           _buildStatItem('Completion', '$completionPercent%', Icons.timeline),
-          _buildStatItem('Meals', '$_completedMeals/${_todayMeals.length}', Icons.restaurant),
-          _buildStatItem('Workouts', '$_completedExercises/${_todayExercises.length}', Icons.fitness_center),
+          _buildStatItem(
+            'Meals',
+            '$_completedMeals/${_todayMeals.length}',
+            Icons.restaurant,
+          ),
+          _buildStatItem(
+            'Workouts',
+            '$_completedExercises/${_todayExercises.length}',
+            Icons.fitness_center,
+          ),
         ],
       ),
     );
@@ -247,10 +276,7 @@ class _DailyPlanScreenState extends State<DailyPlanScreen> with SingleTickerProv
             fontWeight: FontWeight.bold,
           ),
         ),
-        Text(
-          label,
-          style: TextStyle(color: Colors.grey[400], fontSize: 12),
-        ),
+        Text(label, style: TextStyle(color: Colors.grey[400], fontSize: 12)),
       ],
     );
   }
@@ -269,15 +295,22 @@ class _DailyPlanScreenState extends State<DailyPlanScreen> with SingleTickerProv
             ),
             const SizedBox(height: 24),
             ElevatedButton.icon(
-              onPressed: () => _generateNewDailyPlan(
-                Provider.of<AuthProvider>(context, listen: false).currentUser!,
-              ),
+              onPressed:
+                  () => _generateNewDailyPlan(
+                    Provider.of<AuthProvider>(
+                      context,
+                      listen: false,
+                    ).currentUser!,
+                  ),
               icon: const Icon(Icons.auto_awesome),
               label: const Text('Generate AI Plan'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.white,
                 foregroundColor: Colors.black,
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 12,
+                ),
               ),
             ),
           ],
@@ -295,7 +328,9 @@ class _DailyPlanScreenState extends State<DailyPlanScreen> with SingleTickerProv
         return Card(
           color: Colors.grey[900],
           margin: const EdgeInsets.only(bottom: 16),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
@@ -304,7 +339,10 @@ class _DailyPlanScreenState extends State<DailyPlanScreen> with SingleTickerProv
                 Row(
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.orange,
                         borderRadius: BorderRadius.circular(20),
@@ -320,7 +358,11 @@ class _DailyPlanScreenState extends State<DailyPlanScreen> with SingleTickerProv
                     ),
                     const Spacer(),
                     if (isCompleted)
-                      const Icon(Icons.check_circle, color: Colors.green, size: 24),
+                      const Icon(
+                        Icons.check_circle,
+                        color: Colors.green,
+                        size: 24,
+                      ),
                   ],
                 ),
                 const SizedBox(height: 12),
@@ -336,7 +378,10 @@ class _DailyPlanScreenState extends State<DailyPlanScreen> with SingleTickerProv
                 const SizedBox(height: 8),
                 Row(
                   children: [
-                    _buildMacroChip('${meal.calories} cal', Icons.local_fire_department),
+                    _buildMacroChip(
+                      '${meal.calories} cal',
+                      Icons.local_fire_department,
+                    ),
                     const SizedBox(width: 8),
                     _buildMacroChip('P: ${meal.macros['protein']}g', Icons.egg),
                     const SizedBox(width: 8),
@@ -380,15 +425,22 @@ class _DailyPlanScreenState extends State<DailyPlanScreen> with SingleTickerProv
             ),
             const SizedBox(height: 24),
             ElevatedButton.icon(
-              onPressed: () => _generateNewDailyPlan(
-                Provider.of<AuthProvider>(context, listen: false).currentUser!,
-              ),
+              onPressed:
+                  () => _generateNewDailyPlan(
+                    Provider.of<AuthProvider>(
+                      context,
+                      listen: false,
+                    ).currentUser!,
+                  ),
               icon: const Icon(Icons.auto_awesome),
               label: const Text('Generate AI Plan'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.white,
                 foregroundColor: Colors.black,
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 12,
+                ),
               ),
             ),
           ],
@@ -406,7 +458,9 @@ class _DailyPlanScreenState extends State<DailyPlanScreen> with SingleTickerProv
         return Card(
           color: Colors.grey[900],
           margin: const EdgeInsets.only(bottom: 16),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
@@ -415,11 +469,15 @@ class _DailyPlanScreenState extends State<DailyPlanScreen> with SingleTickerProv
                 Row(
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
                       decoration: BoxDecoration(
-                        color: exercise.difficulty == 'beginner'
-                            ? Colors.green
-                            : exercise.difficulty == 'intermediate'
+                        color:
+                            exercise.difficulty == 'beginner'
+                                ? Colors.green
+                                : exercise.difficulty == 'intermediate'
                                 ? Colors.orange
                                 : Colors.red,
                         borderRadius: BorderRadius.circular(20),
@@ -435,7 +493,11 @@ class _DailyPlanScreenState extends State<DailyPlanScreen> with SingleTickerProv
                     ),
                     const Spacer(),
                     if (isCompleted)
-                      const Icon(Icons.check_circle, color: Colors.green, size: 24),
+                      const Icon(
+                        Icons.check_circle,
+                        color: Colors.green,
+                        size: 24,
+                      ),
                   ],
                 ),
                 const SizedBox(height: 12),
@@ -453,22 +515,34 @@ class _DailyPlanScreenState extends State<DailyPlanScreen> with SingleTickerProv
                   children: [
                     _buildExerciseInfo('${exercise.sets} sets', Icons.repeat),
                     const SizedBox(width: 12),
-                    _buildExerciseInfo('${exercise.reps} reps', Icons.fitness_center),
+                    _buildExerciseInfo(
+                      '${exercise.reps} reps',
+                      Icons.fitness_center,
+                    ),
                     const SizedBox(width: 12),
-                    _buildExerciseInfo('${exercise.durationMinutes} min', Icons.timer),
+                    _buildExerciseInfo(
+                      '${exercise.durationMinutes} min',
+                      Icons.timer,
+                    ),
                   ],
                 ),
                 const SizedBox(height: 8),
                 Wrap(
                   spacing: 6,
-                  children: exercise.targetMuscles
-                      .map((muscle) => Chip(
-                            label: Text(muscle),
-                            backgroundColor: Colors.grey[800],
-                            labelStyle: const TextStyle(color: Colors.white, fontSize: 11),
-                            padding: EdgeInsets.zero,
-                          ))
-                      .toList(),
+                  children:
+                      exercise.targetMuscles
+                          .map(
+                            (muscle) => Chip(
+                              label: Text(muscle),
+                              backgroundColor: Colors.grey[800],
+                              labelStyle: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 11,
+                              ),
+                              padding: EdgeInsets.zero,
+                            ),
+                          )
+                          .toList(),
                 ),
                 if (!isCompleted) ...[
                   const SizedBox(height: 12),
@@ -505,10 +579,7 @@ class _DailyPlanScreenState extends State<DailyPlanScreen> with SingleTickerProv
         children: [
           Icon(icon, size: 14, color: Colors.grey[400]),
           const SizedBox(width: 4),
-          Text(
-            text,
-            style: TextStyle(color: Colors.grey[300], fontSize: 12),
-          ),
+          Text(text, style: TextStyle(color: Colors.grey[300], fontSize: 12)),
         ],
       ),
     );
@@ -520,10 +591,7 @@ class _DailyPlanScreenState extends State<DailyPlanScreen> with SingleTickerProv
       children: [
         Icon(icon, size: 16, color: Colors.grey[400]),
         const SizedBox(width: 4),
-        Text(
-          text,
-          style: TextStyle(color: Colors.grey[300], fontSize: 13),
-        ),
+        Text(text, style: TextStyle(color: Colors.grey[300], fontSize: 13)),
       ],
     );
   }

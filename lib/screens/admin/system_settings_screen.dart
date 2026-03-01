@@ -452,7 +452,7 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
         Switch(
           value: value,
           onChanged: onChanged,
-          activeColor: isWarning ? Colors.orange : const Color(0xFF00D4FF),
+          activeThumbColor: isWarning ? Colors.orange : const Color(0xFF00D4FF),
         ),
       ],
     );
@@ -493,7 +493,7 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
           ),
           const SizedBox(height: 12),
           DropdownButtonFormField<String>(
-            value: _paymentGateway,
+            initialValue: _paymentGateway,
             dropdownColor: Colors.black,
             style: const TextStyle(color: Colors.white),
             decoration: InputDecoration(

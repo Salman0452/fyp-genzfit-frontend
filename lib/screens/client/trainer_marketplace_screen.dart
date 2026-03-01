@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import '../../models/trainer_model.dart';
-import '../../models/user_model.dart';
 import '../shared/loading_widget.dart';
 import 'trainer_detail_screen.dart';
 

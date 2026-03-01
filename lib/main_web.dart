@@ -7,7 +7,6 @@ import 'providers/auth_provider.dart';
 import 'providers/language_provider.dart';
 import 'utils/app_localizations.dart';
 import 'screens/admin/admin_login_screen.dart';
-import 'utils/constants.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

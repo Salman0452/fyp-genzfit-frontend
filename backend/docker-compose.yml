@@ -1,0 +1,26 @@
+# Docker Compose for local development
+version: '3.8'
+
+services:
+  avatar-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - DEBUG=true
+      - FIREBASE_CREDENTIALS_PATH=/app/firebase-service-account.json
+      - FIREBASE_STORAGE_BUCKET=${FIREBASE_STORAGE_BUCKET}
+    volumes:
+      - .:/app
+      - ./firebase-service-account.json:/app/firebase-service-account.json
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+    restart: unless-stopped
+
+  # Optional: Add Redis for caching
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    restart: unless-stopped

@@ -348,7 +348,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
           Row(
             children: [
               Expanded(child: _buildDetailRow('Clients', '${user.clients ?? 0}')),
-              Expanded(child: _buildDetailRow('Rating', '${user.rating?.toStringAsFixed(1) ?? '0.0'}')),
+              Expanded(child: _buildDetailRow('Rating', user.rating?.toStringAsFixed(1) ?? '0.0')),
             ],
           ),
           const SizedBox(height: 12),

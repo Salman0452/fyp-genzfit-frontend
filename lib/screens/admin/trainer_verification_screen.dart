@@ -307,7 +307,7 @@ class _TrainerVerificationScreenState extends State<TrainerVerificationScreen> {
               child: _buildStatItem(
                 Icons.star,
                 'Rating',
-                '${trainer.rating?.toStringAsFixed(1) ?? '0.0'}',
+                trainer.rating?.toStringAsFixed(1) ?? '0.0',
               ),
             ),
             Expanded(

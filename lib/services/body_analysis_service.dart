@@ -10,9 +10,7 @@ class BodyAnalysisService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final StorageService _storageService = StorageService();
   final PoseDetector _poseDetector = PoseDetector(
-    options: PoseDetectorOptions(
-      model: PoseDetectionModel.accurate,
-    ),
+    options: PoseDetectorOptions(model: PoseDetectionModel.accurate),
   );
 
   // Analyze pose from image and extract measurements
@@ -22,7 +20,9 @@ class BodyAnalysisService {
       final poses = await _poseDetector.processImage(inputImage);
 
       if (poses.isEmpty) {
-        throw Exception('No pose detected in the image. Please try again with better lighting and positioning.');
+        throw Exception(
+          'No pose detected in the image. Please try again with better lighting and positioning.',
+        );
       }
 
       final pose = poses.first;
@@ -53,7 +53,9 @@ class BodyAnalysisService {
   }
 
   // Calculate body measurements from landmarks
-  Map<String, double> _calculateMeasurements(Map<PoseLandmarkType, PoseLandmark> landmarks) {
+  Map<String, double> _calculateMeasurements(
+    Map<PoseLandmarkType, PoseLandmark> landmarks,
+  ) {
     final measurements = <String, double>{};
 
     try {
@@ -140,7 +142,9 @@ class BodyAnalysisService {
   }
 
   // Calculate overall confidence score
-  double _calculateOverallConfidence(Map<PoseLandmarkType, PoseLandmark> landmarks) {
+  double _calculateOverallConfidence(
+    Map<PoseLandmarkType, PoseLandmark> landmarks,
+  ) {
     if (landmarks.isEmpty) return 0.0;
 
     double totalConfidence = 0.0;
@@ -202,11 +206,12 @@ class BodyAnalysisService {
   // Get user measurements
   Future<List<MeasurementModel>> getUserMeasurements(String userId) async {
     try {
-      final snapshot = await _firestore
-          .collection('measurements')
-          .where('userId', isEqualTo: userId)
-          .orderBy('date', descending: true)
-          .get();
+      final snapshot =
+          await _firestore
+              .collection('measurements')
+              .where('userId', isEqualTo: userId)
+              .orderBy('date', descending: true)
+              .get();
 
       return snapshot.docs
           .map((doc) => MeasurementModel.fromFirestore(doc))
@@ -219,12 +224,13 @@ class BodyAnalysisService {
   // Get latest measurement
   Future<MeasurementModel?> getLatestMeasurement(String userId) async {
     try {
-      final snapshot = await _firestore
-          .collection('measurements')
-          .where('userId', isEqualTo: userId)
-          .orderBy('date', descending: true)
-          .limit(1)
-          .get();
+      final snapshot =
+          await _firestore
+              .collection('measurements')
+              .where('userId', isEqualTo: userId)
+              .orderBy('date', descending: true)
+              .limit(1)
+              .get();
 
       if (snapshot.docs.isEmpty) return null;
 
@@ -236,7 +242,10 @@ class BodyAnalysisService {
   }
 
   // Delete measurement
-  Future<void> deleteMeasurement(String measurementId, List<String> photoUrls) async {
+  Future<void> deleteMeasurement(
+    String measurementId,
+    List<String> photoUrls,
+  ) async {
     try {
       // Delete photos from storage
       for (var photoUrl in photoUrls) {

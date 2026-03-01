@@ -1,8 +1,10 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:genzfit/providers/auth_provider.dart';
 import 'package:genzfit/providers/language_provider.dart';
 import 'package:genzfit/utils/constants.dart';
+import 'package:genzfit/screens/client/edit_measurements_screen.dart';
 import 'package:genzfit/screens/client/edit_profile_screen.dart';
 import 'package:genzfit/screens/auth/forgot_password_screen.dart';
 import 'package:genzfit/screens/common/privacy_policy_screen.dart';
@@ -12,6 +14,63 @@ import 'package:genzfit/screens/common/language_selection_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
+
+  // ── Open the manual measurements editor ──────────────────────────────────
+  Future<void> _openEditMeasurements(BuildContext context) async {
+    final auth = Provider.of<AuthProvider>(context, listen: false);
+    final userId = auth.user?.uid;
+    if (userId == null) return;
+
+    // Fetch the latest measurement doc to pre-fill the form
+    Map<String, double> existingMeasurements = {};
+    double existingHeight = 0;
+    double existingWeight = 0;
+    String? existingDocId;
+
+    try {
+      final snap = await FirebaseFirestore.instance
+          .collection('measurements')
+          .where('userId', isEqualTo: userId)
+          .orderBy('date', descending: true)
+          .limit(1)
+          .get();
+
+      if (snap.docs.isNotEmpty) {
+        final data = snap.docs.first.data();
+        existingDocId = snap.docs.first.id;
+        existingHeight = (data['height'] as num?)?.toDouble() ?? 0;
+        existingWeight = (data['weight'] as num?)?.toDouble() ?? 0;
+        final raw = data['estimatedMeasurements'] as Map<String, dynamic>? ?? {};
+        existingMeasurements = raw.map(
+          (k, v) => MapEntry(k, (v as num?)?.toDouble() ?? 0),
+        );
+      }
+    } catch (_) {}
+
+    if (!context.mounted) return;
+
+    final saved = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => EditMeasurementsScreen(
+          initialMeasurements: existingMeasurements,
+          initialHeight: existingHeight,
+          initialWeight: existingWeight,
+          existingDocId: existingDocId,
+        ),
+      ),
+    );
+
+    if (saved == true && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Measurements saved! Regenerate your avatar to see changes.'),
+          backgroundColor: AppColors.success,
+          duration: Duration(seconds: 4),
+        ),
+      );
+    }
+  }
 
   Future<void> _showLogoutDialog(BuildContext context) async {
     final confirmed = await showDialog<bool>(
@@ -104,6 +163,13 @@ class SettingsScreen extends StatelessWidget {
                 ),
               );
             },
+          ),
+          _buildSettingItem(
+            context,
+            icon: Icons.straighten,
+            title: 'Body Measurements',
+            subtitle: 'Edit your measurements for the 3D avatar',
+            onTap: () => _openEditMeasurements(context),
           ),
 
           const SizedBox(height: 24),

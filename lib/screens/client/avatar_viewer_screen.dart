@@ -1,11 +1,66 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:model_viewer_plus/model_viewer_plus.dart';
 import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../../models/avatar_model.dart';
 import '../../models/measurement_model.dart';
 import '../../providers/auth_provider.dart';
+import '../../services/avatar_generation_service.dart';
+import 'rpm_avatar_screen.dart';
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Data model for a history entry
+// ─────────────────────────────────────────────────────────────────────────────
+class _AvatarEntry {
+  final String modelUrl;
+  final String thumbnailUrl;
+  final String createdAt;
+  final double? weight;
+
+  const _AvatarEntry({
+    required this.modelUrl,
+    required this.thumbnailUrl,
+    required this.createdAt,
+    this.weight,
+  });
+
+  factory _AvatarEntry.fromJson(Map<String, dynamic> j) => _AvatarEntry(
+    modelUrl: j['model_url'] as String? ?? '',
+    thumbnailUrl: j['thumbnail_url'] as String? ?? '',
+    createdAt: j['created_at'] as String? ?? '',
+    weight: (j['weight'] as num?)?.toDouble(),
+  );
+
+  String get shortDate {
+    if (createdAt.isEmpty) return '';
+    try {
+      final dt = DateTime.parse(createdAt);
+      const m = [
+        '',
+        'Jan',
+        'Feb',
+        'Mar',
+        'Apr',
+        'May',
+        'Jun',
+        'Jul',
+        'Aug',
+        'Sep',
+        'Oct',
+        'Nov',
+        'Dec',
+      ];
+      return '${dt.day} ${m[dt.month]}';
+    } catch (_) {
+      return '';
+    }
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Screen
+// ─────────────────────────────────────────────────────────────────────────────
 class AvatarViewerScreen extends StatefulWidget {
   const AvatarViewerScreen({super.key});
 
@@ -14,201 +69,229 @@ class AvatarViewerScreen extends StatefulWidget {
 }
 
 class _AvatarViewerScreenState extends State<AvatarViewerScreen> {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  Avatar3D? _avatar;
+  static const String _backendBase = String.fromEnvironment(
+    'AVATAR_API_URL',
+    defaultValue: 'http://192.168.10.14:8000',
+  );
+
+  // Avaturn subdomain — 'demo' works for free testing.
+  // Register your own at https://developer.avaturn.me/ for production.
+  static const String _avaturnSubdomain = 'genzfit';
+  final FirebaseFirestore _db = FirebaseFirestore.instance;
+  final AvatarGenerationService _avatarService = AvatarGenerationService();
+
+  String? _currentModelUrl;
   MeasurementModel? _latestMeasurement;
+  List<_AvatarEntry> _history = [];
+  int _selectedIndex = 0;
+
   bool _isLoading = true;
+  bool _isSaving = false;
+  String? _error;
 
   @override
   void initState() {
     super.initState();
-    _loadData();
+    _load();
   }
 
-  Future<void> _loadData() async {
+  // ── Load ─────────────────────────────────────────────────────────────────
+  Future<void> _load() async {
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
     try {
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      final userId = authProvider.user?.uid;
+      final auth = Provider.of<AuthProvider>(context, listen: false);
+      final uid = auth.user?.uid;
+      if (uid == null) throw Exception('Not authenticated');
 
-      if (userId == null) return;
-
-      // Load latest measurement
-      final measurementSnapshot = await _firestore
-          .collection('measurements')
-          .where('userId', isEqualTo: userId)
-          .orderBy('date', descending: true)
-          .limit(1)
-          .get();
-
-      if (measurementSnapshot.docs.isNotEmpty) {
-        _latestMeasurement = MeasurementModel.fromFirestore(measurementSnapshot.docs.first);
+      // Load latest measurement for the info panel
+      final mSnap =
+          await _db
+              .collection('measurements')
+              .where('userId', isEqualTo: uid)
+              .orderBy('date', descending: true)
+              .limit(1)
+              .get();
+      if (mSnap.docs.isNotEmpty) {
+        _latestMeasurement = MeasurementModel.fromFirestore(mSnap.docs.first);
       }
 
-      // Load or create avatar
-      final avatarSnapshot = await _firestore
-          .collection('avatars')
-          .where('userId', isEqualTo: userId)
-          .limit(1)
-          .get();
+      // Load avatar URL — first check Firestore avatars collection,
+      // then fall back to the backend REST endpoint.
+      final aSnap =
+          await _db
+              .collection('avatars')
+              .where('userId', isEqualTo: uid)
+              .orderBy('createdAt', descending: true)
+              .limit(1)
+              .get();
 
-      if (avatarSnapshot.docs.isNotEmpty) {
-        _avatar = Avatar3D.fromFirestore(avatarSnapshot.docs.first);
-      } else if (_latestMeasurement != null) {
-        // Create new avatar from measurements
-        await _createAvatar(userId, _latestMeasurement!);
+      if (aSnap.docs.isNotEmpty) {
+        _currentModelUrl = aSnap.docs.first.data()['modelUrl'] as String?;
+      } else {
+        final res = await _avatarService.getLatestAvatar(uid);
+        if (res['success'] == true && (res['modelUrl'] as String).isNotEmpty) {
+          _currentModelUrl = res['modelUrl'] as String;
+        }
       }
 
-      setState(() {
-        _isLoading = false;
-      });
+      // Load history from backend
+      await _loadHistory(uid);
     } catch (e) {
-      print('Error loading avatar data: $e');
-      setState(() {
-        _isLoading = false;
-      });
+      _error = e.toString();
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
-  Future<void> _createAvatar(String userId, MeasurementModel measurement) async {
+  Future<void> _loadHistory(String uid) async {
     try {
-      final avatarData = {
-        'userId': userId,
-        'modelUrl': _getDefaultModelUrl(),
-        'measurements': measurement.estimatedMeasurements ?? {},
-        'createdAt': Timestamp.now(),
-      };
+      final url = Uri.parse(
+        '$_backendBase/api/v1/avatar/history/$uid?limit=30',
+      );
+      final res = await http.get(url).timeout(const Duration(seconds: 10));
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body) as Map<String, dynamic>;
+        final raw =
+            (data['avatars'] as List? ?? [])
+                .whereType<Map<String, dynamic>>()
+                .toList();
+        if (mounted) {
+          setState(() {
+            _history = raw.map(_AvatarEntry.fromJson).toList();
+            _selectedIndex = 0;
+          });
+        }
+      }
+    } catch (_) {}
+  }
 
-      final doc = await _firestore.collection('avatars').add(avatarData);
-      final avatarDoc = await doc.get();
-      _avatar = Avatar3D.fromFirestore(avatarDoc);
+  // ── Open Avaturn customiser ─────────────────────────────────────────────
+  Future<void> _openRpmCustomiser() async {
+    // No guard needed — 'demo' subdomain always works for testing.
+
+    final auth = Provider.of<AuthProvider>(context, listen: false);
+    final uid = auth.user?.uid;
+    if (uid == null) return;
+
+    final avatarUrl = await Navigator.push<String>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => RpmAvatarScreen(subdomain: _avaturnSubdomain),
+        fullscreenDialog: true,
+      ),
+    );
+
+    if (avatarUrl == null || avatarUrl.isEmpty) return;
+
+    setState(() => _isSaving = true);
+    try {
+      // Save to Firestore avatars collection
+      await _db.collection('avatars').add({
+        'userId': uid,
+        'modelUrl': avatarUrl,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+
+      // Also notify our backend (fire-and-forget)
+      _avatarService.saveRpmAvatar(
+        userId: uid,
+        rpmModelUrl: avatarUrl,
+        height: _latestMeasurement?.height,
+        weight: _latestMeasurement?.weight,
+        measurements:
+            _latestMeasurement?.estimatedMeasurements.map(
+              (k, v) => MapEntry(k, v as dynamic),
+            ) ??
+            {},
+      );
+
+      setState(() {
+        _currentModelUrl = avatarUrl;
+        _selectedIndex = 0;
+      });
+
+      _showSnack('🎉 Avatar saved!', Colors.green);
+      await _loadHistory(uid);
     } catch (e) {
-      print('Error creating avatar: $e');
+      _showSnack('Failed to save avatar: $e', Colors.red);
+    } finally {
+      if (mounted) setState(() => _isSaving = false);
     }
   }
 
-  String _getDefaultModelUrl() {
-    // For now, use a placeholder 3D model URL
-    // In production, this would be dynamically generated based on measurements
-    return 'https://modelviewer.dev/shared-assets/models/Astronaut.glb';
+  void _showSnack(String msg, Color color) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(msg), backgroundColor: color));
   }
 
+  // ── Build ────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
         backgroundColor: Colors.black,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text(
-          '3D Body Avatar',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
+        title: const Text('3D Avatar', style: TextStyle(color: Colors.white)),
+        iconTheme: const IconThemeData(color: Colors.white),
         actions: [
-          if (_avatar != null)
+          if (_isSaving)
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16),
+              child: Center(
+                child: SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            )
+          else
             IconButton(
-              icon: const Icon(Icons.refresh, color: Colors.white),
-              onPressed: _loadData,
+              icon: const Icon(Icons.person_add_alt_1, color: Colors.white),
+              tooltip: 'Create / Change Avatar',
+              onPressed: _openRpmCustomiser,
             ),
+          IconButton(
+            icon: const Icon(Icons.refresh, color: Colors.white54),
+            tooltip: 'Reload',
+            onPressed: _load,
+          ),
         ],
       ),
-      body: _isLoading
-          ? const Center(
-              child: CircularProgressIndicator(color: Colors.white),
-            )
-          : _avatar == null && _latestMeasurement == null
-              ? _buildNoDataView()
+      body:
+          _isLoading
+              ? const Center(
+                child: CircularProgressIndicator(color: Colors.white),
+              )
+              : _error != null
+              ? _buildError()
               : Column(
-                  children: [
-                    Expanded(
-                      flex: 3,
-                      child: _build3DViewer(),
-                    ),
-                    Expanded(
-                      flex: 2,
-                      child: _buildMeasurementsPanel(),
-                    ),
-                  ],
-                ),
+                children: [
+                  Expanded(flex: 3, child: _build3DViewer()),
+                  Expanded(flex: 2, child: _buildInfoPanel()),
+                  if (_history.length > 1) _buildHistoryStrip(),
+                ],
+              ),
     );
   }
 
-  Widget _buildNoDataView() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.person_outline,
-              size: 100,
-              color: Colors.white.withOpacity(0.3),
-            ),
-            const SizedBox(height: 24),
-            const Text(
-              'No Body Scan Data',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'Complete a body scan to view your 3D avatar',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: Colors.white.withOpacity(0.7),
-                fontSize: 16,
-              ),
-            ),
-            const SizedBox(height: 32),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pop(context);
-                // Navigate to body scan
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.white,
-                foregroundColor: Colors.black,
-                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              child: const Text(
-                'Start Body Scan',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
+  // ── 3D viewer ────────────────────────────────────────────────────────────
   Widget _build3DViewer() {
-    if (_avatar?.modelUrl == null) {
-      return Container(
-        color: Colors.grey[900],
-        child: const Center(
-          child: Text(
-            'Generating 3D Model...',
-            style: TextStyle(color: Colors.white),
-          ),
-        ),
-      );
+    final url =
+        _history.isNotEmpty
+            ? _history[_selectedIndex].modelUrl
+            : _currentModelUrl;
+
+    if (url == null || url.isEmpty) {
+      return _buildNoAvatar();
     }
 
     return Container(
@@ -216,26 +299,83 @@ class _AvatarViewerScreenState extends State<AvatarViewerScreen> {
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [
-            Colors.grey[900]!,
-            Colors.black,
-          ],
+          colors: [Colors.grey[900]!, Colors.black],
         ),
       ),
       child: ModelViewer(
-        src: _avatar!.modelUrl!,
-        alt: "3D Body Avatar",
-        ar: true,
-        autoRotate: true,
+        src: url,
+        alt: '3D Avatar',
+        ar: false,
+        autoRotate: false,
         cameraControls: true,
-        backgroundColor: Colors.black,
+        backgroundColor: const Color(0xFF1A1A2E),
         loading: Loading.eager,
-        autoPlay: true,
+        interactionPrompt: InteractionPrompt.none,
+        environmentImage:
+            'https://modelviewer.dev/shared-assets/environments/neutral.hdr',
+        exposure: 1.0,
+        shadowIntensity: 1.0,
+        shadowSoftness: 0.8,
       ),
     );
   }
 
-  Widget _buildMeasurementsPanel() {
+  Widget _buildNoAvatar() {
+    return Container(
+      color: const Color(0xFF1A1A2E),
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.person_outline,
+              size: 80,
+              color: Colors.white.withOpacity(0.3),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'No Avatar Yet',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Tap the 👤+ button above to create your avatar',
+              style: TextStyle(
+                color: Colors.white.withOpacity(0.6),
+                fontSize: 14,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
+              onPressed: _openRpmCustomiser,
+              icon: const Icon(Icons.person_add_alt_1),
+              label: const Text('Create Avatar'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.deepPurpleAccent,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 28,
+                  vertical: 14,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ── Info panel ───────────────────────────────────────────────────────────
+  Widget _buildInfoPanel() {
+    final m = _latestMeasurement;
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
@@ -243,40 +383,86 @@ class _AvatarViewerScreenState extends State<AvatarViewerScreen> {
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Body Measurements',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
+            Row(
+              children: [
+                const Text(
+                  'Body Measurements',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const Spacer(),
+                TextButton.icon(
+                  onPressed: _openRpmCustomiser,
+                  icon: const Icon(
+                    Icons.edit,
+                    size: 14,
+                    color: Colors.deepPurpleAccent,
+                  ),
+                  label: const Text(
+                    'Change Avatar',
+                    style: TextStyle(
+                      color: Colors.deepPurpleAccent,
+                      fontSize: 12,
+                    ),
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 20),
-            _buildMeasurementGrid(),
-            const SizedBox(height: 20),
-            _buildBMICard(),
+            const SizedBox(height: 16),
+            if (m == null)
+              Text(
+                'No measurements saved yet.',
+                style: TextStyle(color: Colors.white.withOpacity(0.5)),
+              )
+            else
+              _buildMeasurementGrid(m),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildMeasurementGrid() {
-    final measurements = _avatar?.measurements ?? _latestMeasurement?.estimatedMeasurements ?? {};
-    final height = _latestMeasurement?.height ?? 0;
-    final weight = _latestMeasurement?.weight ?? 0;
-
+  Widget _buildMeasurementGrid(MeasurementModel m) {
+    final meas = m.estimatedMeasurements;
     final items = [
-      {'label': 'Height', 'value': '${height.toStringAsFixed(0)} cm', 'icon': Icons.height},
-      {'label': 'Weight', 'value': '${weight.toStringAsFixed(1)} kg', 'icon': Icons.monitor_weight},
-      {'label': 'Chest', 'value': '${(measurements['chest'] ?? 0).toStringAsFixed(0)} cm', 'icon': Icons.accessibility},
-      {'label': 'Waist', 'value': '${(measurements['waist'] ?? 0).toStringAsFixed(0)} cm', 'icon': Icons.accessibility_new},
-      {'label': 'Hips', 'value': '${(measurements['hips'] ?? 0).toStringAsFixed(0)} cm', 'icon': Icons.accessibility},
-      {'label': 'Shoulders', 'value': '${(measurements['shoulderWidth'] ?? 0).toStringAsFixed(0)} cm', 'icon': Icons.open_in_full},
+      {
+        'label': 'Height',
+        'value': '${m.height.toStringAsFixed(0)} cm',
+        'icon': Icons.height,
+      },
+      {
+        'label': 'Weight',
+        'value': '${m.weight.toStringAsFixed(1)} kg',
+        'icon': Icons.monitor_weight_outlined,
+      },
+      {
+        'label': 'Chest',
+        'value': '${(meas['chest'] ?? 0).toStringAsFixed(0)} cm',
+        'icon': Icons.accessibility,
+      },
+      {
+        'label': 'Waist',
+        'value': '${(meas['waist'] ?? 0).toStringAsFixed(0)} cm',
+        'icon': Icons.accessibility_new,
+      },
+      {
+        'label': 'Hips',
+        'value': '${(meas['hips'] ?? 0).toStringAsFixed(0)} cm',
+        'icon': Icons.accessibility,
+      },
+      {
+        'label': 'Shoulders',
+        'value':
+            '${(meas['shoulderWidth'] ?? meas['shoulders'] ?? 0).toStringAsFixed(0)} cm',
+        'icon': Icons.open_in_full,
+      },
     ];
 
     return GridView.builder(
@@ -285,12 +471,12 @@ class _AvatarViewerScreenState extends State<AvatarViewerScreen> {
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
         childAspectRatio: 2.5,
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
+        crossAxisSpacing: 10,
+        mainAxisSpacing: 10,
       ),
       itemCount: items.length,
-      itemBuilder: (context, index) {
-        final item = items[index];
+      itemBuilder: (_, i) {
+        final item = items[i];
         return Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
@@ -301,32 +487,30 @@ class _AvatarViewerScreenState extends State<AvatarViewerScreen> {
             children: [
               Icon(
                 item['icon'] as IconData,
-                color: Colors.white.withOpacity(0.7),
-                size: 20,
+                color: Colors.white.withOpacity(0.6),
+                size: 18,
               ),
               const SizedBox(width: 8),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      item['label'] as String,
-                      style: TextStyle(
-                        color: Colors.white.withOpacity(0.6),
-                        fontSize: 11,
-                      ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    item['label'] as String,
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.55),
+                      fontSize: 10,
                     ),
-                    Text(
-                      item['value'] as String,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                      ),
+                  ),
+                  Text(
+                    item['value'] as String,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -335,92 +519,143 @@ class _AvatarViewerScreenState extends State<AvatarViewerScreen> {
     );
   }
 
-  Widget _buildBMICard() {
-    final bmi = _latestMeasurement?.bmi ?? _avatar?.bmi;
-    if (bmi == null) return const SizedBox.shrink();
-
-    String category;
-    Color color;
-
-    if (bmi < 18.5) {
-      category = 'Underweight';
-      color = Colors.blue;
-    } else if (bmi < 25) {
-      category = 'Normal';
-      color = Colors.green;
-    } else if (bmi < 30) {
-      category = 'Overweight';
-      color = Colors.orange;
-    } else {
-      category = 'Obese';
-      color = Colors.red;
-    }
-
+  // ── History strip ────────────────────────────────────────────────────────
+  Widget _buildHistoryStrip() {
     return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            color.withOpacity(0.2),
-            color.withOpacity(0.1),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.3)),
-      ),
+      height: 110,
+      color: const Color(0xFF111111),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                'Body Mass Index (BMI)',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                ),
+          const Padding(
+            padding: EdgeInsets.fromLTRB(16, 8, 16, 4),
+            child: Text(
+              'History',
+              style: TextStyle(
+                color: Colors.white54,
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.5,
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                decoration: BoxDecoration(
-                  color: color,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  category,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ],
+            ),
           ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Text(
-                bmi.toStringAsFixed(1),
-                style: TextStyle(
-                  color: color,
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                'kg/m²',
-                style: TextStyle(
-                  color: Colors.white.withOpacity(0.6),
-                  fontSize: 14,
-                ),
-              ),
-            ],
+          Expanded(
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              itemCount: _history.length,
+              itemBuilder: (_, i) {
+                final e = _history[i];
+                final sel = i == _selectedIndex;
+                return GestureDetector(
+                  onTap: () => setState(() => _selectedIndex = i),
+                  child: Container(
+                    width: 64,
+                    margin: const EdgeInsets.symmetric(horizontal: 4),
+                    decoration: BoxDecoration(
+                      color:
+                          sel
+                              ? Colors.deepPurpleAccent.withOpacity(0.2)
+                              : Colors.grey[850],
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color:
+                            sel ? Colors.deepPurpleAccent : Colors.transparent,
+                        width: 2,
+                      ),
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        if (e.thumbnailUrl.isNotEmpty)
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(6),
+                            child: Image.network(
+                              e.thumbnailUrl,
+                              width: 36,
+                              height: 36,
+                              fit: BoxFit.cover,
+                              errorBuilder:
+                                  (_, __, ___) => Icon(
+                                    Icons.person,
+                                    color:
+                                        sel
+                                            ? Colors.deepPurpleAccent
+                                            : Colors.white38,
+                                    size: 24,
+                                  ),
+                            ),
+                          )
+                        else
+                          Icon(
+                            Icons.person,
+                            color:
+                                sel ? Colors.deepPurpleAccent : Colors.white38,
+                            size: 24,
+                          ),
+                        const SizedBox(height: 4),
+                        Text(
+                          e.shortDate.isNotEmpty ? e.shortDate : 'Avatar',
+                          style: TextStyle(
+                            color: sel ? Colors.deepPurpleAccent : Colors.white,
+                            fontSize: 9,
+                            fontWeight:
+                                sel ? FontWeight.bold : FontWeight.normal,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        if (i == 0)
+                          Container(
+                            margin: const EdgeInsets.only(top: 2),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 4,
+                              vertical: 1,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.green.withOpacity(0.25),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: const Text(
+                              'LATEST',
+                              style: TextStyle(
+                                color: Colors.greenAccent,
+                                fontSize: 7,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
           ),
         ],
+      ),
+    );
+  }
+
+  // ── Error ────────────────────────────────────────────────────────────────
+  Widget _buildError() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.error_outline, color: Colors.redAccent, size: 64),
+            const SizedBox(height: 16),
+            Text(
+              _error ?? 'Unknown error',
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: Colors.white70),
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton(onPressed: _load, child: const Text('Retry')),
+          ],
+        ),
       ),
     );
   }

@@ -5,7 +5,6 @@ import 'package:genzfit/utils/constants.dart';
 import 'package:genzfit/screens/client/body_scan_screen.dart';
 import 'package:genzfit/screens/client/client_profile_screen.dart';
 import 'package:genzfit/screens/client/avatar_viewer_screen.dart';
-import 'package:genzfit/screens/client/recommendations_screen.dart';
 import 'package:genzfit/screens/client/trainer_marketplace_screen.dart';
 import 'package:genzfit/screens/client/ai_coach_screen.dart';
 import 'package:genzfit/screens/client/daily_plan_screen.dart';
@@ -50,7 +49,9 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
       final userId = authProvider.user?.uid;
 
       if (userId != null) {
-        final measurement = await _bodyAnalysisService.getLatestMeasurement(userId);
+        final measurement = await _bodyAnalysisService.getLatestMeasurement(
+          userId,
+        );
         setState(() {
           _latestMeasurement = measurement;
           _isLoading = false;
@@ -93,10 +94,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
           type: BottomNavigationBarType.fixed,
           elevation: 0,
           items: const [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.home),
-              label: 'Home',
-            ),
+            BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
             BottomNavigationBarItem(
               icon: Icon(Icons.fitness_center),
               label: 'Trainers',
@@ -105,10 +103,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
               icon: Icon(Icons.chat_bubble_outline),
               label: 'Messages',
             ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.person),
-              label: 'Profile',
-            ),
+            BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
           ],
         ),
       ),
@@ -133,7 +128,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Hello, ${user?.name?.split(' ').first ?? 'User'}!',
+                      'Hello, ${user?.name.split(' ').first ?? 'User'}!',
                       style: const TextStyle(
                         fontSize: 28,
                         fontWeight: FontWeight.bold,
@@ -275,11 +270,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
               color: AppColors.accent.withOpacity(0.2),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(
-              goalIcon,
-              color: AppColors.accent,
-              size: 32,
-            ),
+            child: Icon(goalIcon, color: AppColors.accent, size: 32),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -381,12 +372,17 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                 Icons.smart_toy,
                 Colors.blue,
                 () {
-                  final authProvider = Provider.of<AuthProvider>(context, listen: false);
+                  final authProvider = Provider.of<AuthProvider>(
+                    context,
+                    listen: false,
+                  );
                   if (authProvider.userModel != null) {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => AICoachScreen(user: authProvider.userModel!),
+                        builder:
+                            (context) =>
+                                AICoachScreen(user: authProvider.userModel!),
                       ),
                     );
                   }
@@ -409,9 +405,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
               ),
             ),
             const SizedBox(width: 12),
-            Expanded(
-              child: Container(),
-            ),
+            Expanded(child: Container()),
           ],
         ),
       ],
@@ -501,11 +495,12 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                   measurement.bmi < 18.5
                       ? Icons.trending_down
                       : measurement.bmi < 25
-                          ? Icons.check_circle
-                          : Icons.trending_up,
-                  color: measurement.bmi < 18.5
-                      ? AppColors.info
-                      : measurement.bmi < 25
+                      ? Icons.check_circle
+                      : Icons.trending_up,
+                  color:
+                      measurement.bmi < 18.5
+                          ? AppColors.info
+                          : measurement.bmi < 25
                           ? AppColors.success
                           : AppColors.warning,
                   size: 20,
@@ -542,10 +537,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
         const SizedBox(height: 4),
         Text(
           label,
-          style: const TextStyle(
-            fontSize: 12,
-            color: AppColors.textSecondary,
-          ),
+          style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
         ),
       ],
     );
@@ -578,19 +570,14 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
           const Text(
             'Take your first body scan to start tracking your progress',
             textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 14,
-              color: AppColors.textSecondary,
-            ),
+            style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
           ),
           const SizedBox(height: 24),
           ElevatedButton.icon(
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(
-                  builder: (context) => const BodyScanScreen(),
-                ),
+                MaterialPageRoute(builder: (context) => const BodyScanScreen()),
               ).then((_) => _loadLatestMeasurement());
             },
             style: ElevatedButton.styleFrom(

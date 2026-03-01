@@ -110,7 +110,7 @@ class _TrainerHomeScreenState extends State<TrainerHomeScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Welcome back, ${user?.name?.split(' ').first ?? 'Trainer'}!',
+                      'Welcome back, ${user?.name.split(' ').first ?? 'Trainer'}!',
                       style: const TextStyle(
                         fontSize: 28,
                         fontWeight: FontWeight.bold,

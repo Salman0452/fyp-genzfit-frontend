@@ -19,6 +19,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _heightController = TextEditingController();
+  final TextEditingController _weightController = TextEditingController();
+  final TextEditingController _chestController = TextEditingController();
+  final TextEditingController _waistController = TextEditingController();
+  final TextEditingController _hipsController = TextEditingController();
+  final TextEditingController _shoulderController = TextEditingController();
   final StorageService _storageService = StorageService();
   
   String? _selectedGoal;
@@ -41,7 +47,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     _loadUserData();
   }
 
-  void _loadUserData() {
+  void _loadUserData() async {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final user = authProvider.userModel;
     
@@ -54,6 +60,34 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     } else {
       // If user's goal doesn't match, set to first option
       _selectedGoal = _goals.first;
+    }
+
+    // Load existing measurements from Firestore
+    if (user != null) {
+      try {
+        final measurementSnapshot = await FirebaseFirestore.instance
+            .collection('measurements')
+            .where('userId', isEqualTo: user.id)
+            .orderBy('date', descending: true)
+            .limit(1)
+            .get();
+
+        if (measurementSnapshot.docs.isNotEmpty) {
+          final data = measurementSnapshot.docs.first.data();
+          _heightController.text = (data['height'] ?? '').toString();
+          _weightController.text = (data['weight'] ?? '').toString();
+          
+          final measurements = data['estimatedMeasurements'] as Map<String, dynamic>?;
+          if (measurements != null) {
+            _chestController.text = (measurements['chest'] ?? '').toString();
+            _waistController.text = (measurements['waist'] ?? '').toString();
+            _hipsController.text = (measurements['hips'] ?? '').toString();
+            _shoulderController.text = (measurements['shoulderWidth'] ?? '').toString();
+          }
+        }
+      } catch (e) {
+        print('Error loading measurements: $e');
+      }
     }
   }
 
@@ -111,6 +145,29 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           .doc(userId)
           .update(updates);
 
+      // Save or update measurements if provided
+      if (_heightController.text.isNotEmpty && _weightController.text.isNotEmpty) {
+        final measurementData = {
+          'userId': userId,
+          'date': Timestamp.now(),
+          'height': double.tryParse(_heightController.text) ?? 0.0,
+          'weight': double.tryParse(_weightController.text) ?? 0.0,
+          'bodyLandmarks': {},
+          'photoUrls': [],
+          'estimatedMeasurements': {
+            'chest': double.tryParse(_chestController.text) ?? 0.0,
+            'waist': double.tryParse(_waistController.text) ?? 0.0,
+            'hips': double.tryParse(_hipsController.text) ?? 0.0,
+            'shoulderWidth': double.tryParse(_shoulderController.text) ?? 0.0,
+          },
+          'notes': 'Updated from profile',
+        };
+
+        await FirebaseFirestore.instance
+            .collection('measurements')
+            .add(measurementData);
+      }
+
       // Refresh user data
       await authProvider.refreshUser();
 
@@ -144,6 +201,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   void dispose() {
     _nameController.dispose();
     _emailController.dispose();
+    _heightController.dispose();
+    _weightController.dispose();
+    _chestController.dispose();
+    _waistController.dispose();
+    _hipsController.dispose();
+    _shoulderController.dispose();
     super.dispose();
   }
 
@@ -178,7 +241,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                             : null),
                     child: _selectedImage == null && user?.avatarUrl == null
                         ? Text(
-                            user?.name?.substring(0, 1).toUpperCase() ?? 'U',
+                            user?.name.substring(0, 1).toUpperCase() ?? 'U',
                             style: const TextStyle(
                               fontSize: 48,
                               fontWeight: FontWeight.bold,
@@ -266,7 +329,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
               // Goal dropdown
               DropdownButtonFormField<String>(
-                value: _selectedGoal,
+                initialValue: _selectedGoal,
                 dropdownColor: AppColors.surface,
                 style: const TextStyle(color: AppColors.textPrimary),
                 decoration: InputDecoration(
@@ -295,6 +358,159 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   }
                   return null;
                 },
+              ),
+              const SizedBox(height: 32),
+
+              // Body Measurements Section
+              const Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'Body Measurements',
+                  style: TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 4),
+              const Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'Add your measurements to generate a 3D avatar',
+                  style: TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 13,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // Height & Weight Row
+              Row(
+                children: [
+                  Expanded(
+                    child: TextFormField(
+                      controller: _heightController,
+                      keyboardType: TextInputType.number,
+                      style: const TextStyle(color: AppColors.textPrimary),
+                      decoration: InputDecoration(
+                        labelText: 'Height (cm)',
+                        labelStyle: const TextStyle(color: AppColors.textSecondary),
+                        prefixIcon: const Icon(Icons.height, color: AppColors.accent),
+                        filled: true,
+                        fillColor: AppColors.surface,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(AppSizes.borderRadius),
+                          borderSide: BorderSide.none,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: TextFormField(
+                      controller: _weightController,
+                      keyboardType: TextInputType.number,
+                      style: const TextStyle(color: AppColors.textPrimary),
+                      decoration: InputDecoration(
+                        labelText: 'Weight (kg)',
+                        labelStyle: const TextStyle(color: AppColors.textSecondary),
+                        prefixIcon: const Icon(Icons.monitor_weight, color: AppColors.accent),
+                        filled: true,
+                        fillColor: AppColors.surface,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(AppSizes.borderRadius),
+                          borderSide: BorderSide.none,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+
+              // Chest & Waist Row
+              Row(
+                children: [
+                  Expanded(
+                    child: TextFormField(
+                      controller: _chestController,
+                      keyboardType: TextInputType.number,
+                      style: const TextStyle(color: AppColors.textPrimary),
+                      decoration: InputDecoration(
+                        labelText: 'Chest (cm)',
+                        labelStyle: const TextStyle(color: AppColors.textSecondary),
+                        filled: true,
+                        fillColor: AppColors.surface,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(AppSizes.borderRadius),
+                          borderSide: BorderSide.none,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: TextFormField(
+                      controller: _waistController,
+                      keyboardType: TextInputType.number,
+                      style: const TextStyle(color: AppColors.textPrimary),
+                      decoration: InputDecoration(
+                        labelText: 'Waist (cm)',
+                        labelStyle: const TextStyle(color: AppColors.textSecondary),
+                        filled: true,
+                        fillColor: AppColors.surface,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(AppSizes.borderRadius),
+                          borderSide: BorderSide.none,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+
+              // Hips & Shoulders Row
+              Row(
+                children: [
+                  Expanded(
+                    child: TextFormField(
+                      controller: _hipsController,
+                      keyboardType: TextInputType.number,
+                      style: const TextStyle(color: AppColors.textPrimary),
+                      decoration: InputDecoration(
+                        labelText: 'Hips (cm)',
+                        labelStyle: const TextStyle(color: AppColors.textSecondary),
+                        filled: true,
+                        fillColor: AppColors.surface,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(AppSizes.borderRadius),
+                          borderSide: BorderSide.none,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: TextFormField(
+                      controller: _shoulderController,
+                      keyboardType: TextInputType.number,
+                      style: const TextStyle(color: AppColors.textPrimary),
+                      decoration: InputDecoration(
+                        labelText: 'Shoulders (cm)',
+                        labelStyle: const TextStyle(color: AppColors.textSecondary),
+                        filled: true,
+                        fillColor: AppColors.surface,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(AppSizes.borderRadius),
+                          borderSide: BorderSide.none,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 32),
 

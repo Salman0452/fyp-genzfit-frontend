@@ -497,7 +497,7 @@ class _TrainerDashboardScreenState extends State<TrainerDashboardScreen> {
                       ),
                     ),
                     Text(
-                      'Goal: ${goals}',
+                      'Goal: $goals',
                       style: GoogleFonts.inter(
                         fontSize: 12,
                         color: Colors.white60,
