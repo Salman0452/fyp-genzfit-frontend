@@ -27,7 +27,7 @@ class _AvatarViewerScreenState extends State<AvatarViewerScreen>
   // ── State ──────────────────────────────────────────────────────────────────
   List<AvatarSnapshot> _snapshots = [];
   int _selectedIndex = 0;
-  String? _currentGlbPath; // absolute local path for ModelViewer
+  String? _currentGlbUrl; // Cloudinary https:// URL for ModelViewer
   bool _isLoading = true;
   bool _isGenerating = false;
   bool _backendAvailable = false;
@@ -90,21 +90,30 @@ class _AvatarViewerScreenState extends State<AvatarViewerScreen>
   Future<void> _loadGlbForSelected() async {
     if (_snapshots.isEmpty) return;
     final snap = _snapshots[_selectedIndex];
+
+    // If the snapshot already carries the URL (loaded from Firestore), use it
+    // directly without a network round-trip.
+    if (snap.glbUrl != null && snap.glbUrl!.isNotEmpty) {
+      if (mounted) setState(() => _currentGlbUrl = snap.glbUrl);
+      return;
+    }
+
+    // Fallback: fetch from Firestore in case the in-memory snapshot is stale
     setState(() => _statusMessage = 'Loading model…');
     try {
-      final path = await _smplService.getGlbPath(
+      final url = await _smplService.getGlbUrl(
         userId: _userId!,
         snapDate: snap.date,
       );
       if (mounted)
         setState(() {
-          _currentGlbPath = path;
+          _currentGlbUrl = url;
           _statusMessage = '';
         });
     } catch (e) {
       if (mounted)
         setState(
-            () => _statusMessage = 'Could not load model for ${snap.date}');
+            () => _statusMessage = 'Could not load model for \${snap.date}');
     }
   }
 
@@ -130,15 +139,19 @@ class _AvatarViewerScreenState extends State<AvatarViewerScreen>
     });
 
     try {
-      final path = await _smplService.generateAvatar(
+      final glbUrl = await _smplService.generateAvatar(
         userId: userId,
         measurement: latest,
+        skinTone: Provider.of<AuthProvider>(context, listen: false)
+                .userModel
+                ?.skinTone ??
+            'medium',
       );
       _snapshots = await _smplService.getAvatarHistory(userId);
       _selectedIndex = _snapshots.length - 1;
       if (mounted) {
         setState(() {
-          _currentGlbPath = path;
+          _currentGlbUrl = glbUrl;
           _isGenerating = false;
           _statusMessage = '';
         });
@@ -235,10 +248,9 @@ class _AvatarViewerScreenState extends State<AvatarViewerScreen>
   }
 
   Widget _build3DViewer() {
-    final String? src = _currentGlbPath != null
-        ? (_currentGlbPath!.startsWith('/') || _currentGlbPath!.contains(':\\')
-            ? 'file://$_currentGlbPath'
-            : _currentGlbPath)
+    // Cloudinary URLs are already https:// — pass straight to ModelViewer.
+    final String? src = (_currentGlbUrl != null && _currentGlbUrl!.isNotEmpty)
+        ? _currentGlbUrl
         : null;
 
     if (src == null || src.isEmpty) {
@@ -263,13 +275,13 @@ class _AvatarViewerScreenState extends State<AvatarViewerScreen>
 
     return Stack(
       children: [
-        // Gradient background so the WebView scene blends naturally
+        // Soft neutral background so skin-toned avatar stands out
         Container(
           decoration: const BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
-              colors: [Color(0xFF0A0B0A), Color(0xFF0A0B0A)],
+              colors: [Color(0xFF1C1F2E), Color(0xFF12141E)],
             ),
           ),
         ),
@@ -280,11 +292,11 @@ class _AvatarViewerScreenState extends State<AvatarViewerScreen>
           autoRotate: true,
           autoRotateDelay: 1500,
           cameraControls: true,
-          backgroundColor: const Color(0xFF0A0B0A),
+          backgroundColor: const Color(0xFF1C1F2E),
           loading: Loading.eager,
           autoPlay: true,
-          shadowIntensity: 0.8,
-          exposure: 1.2,
+          shadowIntensity: 0.4,
+          exposure: 3.0,
           cameraOrbit: '0deg 75deg 2.5m',
           minCameraOrbit: 'auto auto 0.5m',
           maxCameraOrbit: 'auto auto 5m',
@@ -636,51 +648,6 @@ class _AvatarViewerScreenState extends State<AvatarViewerScreen>
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14)),
                 ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildNoSnapshotView() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.photo_camera_outlined,
-                size: 90, color: Colors.white.withOpacity(0.25)),
-            const SizedBox(height: 24),
-            const Text('No Snapshots Yet',
-                style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold)),
-            const SizedBox(height: 12),
-            Text(
-              'Your realistic avatar is ready!\nComplete a body scan, then tap Update Avatar '
-              'to see your personalised 3D avatar with your exact measurements.',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                  color: Colors.white.withOpacity(0.6),
-                  fontSize: 15,
-                  height: 1.5),
-            ),
-            const SizedBox(height: 32),
-            ElevatedButton.icon(
-              onPressed: () => Navigator.pop(context),
-              icon: const Icon(Icons.camera_alt),
-              label: const Text('Go to Body Scan'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.accent,
-                foregroundColor: Colors.white,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12)),
               ),
             ),
           ],

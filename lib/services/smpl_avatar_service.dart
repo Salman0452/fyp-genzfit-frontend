@@ -1,29 +1,27 @@
 import 'dart:convert';
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
-import 'package:path_provider/path_provider.dart';
 
 import '../models/measurement_model.dart';
 
 // ---------------------------------------------------------------------------
 // SmplAvatarService
 // ---------------------------------------------------------------------------
-// Calls the FastAPI SMPL-X backend (/generate-avatar), downloads the
-// returned binary .glb file, caches it locally, and persists snapshot
-// metadata to Firestore.
+// Calls the FastAPI SMPL-X backend (/generate-avatar), which:
+//   1. Generates the SMPL-X mesh
+//   2. Uploads the .glb to Cloudinary
+//   3. Returns a JSON response containing the Cloudinary URL (glb_url)
 //
-// The backend POST /generate-avatar accepts JSON and returns a binary .glb
-// (Content-Type: model/gltf-binary). No base64 wrapping – raw bytes.
+// The Cloudinary URL is persisted to Firestore (avatar_snapshots).
+// No local file storage — the GLB lives permanently in Cloudinary.
 // ---------------------------------------------------------------------------
 class SmplAvatarService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   /// Backend base URL. Override in .env via SMPL_BACKEND_URL.
-  /// Default: Android emulator host loopback (10.0.2.2 = your machine).
   String get _baseUrl =>
       dotenv.env['SMPL_BACKEND_URL'] ?? 'http://10.0.2.2:8000';
 
@@ -31,25 +29,21 @@ class SmplAvatarService {
 
   /// Generate a SMPL-X avatar from [measurement].
   ///
-  /// Calls POST /generate-avatar on the backend. The backend generates the
-  /// SMPL-X mesh, applies UV skin texture, and returns binary .glb bytes.
-  ///
-  /// The .glb is saved locally under avatars/{userId}/{date}.glb.
-  /// Snapshot metadata is persisted to Firestore (avatar_snapshots).
-  ///
-  /// Returns the absolute local file path of the saved .glb.
-  Future<String> generateAvatar({
+  /// [skinTone] must be one of: light | medium | brown | dark.
+  /// Defaults to "medium" if not provided.
+  Future<String?> generateAvatar({
     required String userId,
     required MeasurementModel measurement,
+    String skinTone = 'medium',
   }) async {
-    // Build JSON request body for the backend
     final payload = <String, dynamic>{
+      'user_id': userId,
       'gender': measurement.gender ?? 'neutral',
       'height': measurement.height,
       'weight': measurement.weight,
+      'skin_tone': skinTone,
     };
 
-    // Include body measurements if available (chest, waist, hips, etc.)
     if (measurement.estimatedMeasurements.isNotEmpty) {
       payload['body_measurements'] = measurement.estimatedMeasurements;
     }
@@ -64,7 +58,7 @@ class SmplAvatarService {
             headers: {'Content-Type': 'application/json'},
             body: jsonEncode(payload),
           )
-          .timeout(const Duration(seconds: 120));
+          .timeout(const Duration(seconds: 180));
     } on SocketException catch (e) {
       throw SmplBackendException(
         'Cannot reach SMPL-X backend at $_baseUrl.\n'
@@ -75,20 +69,20 @@ class SmplAvatarService {
 
     if (response.statusCode != 200) {
       throw SmplBackendException(
-          'Backend returned ${response.statusCode}: ${response.body}');
+          'Backend returned \${response.statusCode}: \${response.body}');
     }
 
-    // Backend returns raw .glb bytes (Content-Type: model/gltf-binary)
-    final glbBytes = response.bodyBytes;
-    if (glbBytes.isEmpty) {
-      throw const SmplBackendException('Backend returned an empty .glb.');
+    final Map<String, dynamic> jsonBody;
+    try {
+      jsonBody = jsonDecode(response.body) as Map<String, dynamic>;
+    } catch (e) {
+      throw SmplBackendException('Backend returned invalid JSON: $e');
     }
 
-    // Save .glb to local storage
+    final glbUrl = jsonBody['glb_url'] as String?;
+
+    // Persist snapshot metadata + Cloudinary URL to Firestore
     final dateKey = _dateKey(measurement.date);
-    final localPath = await _saveGlb(userId, dateKey, glbBytes);
-
-    // Persist snapshot metadata to Firestore
     await _persistSnapshot(
       userId: userId,
       dateKey: dateKey,
@@ -97,10 +91,11 @@ class SmplAvatarService {
         'weight': measurement.weight,
         ...measurement.estimatedMeasurements,
       },
-      localGlbPath: localPath,
+      glbUrl: glbUrl,
+      skinTone: skinTone,
     );
 
-    return localPath;
+    return glbUrl;
   }
 
   /// Load all avatar snapshots (metadata only) for [userId].
@@ -114,19 +109,31 @@ class SmplAvatarService {
     return snapshot.docs.map(AvatarSnapshot.fromFirestore).toList();
   }
 
-  /// Load a specific snapshot's .glb path.
+  /// Returns the Cloudinary URL for the avatar snapshot on [snapDate].
   ///
-  /// Returns the cached local file path if it exists.
-  /// If cache is missing, throws [SmplBackendException]
-  /// (re-generation requires calling [generateAvatar] directly).
-  Future<String> getGlbPath({
+  /// Reads from Firestore. Throws [SmplBackendException] if the snapshot
+  /// does not exist or was saved without a Cloudinary URL.
+  Future<String> getGlbUrl({
     required String userId,
     required String snapDate,
   }) async {
-    final localPath = await _localGlbPath(userId, snapDate);
-    if (await File(localPath).exists()) return localPath;
-    throw SmplBackendException('Local .glb cache missing for $snapDate. '
-        'Call generateAvatar() to re-generate.');
+    final result = await _firestore
+        .collection('avatar_snapshots')
+        .where('userId', isEqualTo: userId)
+        .where('date', isEqualTo: snapDate)
+        .limit(1)
+        .get();
+
+    if (result.docs.isEmpty) {
+      throw SmplBackendException('No snapshot found for $snapDate.');
+    }
+
+    final url = result.docs.first.data()['glbUrl'] as String?;
+    if (url == null || url.isEmpty) {
+      throw SmplBackendException(
+          'No Cloudinary URL for $snapDate. Re-generate the avatar.');
+    }
+    return url;
   }
 
   /// Check whether the backend is reachable.
@@ -141,24 +148,7 @@ class SmplAvatarService {
     }
   }
 
-  // ── Private helpers ─────────────────────────────────────────────────────────
-
-  Future<String> _saveGlb(
-    String userId,
-    String dateKey,
-    Uint8List bytes,
-  ) async {
-    final path = await _localGlbPath(userId, dateKey);
-    await File(path).writeAsBytes(bytes);
-    return path;
-  }
-
-  Future<String> _localGlbPath(String userId, String dateKey) async {
-    final dir = await getApplicationDocumentsDirectory();
-    final folder = Directory('${dir.path}/avatars/$userId');
-    await folder.create(recursive: true);
-    return '${folder.path}/$dateKey.glb';
-  }
+  // ── Private helpers ──────────────────────────────────────────────────────
 
   String _dateKey(DateTime dt) => '${dt.year.toString().padLeft(4, '0')}-'
       '${dt.month.toString().padLeft(2, '0')}-'
@@ -168,9 +158,9 @@ class SmplAvatarService {
     required String userId,
     required String dateKey,
     required Map<String, dynamic> measurements,
-    required String localGlbPath,
+    String? glbUrl,
+    String skinTone = 'medium',
   }) async {
-    // Check for an existing Firestore document on the same date
     final existing = await _firestore
         .collection('avatar_snapshots')
         .where('userId', isEqualTo: userId)
@@ -182,7 +172,8 @@ class SmplAvatarService {
       'userId': userId,
       'date': dateKey,
       'measurements': measurements,
-      'localGlbPath': localGlbPath,
+      'glbUrl': glbUrl, // Cloudinary public URL
+      'skinTone': skinTone,
       'updatedAt': Timestamp.now(),
     };
 
@@ -204,14 +195,16 @@ class AvatarSnapshot {
   final String userId;
   final String date; // "YYYY-MM-DD"
   final Map<String, dynamic> measurements;
-  final String? localGlbPath; // absolute path; null if cache cleared
+
+  /// Cloudinary https:// URL for the .glb file. Null if upload failed.
+  final String? glbUrl;
 
   const AvatarSnapshot({
     required this.id,
     required this.userId,
     required this.date,
     required this.measurements,
-    this.localGlbPath,
+    this.glbUrl,
   });
 
   factory AvatarSnapshot.fromFirestore(DocumentSnapshot doc) {
@@ -221,7 +214,7 @@ class AvatarSnapshot {
       userId: d['userId'] as String,
       date: d['date'] as String,
       measurements: Map<String, dynamic>.from(d['measurements'] as Map? ?? {}),
-      localGlbPath: d['localGlbPath'] as String?,
+      glbUrl: d['glbUrl'] as String?,
     );
   }
 

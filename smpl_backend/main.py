@@ -13,6 +13,9 @@ from datetime import date
 from pathlib import Path
 from typing import Optional
 
+import cloudinary
+import cloudinary.uploader
+
 import numpy as np
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
@@ -21,6 +24,19 @@ from fastapi.responses import Response
 from pydantic import BaseModel, Field, ConfigDict
 
 load_dotenv()
+
+# --- Cloudinary configuration ---
+cloudinary.config(
+    cloud_name=os.getenv("CLOUDINARY_CLOUD_NAME"),
+    api_key=os.getenv("CLOUDINARY_API_KEY"),
+    api_secret=os.getenv("CLOUDINARY_API_SECRET"),
+    secure=True,
+)
+_CLOUDINARY_ENABLED = bool(
+    os.getenv("CLOUDINARY_CLOUD_NAME")
+    and os.getenv("CLOUDINARY_API_KEY")
+    and os.getenv("CLOUDINARY_API_SECRET")
+)
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -31,6 +47,14 @@ UV_OBJ_PATH     = Path(__file__).parent / "models" / "uv" / "smplx_uv.obj"
 UV_TEXTURE_PATH = Path(__file__).parent / "models" / "uv" / "smplx_uv.png"
 CACHE_DIR       = Path(os.getenv("CACHE_DIR", str(Path(__file__).parent / "cache" / "glb")))
 CACHE_DIR.mkdir(parents=True, exist_ok=True)
+
+# Skin tone palette (RGBA, sRGB)
+SKIN_TONES: dict[str, list[int]] = {
+    "light":  [255, 220, 185, 255],
+    "medium": [210, 168, 130, 255],
+    "brown":  [180, 120,  80, 255],
+    "dark":   [110,  70,  45, 255],
+}
 
 # In-memory snapshot store {user_id: [{date, betas, measurements, glb_path}]}
 _avatar_store: dict = {}
@@ -67,6 +91,7 @@ class AvatarRequest(BaseModel):
     gender: str           = Field("neutral", description="male | female | neutral")
     height: float         = Field(..., ge=100.0, le=250.0, description="Height in cm")
     weight: float         = Field(..., ge=20.0,  le=300.0, description="Weight in kg")
+    skin_tone: str        = Field("medium", description="light | medium | brown | dark")
     body_measurements: Optional[dict] = Field(None, description="Anthropometric measurements in cm")
 
 class AvatarResponse(BaseModel):
@@ -76,6 +101,7 @@ class AvatarResponse(BaseModel):
     betas: list
     body_measurements: dict
     pipeline: str
+    glb_url: Optional[str] = None   # Cloudinary public URL (None if upload skipped)
     message: str = "OK"
 
 class HealthResponse(BaseModel):
@@ -84,6 +110,7 @@ class HealthResponse(BaseModel):
     smplx_available: bool
     model_dir_exists: bool
     uv_files_exist: bool
+    cloudinary_enabled: bool
 
 # --- Health endpoint ---
 @app.get("/health", response_model=HealthResponse)
@@ -92,6 +119,7 @@ def health() -> HealthResponse:
         status="ok", smplx_available=_SMPLX_AVAILABLE,
         model_dir_exists=(SMPLX_MODEL_DIR / "smplx").exists(),
         uv_files_exist=(UV_OBJ_PATH.exists() and UV_TEXTURE_PATH.exists()),
+        cloudinary_enabled=_CLOUDINARY_ENABLED,
     )
 
 # --- Main generate-avatar endpoint ---
@@ -104,20 +132,44 @@ def generate_avatar(req: AvatarRequest) -> AvatarResponse:
     if _SMPLX_AVAILABLE:
         verts, faces = _run_smplx(betas, req.gender)
         verts = _scale_to_height(verts, req.height)
-        glb = _build_textured_glb(verts, faces)
+        glb = _build_textured_glb(verts, faces, req.skin_tone)
         pipeline = "SMPL-X"
     else:
         from services.mesh_generator import generate_mesh
         glb = generate_mesh(betas=betas, height_cm=req.height, gender=req.gender,
+                            skin_tone=req.skin_tone,
                             measurements={**meas, "weight": req.weight})
         pipeline = "geometric-fallback"
 
-    # Cache
+    # Upload to Cloudinary (raw resource so .glb is preserved)
+    glb_url: Optional[str] = None
+    if req.user_id and _CLOUDINARY_ENABLED:
+        try:
+            public_id = f"genzfit_avatars/{req.user_id}/{snap_date}"
+            upload_result = cloudinary.uploader.upload(
+                glb,
+                resource_type="raw",
+                public_id=public_id,
+                overwrite=True,
+                format="glb",
+            )
+            glb_url = upload_result.get("secure_url")
+            logger.info("GLB uploaded to Cloudinary: %s", glb_url)
+        except Exception as exc:
+            logger.warning("Cloudinary upload failed (%s); continuing without URL.", exc)
+
+    # Cache locally (fallback / backup)
     if req.user_id:
         cache_key = f"{req.user_id}_{snap_date}"
         glb_path  = CACHE_DIR / f"{cache_key}.glb"
         glb_path.write_bytes(glb)
-        snap = {"date": snap_date, "betas": betas, "measurements": meas, "glb_path": str(glb_path)}
+        snap = {
+            "date": snap_date,
+            "betas": betas,
+            "measurements": meas,
+            "glb_path": str(glb_path),
+            "glb_url": glb_url,
+        }
         history = _avatar_store.setdefault(req.user_id, [])
         _avatar_store[req.user_id] = [s for s in history if s["date"] != snap_date]
         _avatar_store[req.user_id].append(snap)
@@ -130,13 +182,21 @@ def generate_avatar(req: AvatarRequest) -> AvatarResponse:
         betas=betas,
         body_measurements=meas,
         pipeline=pipeline,
+        glb_url=glb_url,
         message=f"Avatar generated using {pipeline} pipeline.",
     )
 
 @app.get("/avatar/{user_id}/history")
 def get_avatar_history(user_id: str):
-    return [{"date": s["date"], "betas": s["betas"], "measurements": s["measurements"]}
-            for s in _avatar_store.get(user_id, [])]
+    return [
+        {
+            "date": s["date"],
+            "betas": s["betas"],
+            "measurements": s["measurements"],
+            "glb_url": s.get("glb_url"),
+        }
+        for s in _avatar_store.get(user_id, [])
+    ]
 
 @app.get("/avatar/{user_id}/{snap_date}/glb")
 def download_glb(user_id: str, snap_date: str):
@@ -196,11 +256,32 @@ def _run_smplx(betas, gender):
     g = gender.lower()
     if g not in ("male","female","neutral"): g = "neutral"
     model = _smplx_module.create(
-        model_path=str(SMPLX_MODEL_DIR), model_type="smplx", gender=g,  # models/ parent; smplx.create() finds smplx/ subfolder automatically
+        model_path=str(SMPLX_MODEL_DIR), model_type="smplx", gender=g,
         use_pca=False, num_betas=10, batch_size=1, flat_hand_mean=True,
     ).to(torch.device("cpu"))
+
+    # ── A-pose: arms angled ~45° down from T-pose ──────────────────────────
+    # SMPL-X body_pose has 21 joints × 3 axis-angle values = 63 floats.
+    # Joint indices (0-based): 15=left shoulder, 16=right shoulder
+    #                           17=left elbow,   18=right elbow
+    # Positive Z-rotation lowers the left arm; negative Z lowers the right.
+    body_pose = torch.zeros(1, 63, dtype=torch.float32)
+    import math
+    angle = math.radians(50)          # 50° down from horizontal
+    body_pose[0, 15*3 + 2] =  angle   # left  shoulder → rotate arm down
+    body_pose[0, 16*3 + 2] = -angle   # right shoulder → rotate arm down
+    # Slight elbow bend so arms look relaxed, not robotic
+    elbow_bend = math.radians(10)
+    body_pose[0, 17*3 + 2] = -elbow_bend   # left  elbow
+    body_pose[0, 18*3 + 2] =  elbow_bend   # right elbow
+    # ────────────────────────────────────────────────────────────────────────
+
     with torch.no_grad():
-        out = model(betas=torch.tensor([betas], dtype=torch.float32), return_verts=True)
+        out = model(
+            betas=torch.tensor([betas], dtype=torch.float32),
+            body_pose=body_pose,
+            return_verts=True,
+        )
     return out.vertices.detach().cpu().numpy().squeeze(), model.faces.astype(np.int32)
 
 def _scale_to_height(v, h_cm):
@@ -228,17 +309,11 @@ def _parse_uv_obj(path):
             np.array(fv_r,dtype=np.int32),
             np.array(fvt_r,dtype=np.int32))
 
-def _build_textured_glb(verts, faces) -> bytes:
+def _build_textured_glb(verts, faces, skin_tone: str = "medium") -> bytes:
     import trimesh
-    mesh = None
-    if UV_OBJ_PATH.exists() and UV_TEXTURE_PATH.exists():
-        try:
-            mesh = _build_uv_mesh(verts, faces)
-            logger.info("UV texture applied.")
-        except Exception as e:
-            logger.warning("UV texture failed (%s); using vertex-colour fallback.", e)
-    if mesh is None:
-        mesh = _build_vertex_colour_mesh(verts, faces)
+    # smplx_uv.png is a UV wireframe map (nearly black, max≈51/255).
+    # We always use vertex-colour rendering with the requested skin tone.
+    mesh = _build_vertex_colour_mesh(verts, faces, skin_tone)
     with tempfile.NamedTemporaryFile(suffix=".glb", delete=False) as tmp:
         tp = tmp.name
     try:
@@ -262,12 +337,21 @@ def _build_uv_mesh(verts, faces):
     nf   = np.arange(n*3, dtype=np.int32).reshape(n,3)
     nuv2[:,1] = 1.0 - nuv2[:,1]
     tex = Image.open(UV_TEXTURE_PATH).convert("RGBA")
-    mat = trimesh.visual.material.SimpleMaterial(image=tex)
+    # Warm skin-tone diffuse so the material reads correctly under any lighting
+    mat = trimesh.visual.material.SimpleMaterial(
+        image=tex,
+        diffuse=[210, 160, 120, 255],   # warm medium skin tone
+        ambient=[180, 130, 100, 255],
+    )
     vis = trimesh.visual.TextureVisuals(uv=nuv2, material=mat)
     return trimesh.Trimesh(vertices=nv2, faces=nf, visual=vis, process=False)
 
-def _build_vertex_colour_mesh(verts, faces):
+def _build_vertex_colour_mesh(verts, faces, skin_tone: str = "medium"):
     import trimesh
+    color = np.array(SKIN_TONES.get(skin_tone, SKIN_TONES["medium"]), dtype=np.uint8)
     mesh = trimesh.Trimesh(vertices=verts, faces=faces, process=False)
-    mesh.visual.vertex_colors = np.tile([210,160,120,255], (len(verts),1)).astype(np.uint8)
+    mesh.visual = trimesh.visual.ColorVisuals(
+        mesh=mesh,
+        vertex_colors=np.tile(color, (len(verts), 1)),
+    )
     return mesh

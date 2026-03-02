@@ -18,16 +18,15 @@ trimesh==4.4.1
 
 # --- Image processing (UV texture application) ---
 Pillow==10.3.0
-opencv-python==4.10.0.82
 
 # --- SMPL-X parametric body model ---
-# Requires the .pkl model files in models/smplx/
-# (SMPLX_MALE.pkl, SMPLX_FEMALE.pkl, SMPLX_NEUTRAL.pkl)
 smplx==0.1.28
 
 # --- Deep learning runtime (CPU only) ---
-# Install separately with the --index-url flag shown above
-torch==2.3.0
+torch==2.2.2
+
+# --- Cloud storage ---
+cloudinary==1.40.0
 
 # --- Misc ---
 python-dotenv==1.0.1

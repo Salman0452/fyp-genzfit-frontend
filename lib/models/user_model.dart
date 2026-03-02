@@ -13,6 +13,7 @@ class UserModel {
 
   // Client-specific fields
   final String? goals; // fitness, weightGain, weightLoss
+  final String? skinTone; // light | medium | brown | dark
   final Map<String, dynamic>? preferences;
 
   // Trainer-specific fields
@@ -34,6 +35,7 @@ class UserModel {
     required this.createdAt,
     this.status = 'active',
     this.goals,
+    this.skinTone,
     this.preferences,
     this.expertise,
     this.rating,
@@ -83,6 +85,7 @@ class UserModel {
       'status': status,
       if (role == UserRole.client) ...{
         'goals': goals,
+        'skinTone': skinTone ?? 'medium',
         'preferences': preferences ?? {},
       },
       if (role == UserRole.trainer) ...{
@@ -109,19 +112,18 @@ class UserModel {
       createdAt: (map['createdAt'] as Timestamp).toDate(),
       status: map['status'] ?? 'active',
       goals: map['goals'],
+      skinTone: map['skinTone'] as String?,
       preferences: map['preferences'],
-      expertise: map['expertise'] != null
-          ? List<String>.from(map['expertise'])
-          : null,
+      expertise:
+          map['expertise'] != null ? List<String>.from(map['expertise']) : null,
       rating: map['rating']?.toDouble(),
       hourlyRate: map['hourlyRate']?.toDouble(),
       verified: map['verified'],
       certifications: map['certifications'] != null
           ? List<String>.from(map['certifications'])
           : null,
-      videoUrls: map['videoUrls'] != null
-          ? List<String>.from(map['videoUrls'])
-          : null,
+      videoUrls:
+          map['videoUrls'] != null ? List<String>.from(map['videoUrls']) : null,
       clients: map['clients'],
       totalEarnings: map['totalEarnings']?.toDouble(),
     );
@@ -146,6 +148,7 @@ class UserModel {
     DateTime? createdAt,
     String? status,
     String? goals,
+    String? skinTone,
     Map<String, dynamic>? preferences,
     List<String>? expertise,
     double? rating,
@@ -165,6 +168,7 @@ class UserModel {
       createdAt: createdAt ?? this.createdAt,
       status: status ?? this.status,
       goals: goals ?? this.goals,
+      skinTone: skinTone ?? this.skinTone,
       preferences: preferences ?? this.preferences,
       expertise: expertise ?? this.expertise,
       rating: rating ?? this.rating,

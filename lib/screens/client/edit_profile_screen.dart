@@ -20,8 +20,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final StorageService _storageService = StorageService();
-  
+
   String? _selectedGoal;
+  String _selectedSkinTone = 'medium';
   File? _selectedImage;
   bool _isLoading = false;
   bool _isUploadingImage = false;
@@ -44,17 +45,18 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   void _loadUserData() {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final user = authProvider.userModel;
-    
+
     _nameController.text = user?.name ?? '';
     _emailController.text = user?.email ?? '';
-    
+
     // Set selected goal only if it exists in the list
     if (user?.goals != null && _goals.contains(user!.goals)) {
       _selectedGoal = user.goals;
     } else {
-      // If user's goal doesn't match, set to first option
       _selectedGoal = _goals.first;
     }
+
+    _selectedSkinTone = user?.skinTone ?? 'medium';
   }
 
   Future<void> _pickImage() async {
@@ -91,7 +93,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       // Upload new avatar if selected
       if (_selectedImage != null) {
         setState(() => _isUploadingImage = true);
-        avatarUrl = await _storageService.uploadProfilePicture(_selectedImage!, userId);
+        avatarUrl =
+            await _storageService.uploadProfilePicture(_selectedImage!, userId);
         setState(() => _isUploadingImage = false);
       }
 
@@ -99,6 +102,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       final updates = <String, dynamic>{
         'name': _nameController.text.trim(),
         'goals': _selectedGoal,
+        'skinTone': _selectedSkinTone,
         'updatedAt': FieldValue.serverTimestamp(),
       };
 
@@ -178,7 +182,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                             : null),
                     child: _selectedImage == null && user?.avatarUrl == null
                         ? Text(
-                            user?.name?.substring(0, 1).toUpperCase() ?? 'U',
+                            (user?.name ?? 'U').substring(0, 1).toUpperCase(),
                             style: const TextStyle(
                               fontSize: 48,
                               fontWeight: FontWeight.bold,
@@ -192,7 +196,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       child: CircleAvatar(
                         radius: 60,
                         backgroundColor: Colors.black54,
-                        child: CircularProgressIndicator(color: AppColors.accent),
+                        child:
+                            CircularProgressIndicator(color: AppColors.accent),
                       ),
                     ),
                   Positioned(
@@ -205,7 +210,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         decoration: BoxDecoration(
                           color: AppColors.accent,
                           shape: BoxShape.circle,
-                          border: Border.all(color: AppColors.background, width: 2),
+                          border:
+                              Border.all(color: AppColors.background, width: 2),
                         ),
                         child: const Icon(
                           Icons.camera_alt,
@@ -251,7 +257,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 decoration: InputDecoration(
                   labelText: 'Email',
                   labelStyle: const TextStyle(color: AppColors.textSecondary),
-                  prefixIcon: const Icon(Icons.email, color: AppColors.textSecondary),
+                  prefixIcon:
+                      const Icon(Icons.email, color: AppColors.textSecondary),
                   filled: true,
                   fillColor: AppColors.charcoal,
                   border: OutlineInputBorder(
@@ -259,7 +266,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     borderSide: BorderSide.none,
                   ),
                   helperText: 'Email cannot be changed',
-                  helperStyle: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                  helperStyle: const TextStyle(
+                      color: AppColors.textSecondary, fontSize: 12),
                 ),
               ),
               const SizedBox(height: 16),
@@ -296,6 +304,60 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   return null;
                 },
               ),
+              const SizedBox(height: 16),
+
+              // Skin Tone selector
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Padding(
+                    padding: EdgeInsets.only(left: 4, bottom: 10),
+                    child: Text(
+                      'Avatar Skin Tone',
+                      style: TextStyle(
+                          color: AppColors.textSecondary, fontSize: 13),
+                    ),
+                  ),
+                  Row(
+                    children: [
+                      _SkinToneChip(
+                        label: 'Light',
+                        color: const Color(0xFFFFDCB9),
+                        value: 'light',
+                        selected: _selectedSkinTone == 'light',
+                        onTap: () =>
+                            setState(() => _selectedSkinTone = 'light'),
+                      ),
+                      const SizedBox(width: 10),
+                      _SkinToneChip(
+                        label: 'Medium',
+                        color: const Color(0xFFD2A882),
+                        value: 'medium',
+                        selected: _selectedSkinTone == 'medium',
+                        onTap: () =>
+                            setState(() => _selectedSkinTone = 'medium'),
+                      ),
+                      const SizedBox(width: 10),
+                      _SkinToneChip(
+                        label: 'Brown',
+                        color: const Color(0xFFB47850),
+                        value: 'brown',
+                        selected: _selectedSkinTone == 'brown',
+                        onTap: () =>
+                            setState(() => _selectedSkinTone = 'brown'),
+                      ),
+                      const SizedBox(width: 10),
+                      _SkinToneChip(
+                        label: 'Dark',
+                        color: const Color(0xFF6E462D),
+                        value: 'dark',
+                        selected: _selectedSkinTone == 'dark',
+                        onTap: () => setState(() => _selectedSkinTone = 'dark'),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
               const SizedBox(height: 32),
 
               // Update button
@@ -312,6 +374,64 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 text: 'Cancel',
                 onPressed: () => Navigator.pop(context),
                 isOutlined: true,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ── Skin tone chip ────────────────────────────────────────────────────────────
+
+class _SkinToneChip extends StatelessWidget {
+  final String label;
+  final Color color;
+  final String value;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _SkinToneChip({
+    required this.label,
+    required this.color,
+    required this.value,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 150),
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+              color: selected ? Colors.white : Colors.transparent,
+              width: 2.5,
+            ),
+            boxShadow: selected
+                ? [BoxShadow(color: color.withOpacity(0.5), blurRadius: 8)]
+                : [],
+          ),
+          child: Column(
+            children: [
+              if (selected)
+                const Icon(Icons.check, color: Colors.white, size: 16),
+              Text(
+                label,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 11,
+                  fontWeight: selected ? FontWeight.bold : FontWeight.normal,
+                  shadows: const [Shadow(color: Colors.black54, blurRadius: 4)],
+                ),
               ),
             ],
           ),
