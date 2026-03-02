@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:model_viewer_plus/model_viewer_plus.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../models/measurement_model.dart';
 import '../../providers/auth_provider.dart';
@@ -20,7 +21,7 @@ class AvatarViewerScreen extends StatefulWidget {
 }
 
 class _AvatarViewerScreenState extends State<AvatarViewerScreen>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   final SmplAvatarService _smplService = SmplAvatarService();
   final BodyAnalysisService _bodyService = BodyAnalysisService();
 
@@ -33,7 +34,12 @@ class _AvatarViewerScreenState extends State<AvatarViewerScreen>
   bool _backendAvailable = false;
   String _statusMessage = '';
 
+  // Hint visibility
+  bool _showHint = false;
+
   late AnimationController _spinCtrl;
+  late AnimationController _hintCtrl;
+  late Animation<double> _hintOpacity;
 
   @override
   void initState() {
@@ -42,14 +48,38 @@ class _AvatarViewerScreenState extends State<AvatarViewerScreen>
       vsync: this,
       duration: const Duration(seconds: 2),
     )..repeat();
+
+    _hintCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 600),
+    );
+    _hintOpacity = CurvedAnimation(parent: _hintCtrl, curve: Curves.easeInOut);
+
     _init();
+    _checkHint();
   }
 
   @override
   void dispose() {
     _spinCtrl.dispose();
+    _hintCtrl.dispose();
     _bodyService.dispose();
     super.dispose();
+  }
+
+  Future<void> _checkHint() async {
+    final prefs = await SharedPreferences.getInstance();
+    final shown = prefs.getBool('avatar_hint_shown') ?? false;
+    if (!shown && mounted) {
+      setState(() => _showHint = true);
+      _hintCtrl.forward();
+      await Future.delayed(const Duration(seconds: 3));
+      if (mounted) {
+        await _hintCtrl.reverse();
+        setState(() => _showHint = false);
+        await prefs.setBool('avatar_hint_shown', true);
+      }
+    }
   }
 
   // ── Initialisation ─────────────────────────────────────────────────────────
@@ -173,7 +203,7 @@ class _AvatarViewerScreenState extends State<AvatarViewerScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: const Color(0xFF1A1A2E),
       appBar: _buildAppBar(),
       body: _isLoading
           ? _buildLoadingView('Loading avatar data…')
@@ -186,7 +216,7 @@ class _AvatarViewerScreenState extends State<AvatarViewerScreen>
 
   AppBar _buildAppBar() {
     return AppBar(
-      backgroundColor: AppColors.background,
+      backgroundColor: Colors.transparent,
       elevation: 0,
       leading: IconButton(
         icon: const Icon(Icons.arrow_back, color: Colors.white),
@@ -220,29 +250,103 @@ class _AvatarViewerScreenState extends State<AvatarViewerScreen>
   }
 
   Widget _buildMainContent() {
-    return Column(
+    return Stack(
       children: [
-        Expanded(
-          flex: 5,
+        // ── Layer 1: Avatar fills entire screen ──────────────────────────────
+        Positioned.fill(
           child: _isGenerating
               ? _buildLoadingView(_statusMessage)
               : _build3DViewer(),
         ),
-        if (_snapshots.isNotEmpty)
-          Container(
-            color: AppColors.surface,
-            padding: const EdgeInsets.symmetric(vertical: 12),
-            child: AvatarProgressSlider(
-              snapshots: _snapshots,
-              selectedIndex: _selectedIndex,
-              onSnapshotSelected: (i) async {
-                setState(() => _selectedIndex = i);
-                await _loadGlbForSelected();
-              },
-            ),
-          ),
-        if (_snapshots.isNotEmpty)
-          Expanded(flex: 3, child: _buildMeasurementsPanel()),
+
+        // ── Layer 2: Draggable bottom sheet ───────────────────────────────────
+        DraggableScrollableSheet(
+          initialChildSize: 0.45,
+          minChildSize: 0.08,
+          maxChildSize: 0.75,
+          snap: true,
+          snapSizes: const [0.08, 0.45, 0.75],
+          builder: (context, scrollController) {
+            return Container(
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(24)),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Colors.black38,
+                    blurRadius: 20,
+                    offset: Offset(0, -6),
+                  ),
+                ],
+              ),
+              child: ListView(
+                controller: scrollController,
+                padding: EdgeInsets.zero,
+                children: [
+                  // ── Drag handle + optional hint ───────────────────────────
+                  Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const SizedBox(height: 12),
+                      Center(
+                        child: Container(
+                          width: 40,
+                          height: 4,
+                          decoration: BoxDecoration(
+                            color: Colors.grey[600],
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
+                      ),
+                      if (_showHint)
+                        FadeTransition(
+                          opacity: _hintOpacity,
+                          child: const Padding(
+                            padding: EdgeInsets.only(top: 8),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.keyboard_arrow_down,
+                                    size: 16, color: Colors.white38),
+                                SizedBox(width: 4),
+                                Text(
+                                  'Swipe down for fullscreen',
+                                  style: TextStyle(
+                                      color: Colors.white38, fontSize: 12),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      const SizedBox(height: 8),
+                    ],
+                  ),
+
+                  // ── Progress timeline ─────────────────────────────────────
+                  if (_snapshots.isNotEmpty)
+                    Container(
+                      color: AppColors.surface,
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      child: AvatarProgressSlider(
+                        snapshots: _snapshots,
+                        selectedIndex: _selectedIndex,
+                        onSnapshotSelected: (i) async {
+                          setState(() => _selectedIndex = i);
+                          await _loadGlbForSelected();
+                        },
+                      ),
+                    ),
+
+                  // ── Body measurements ─────────────────────────────────────
+                  if (_snapshots.isNotEmpty) _buildMeasurementsPanel(),
+
+                  const SizedBox(height: 32),
+                ],
+              ),
+            );
+          },
+        ),
       ],
     );
   }
@@ -289,15 +393,17 @@ class _AvatarViewerScreenState extends State<AvatarViewerScreen>
           src: src,
           alt: '3D Body Avatar',
           ar: false,
-          autoRotate: true,
-          autoRotateDelay: 1500,
+          autoRotate: false,
+          autoRotateDelay: 0,
           cameraControls: true,
+          disablePan: true,
           backgroundColor: const Color(0xFF1C1F2E),
           loading: Loading.eager,
           autoPlay: true,
-          shadowIntensity: 0.4,
-          exposure: 3.0,
-          cameraOrbit: '0deg 75deg 2.5m',
+          shadowIntensity: 1,
+          exposure: 1.5,
+          cameraOrbit: '0deg 85deg 4.5m',
+          fieldOfView: '45deg',
           minCameraOrbit: 'auto auto 0.5m',
           maxCameraOrbit: 'auto auto 5m',
         ),
@@ -375,110 +481,99 @@ class _AvatarViewerScreenState extends State<AvatarViewerScreen>
                     ? Colors.orange
                     : Colors.red;
 
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                const Text(
-                  'Body Measurements',
-                  style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold),
-                ),
-                const Spacer(),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: AppColors.accent.withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(8),
-                    border:
-                        Border.all(color: AppColors.accent.withOpacity(0.4)),
-                  ),
-                  child: Text(
-                    _backendAvailable ? 'SMPL-X morphed' : 'cached',
-                    style:
-                        const TextStyle(color: AppColors.accent, fontSize: 10),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            GridView.count(
-              crossAxisCount: 2,
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              childAspectRatio: 2.8,
-              crossAxisSpacing: 10,
-              mainAxisSpacing: 10,
-              children: [
-                _measCard(
-                    'Height', '${height.toStringAsFixed(0)} cm', Icons.height),
-                _measCard('Weight', '${weight.toStringAsFixed(1)} kg',
-                    Icons.monitor_weight_outlined),
-                _measCard('Chest', _fmt(meas['chest']), Icons.accessibility),
-                _measCard(
-                    'Waist', _fmt(meas['waist']), Icons.accessibility_new),
-                _measCard('Hips', _fmt(meas['hips']), Icons.accessibility),
-                _measCard('Shoulders', _fmt(meas['shoulderWidth']),
-                    Icons.open_in_full),
-              ],
-            ),
-            if (bmi != null) ...[
-              const SizedBox(height: 12),
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Text(
+                'Body Measurements',
+                style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold),
+              ),
+              const Spacer(),
               Container(
-                padding: const EdgeInsets.all(14),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: bmiColor.withOpacity(0.15),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: bmiColor.withOpacity(0.3)),
+                  color: AppColors.accent.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: AppColors.accent.withOpacity(0.4)),
                 ),
-                child: Row(
-                  children: [
-                    Text(
-                      bmi.toStringAsFixed(1),
-                      style: TextStyle(
-                          color: bmiColor,
-                          fontSize: 28,
-                          fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(width: 6),
-                    Text('kg/m²',
-                        style: TextStyle(
-                            color: Colors.white.withOpacity(0.6),
-                            fontSize: 13)),
-                    const Spacer(),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(
-                          color: bmiColor,
-                          borderRadius: BorderRadius.circular(10)),
-                      child: Text(bmiLabel,
-                          style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold)),
-                    ),
-                  ],
+                child: Text(
+                  _backendAvailable ? 'SMPL-X morphed' : 'cached',
+                  style: const TextStyle(color: AppColors.accent, fontSize: 10),
                 ),
               ),
             ],
-            if (_snapshots.length > 1) ...[
-              const SizedBox(height: 12),
-              _buildProgressComparison(),
+          ),
+          const SizedBox(height: 12),
+          GridView.count(
+            crossAxisCount: 2,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            childAspectRatio: 2.8,
+            crossAxisSpacing: 10,
+            mainAxisSpacing: 10,
+            children: [
+              _measCard(
+                  'Height', '${height.toStringAsFixed(0)} cm', Icons.height),
+              _measCard('Weight', '${weight.toStringAsFixed(1)} kg',
+                  Icons.monitor_weight_outlined),
+              _measCard('Chest', _fmt(meas['chest']), Icons.accessibility),
+              _measCard('Waist', _fmt(meas['waist']), Icons.accessibility_new),
+              _measCard('Hips', _fmt(meas['hips']), Icons.accessibility),
+              _measCard(
+                  'Shoulders', _fmt(meas['shoulderWidth']), Icons.open_in_full),
             ],
+          ),
+          if (bmi != null) ...[
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: bmiColor.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: bmiColor.withOpacity(0.3)),
+              ),
+              child: Row(
+                children: [
+                  Text(
+                    bmi.toStringAsFixed(1),
+                    style: TextStyle(
+                        color: bmiColor,
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(width: 6),
+                  Text('kg/m²',
+                      style: TextStyle(
+                          color: Colors.white.withOpacity(0.6), fontSize: 13)),
+                  const Spacer(),
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                        color: bmiColor,
+                        borderRadius: BorderRadius.circular(10)),
+                    child: Text(bmiLabel,
+                        style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold)),
+                  ),
+                ],
+              ),
+            ),
           ],
-        ),
+          if (_snapshots.length > 1) ...[
+            const SizedBox(height: 12),
+            _buildProgressComparison(),
+          ],
+        ],
       ),
     );
   }

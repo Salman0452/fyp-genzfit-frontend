@@ -132,7 +132,7 @@ def generate_avatar(req: AvatarRequest) -> AvatarResponse:
     if _SMPLX_AVAILABLE:
         verts, faces = _run_smplx(betas, req.gender)
         verts = _scale_to_height(verts, req.height)
-        glb = _build_textured_glb(verts, faces, req.skin_tone)
+        glb = _build_textured_glb(verts, faces, req.skin_tone, req.gender)
         pipeline = "SMPL-X"
     else:
         from services.mesh_generator import generate_mesh
@@ -260,20 +260,25 @@ def _run_smplx(betas, gender):
         use_pca=False, num_betas=10, batch_size=1, flat_hand_mean=True,
     ).to(torch.device("cpu"))
 
-    # ── A-pose: arms angled ~45° down from T-pose ──────────────────────────
+    # ── Natural pose: arms lowered toward body ───────────────────────────────
     # SMPL-X body_pose has 21 joints × 3 axis-angle values = 63 floats.
-    # Joint indices (0-based): 15=left shoulder, 16=right shoulder
-    #                           17=left elbow,   18=right elbow
+    # Joint indices (0-based): 16=left shoulder, 17=right shoulder
+    #                           18=left elbow,   19=right elbow
     # Positive Z-rotation lowers the left arm; negative Z lowers the right.
     body_pose = torch.zeros(1, 63, dtype=torch.float32)
-    import math
-    angle = math.radians(50)          # 50° down from horizontal
-    body_pose[0, 15*3 + 2] =  angle   # left  shoulder → rotate arm down
-    body_pose[0, 16*3 + 2] = -angle   # right shoulder → rotate arm down
-    # Slight elbow bend so arms look relaxed, not robotic
-    elbow_bend = math.radians(10)
-    body_pose[0, 17*3 + 2] = -elbow_bend   # left  elbow
-    body_pose[0, 18*3 + 2] =  elbow_bend   # right elbow
+    # Left shoulder — rotate arm DOWN toward body
+    body_pose[0, 16*3 + 2] =  1.2   # left  shoulder Z
+    body_pose[0, 16*3 + 1] =  0.2   # left  shoulder Y (slight forward)
+    # Right shoulder — MIRROR of left (opposite sign on Z and Y)
+    body_pose[0, 17*3 + 2] = -1.2   # right shoulder Z
+    body_pose[0, 17*3 + 1] = -0.2   # right shoulder Y (slight forward)
+    # Left elbow — natural slight bend
+    body_pose[0, 18*3 + 2] =  0.3   # left  elbow Z
+    # Right elbow — MIRROR of left
+    body_pose[0, 19*3 + 2] = -0.3   # right elbow Z
+    # Wrists — straighten
+    body_pose[0, 20*3 + 2] = -0.1   # left  wrist Z
+    body_pose[0, 21*3 + 2] =  0.1   # right wrist Z
     # ────────────────────────────────────────────────────────────────────────
 
     with torch.no_grad():
@@ -309,11 +314,11 @@ def _parse_uv_obj(path):
             np.array(fv_r,dtype=np.int32),
             np.array(fvt_r,dtype=np.int32))
 
-def _build_textured_glb(verts, faces, skin_tone: str = "medium") -> bytes:
+def _build_textured_glb(verts, faces, skin_tone: str = "medium", gender: str = "neutral") -> bytes:
     import trimesh
     # smplx_uv.png is a UV wireframe map (nearly black, max≈51/255).
     # We always use vertex-colour rendering with the requested skin tone.
-    mesh = _build_vertex_colour_mesh(verts, faces, skin_tone)
+    mesh = _build_vertex_colour_mesh(verts, faces, skin_tone, gender)
     with tempfile.NamedTemporaryFile(suffix=".glb", delete=False) as tmp:
         tp = tmp.name
     try:
@@ -346,12 +351,160 @@ def _build_uv_mesh(verts, faces):
     vis = trimesh.visual.TextureVisuals(uv=nuv2, material=mat)
     return trimesh.Trimesh(vertices=nv2, faces=nf, visual=vis, process=False)
 
-def _build_vertex_colour_mesh(verts, faces, skin_tone: str = "medium"):
+def _build_vertex_colour_mesh(verts, faces, skin_tone: str = "medium", gender: str = "neutral"):
     import trimesh
     color = np.array(SKIN_TONES.get(skin_tone, SKIN_TONES["medium"]), dtype=np.uint8)
+    n = len(verts)
+    colors = np.tile(color, (n, 1)).astype(np.uint8)
+    colors = _apply_face_details(verts, colors, skin_tone, gender)
     mesh = trimesh.Trimesh(vertices=verts, faces=faces, process=False)
     mesh.visual = trimesh.visual.ColorVisuals(
         mesh=mesh,
-        vertex_colors=np.tile(color, (len(verts), 1)),
+        vertex_colors=colors,
     )
     return mesh
+
+
+# Face-region colour palette — each skin tone has 4 anatomical zones
+_FACE_COLORS: dict = {
+    "light": {
+        "base":       [255, 220, 185, 255],
+        "eye_socket": [220, 185, 155, 255],
+        "lips":       [210, 140, 130, 255],
+        "nose":       [245, 210, 175, 255],
+    },
+    "medium": {
+        "base":       [210, 168, 130, 255],
+        "eye_socket": [175, 130, 100, 255],
+        "lips":       [180, 100,  90, 255],
+        "nose":       [220, 175, 138, 255],
+    },
+    "brown": {
+        "base":       [180, 120,  80, 255],
+        "eye_socket": [145,  90,  55, 255],
+        "lips":       [150,  75,  65, 255],
+        "nose":       [190, 130,  88, 255],
+    },
+    "dark": {
+        "base":       [110,  70,  45, 255],
+        "eye_socket": [ 80,  48,  28, 255],
+        "lips":       [ 90,  50,  45, 255],
+        "nose":       [120,  78,  50, 255],
+    },
+}
+
+
+def _apply_face_details(
+    mesh_vertices: np.ndarray,
+    colors: np.ndarray,
+    skin_tone: str,
+    gender: str,
+) -> np.ndarray:
+    """
+    Paint face/head vertices with anatomically correct zone colours.
+    Identifies face zones purely from 3D vertex positions (Y=height, Z=forward).
+    """
+    fc = _FACE_COLORS.get(skin_tone, _FACE_COLORS["medium"])
+    v  = mesh_vertices
+
+    y_min   = float(v[:, 1].min())
+    y_max   = float(v[:, 1].max())
+    y_range = y_max - y_min
+    if y_range < 1e-6:
+        return colors
+
+    # ── 1. Head region: top 15% of total mesh height ────────────────────────────
+    head_mask = v[:, 1] > (y_min + y_range * 0.85)
+    if not head_mask.any():
+        return colors
+
+    # ── 2. Face region: head verts on the front face (+Z side) ─────────────────
+    # Use p75 of head-Z to cut away back-of-head; ears sit wide on X, not deep on Z
+    z_p75     = float(np.percentile(v[head_mask, 2], 75))
+    face_mask = head_mask & (v[:, 2] > z_p75)
+    if not face_mask.any():
+        return colors
+
+    # ── 3. Normalise Y within the face region ────────────────────────────────
+    face_verts   = v[face_mask]
+    y_face_min   = float(face_verts[:, 1].min())
+    y_face_max   = float(face_verts[:, 1].max())
+    y_face_range = y_face_max - y_face_min
+    if y_face_range < 1e-6:
+        return colors
+
+    # y_norm: 0 = chin, 1 = forehead (applied to ALL vertices; only face_mask ones used)
+    y_norm = (v[:, 1] - y_face_min) / y_face_range
+
+    # x_thresh derived from face verts' own X spread — excludes ear verts (filtered by Z)
+    x_face_half = float(np.percentile(np.abs(face_verts[:, 0]), 90))  # robust half-width
+    x_thresh    = x_face_half * 0.55   # central column ≈ nose + inner eye
+
+    # ── 4. Sub-region masks ─────────────────────────────────────────────────
+    # Eye sockets: upper face (sparse band), all lateral positions
+    eye_mask = (
+        face_mask
+        & (y_norm > 0.55) & (y_norm < 0.85)
+    )
+    # Lips: lower face, narrow central column (below nose)
+    lip_mask = (
+        face_mask
+        & (y_norm > 0.12) & (y_norm < 0.30)
+        & (np.abs(v[:, 0]) < x_thresh * 1.5)
+    )
+    # Nose: mid face, tightest central column
+    nose_mask = (
+        face_mask
+        & (y_norm > 0.30) & (y_norm < 0.58)
+        & (np.abs(v[:, 0]) < x_thresh * 0.8)
+    )
+
+    # Eyebrow: above eyes, lateral band (slightly darker than skin)
+    EYEBROW_COLORS = {
+        "light":  [ 80,  55,  35, 255],
+        "medium": [ 60,  40,  25, 255],
+        "brown":  [ 45,  28,  15, 255],
+        "dark":   [ 25,  15,   8, 255],
+    }
+    eyebrow_mask = (
+        face_mask
+        & (y_norm > 0.76) & (y_norm < 0.84)
+        & (np.abs(v[:, 0]) > x_thresh * 0.8)
+        & (np.abs(v[:, 0]) < x_thresh * 2.0)
+    )
+
+    # Sclera (white of eye): forward-facing, lateral to nose, within eye band
+    z_face_mean = float(v[face_mask, 2].mean())
+    sclera_mask = (
+        face_mask
+        & (y_norm > 0.58) & (y_norm < 0.76)
+        & (np.abs(v[:, 0]) > x_thresh * 1.0)
+        & (np.abs(v[:, 0]) < x_thresh * 2.2)
+        & (v[:, 2] > z_face_mean * 1.05)
+    )
+
+    # Pupil/iris: tighter central eye zone, most forward verts
+    pupil_mask = (
+        face_mask
+        & (y_norm > 0.61) & (y_norm < 0.73)
+        & (np.abs(v[:, 0]) > x_thresh * 1.2)
+        & (np.abs(v[:, 0]) < x_thresh * 1.8)
+        & (v[:, 2] > z_face_mean * 1.08)
+    )
+
+    # ── 5. Paint: base face first, then overwrite sub-regions ──────────────────
+    colors[face_mask]    = np.array(fc["base"],       dtype=np.uint8)
+    colors[eye_mask]     = np.array(fc["eye_socket"], dtype=np.uint8)
+    colors[lip_mask]     = np.array(fc["lips"],       dtype=np.uint8)
+    colors[nose_mask]    = np.array(fc["nose"],       dtype=np.uint8)
+    colors[eyebrow_mask] = np.array(EYEBROW_COLORS.get(skin_tone, EYEBROW_COLORS["medium"]), dtype=np.uint8)
+    colors[sclera_mask]  = np.array([245, 245, 245, 255], dtype=np.uint8)
+    colors[pupil_mask]   = np.array([ 40,  30,  20, 255], dtype=np.uint8)
+
+    logger.debug(
+        "Face details: head=%d face=%d eye=%d lip=%d nose=%d eyebrow=%d sclera=%d pupil=%d verts",
+        head_mask.sum(), face_mask.sum(), eye_mask.sum(),
+        lip_mask.sum(), nose_mask.sum(), eyebrow_mask.sum(),
+        sclera_mask.sum(), pupil_mask.sum(),
+    )
+    return colors
