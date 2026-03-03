@@ -1,6 +1,3 @@
-// ignore_for_file: unused_import
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:model_viewer_plus/model_viewer_plus.dart';
 import 'package:provider/provider.dart';
@@ -352,7 +349,6 @@ class _AvatarViewerScreenState extends State<AvatarViewerScreen>
   }
 
   Widget _build3DViewer() {
-    // Cloudinary URLs are already https:// — pass straight to ModelViewer.
     final String? src = (_currentGlbUrl != null && _currentGlbUrl!.isNotEmpty)
         ? _currentGlbUrl
         : null;
@@ -377,9 +373,12 @@ class _AvatarViewerScreenState extends State<AvatarViewerScreen>
       );
     }
 
+    return _buildModelViewer(src);
+  }
+
+  Widget _buildModelViewer(String src) {
     return Stack(
       children: [
-        // Soft neutral background so skin-toned avatar stands out
         Container(
           decoration: const BoxDecoration(
             gradient: LinearGradient(
@@ -407,6 +406,15 @@ class _AvatarViewerScreenState extends State<AvatarViewerScreen>
           minCameraOrbit: 'auto auto 0.5m',
           maxCameraOrbit: 'auto auto 5m',
         ),
+        _buildViewerOverlay(),
+      ],
+    );
+  }
+
+  /// Date badge + SMPL-X badge overlaid on viewer
+  Widget _buildViewerOverlay() {
+    return Stack(
+      children: [
         if (_snapshots.isNotEmpty)
           Positioned(
             top: 12,
@@ -770,8 +778,10 @@ class _AvatarViewerScreenState extends State<AvatarViewerScreen>
   }
 
   Widget? _buildFab() {
-    if (_isLoading || _isGenerating || !_backendAvailable) return null;
+    if (_isLoading || _isGenerating) return null;
+    if (!_backendAvailable) return null;
     return FloatingActionButton.extended(
+      heroTag: 'fab_update',
       onPressed: _generateAvatar,
       backgroundColor: AppColors.accent,
       icon: const Icon(Icons.sync, color: Colors.black),

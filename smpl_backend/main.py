@@ -83,6 +83,7 @@ app = FastAPI(
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True,
                    allow_methods=["*"], allow_headers=["*"])
 
+
 # --- Pydantic models ---
 class AvatarRequest(BaseModel):
     model_config = ConfigDict(protected_namespaces=())
@@ -266,19 +267,22 @@ def _run_smplx(betas, gender):
     #                           18=left elbow,   19=right elbow
     # Positive Z-rotation lowers the left arm; negative Z lowers the right.
     body_pose = torch.zeros(1, 63, dtype=torch.float32)
-    # Left shoulder — rotate arm DOWN toward body
-    body_pose[0, 16*3 + 2] =  1.2   # left  shoulder Z
-    body_pose[0, 16*3 + 1] =  0.2   # left  shoulder Y (slight forward)
-    # Right shoulder — MIRROR of left (opposite sign on Z and Y)
-    body_pose[0, 17*3 + 2] = -1.2   # right shoulder Z
-    body_pose[0, 17*3 + 1] = -0.2   # right shoulder Y (slight forward)
-    # Left elbow — natural slight bend
-    body_pose[0, 18*3 + 2] =  0.3   # left  elbow Z
-    # Right elbow — MIRROR of left
-    body_pose[0, 19*3 + 2] = -0.3   # right elbow Z
-    # Wrists — straighten
-    body_pose[0, 20*3 + 2] = -0.1   # left  wrist Z
-    body_pose[0, 21*3 + 2] =  0.1   # right wrist Z
+
+    # Arms down naturally
+    body_pose[0, 12*3 + 2] = -1.2   # left shoulder Z: down
+    body_pose[0, 13*3 + 2] =  1.2   # right shoulder Z: down
+
+    # Shoulder shape — very small value only
+    body_pose[0, 12*3 + 0] = -0.08  # left shoulder X
+    body_pose[0, 13*3 + 0] =  0.08  # right shoulder X
+
+    # Elbow
+    body_pose[0, 15*3 + 2] =  0.1   # left elbow
+    body_pose[0, 16*3 + 2] = -0.1   # right elbow
+
+    # Wrist — only set ONCE
+    body_pose[0, 17*3 + 2] = -0.05
+    body_pose[0, 18*3 + 2] =  0.05
     # ────────────────────────────────────────────────────────────────────────
 
     with torch.no_grad():
