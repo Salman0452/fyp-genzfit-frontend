@@ -13,14 +13,16 @@ import 'screens/auth/forgot_password_screen.dart';
 import 'screens/client/client_home_screen.dart';
 import 'screens/trainer/trainer_home_screen.dart';
 import 'screens/admin/admin_login_screen.dart';
+import 'screens/preferences/preferences_screen.dart';
+import 'screens/onboarding/onboarding_screen.dart';
 import 'utils/constants.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   // Load environment variables
   await dotenv.load(fileName: ".env");
-  
+
   // Initialize Firebase
   await Firebase.initializeApp(
     options: const FirebaseOptions(
@@ -31,7 +33,7 @@ void main() async {
       storageBucket: 'genzfit-d36f0.firebasestorage.app',
     ),
   );
-  
+
   runApp(const GenZFitApp());
 }
 
@@ -108,7 +110,8 @@ class GenZFitApp extends StatelessWidget {
                   backgroundColor: AppConstants.primaryGold,
                   foregroundColor: AppConstants.primaryBlack,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(AppConstants.radiusMedium),
+                    borderRadius:
+                        BorderRadius.circular(AppConstants.radiusMedium),
                   ),
                 ),
               ),
@@ -122,6 +125,8 @@ class GenZFitApp extends StatelessWidget {
               '/client-home': (context) => const ClientHomeScreen(),
               '/trainer-home': (context) => const TrainerHomeScreen(),
               '/admin-login': (context) => const AdminLoginScreen(),
+              '/preferences': (context) => const PreferencesScreen(),
+              '/onboarding': (context) => const OnboardingScreen(),
             },
           );
         },
@@ -194,4 +199,3 @@ class PlaceholderScreen extends StatelessWidget {
     );
   }
 }
-

@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/user_model.dart';
 import '../services/auth_service.dart';
+import '../services/user_preferences_service.dart';
 
 class AuthProvider extends ChangeNotifier {
   final AuthService _authService = AuthService();
-  
+  final UserPreferencesService _prefsService = UserPreferencesService();
+
   UserModel? _currentUser;
   User? _firebaseUser;
   bool _isLoading = false;
@@ -17,7 +19,7 @@ class AuthProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get error => _error;
   bool get isAuthenticated => _currentUser != null;
-  
+
   AuthProvider() {
     _initializeAuthState();
     _checkCurrentUser();
@@ -46,6 +48,11 @@ class AuthProvider extends ChangeNotifier {
         try {
           _currentUser = await _authService.getUserData(user.uid);
           notifyListeners();
+          // Sync saved preferences to backend on every login / app restart
+          _prefsService.loadPreferences(user.uid).catchError((e) {
+            print('⚠️ Preferences sync on login failed: $e');
+            return null;
+          });
         } catch (e) {
           _error = e.toString();
           notifyListeners();
@@ -146,7 +153,7 @@ class AuthProvider extends ChangeNotifier {
       notifyListeners();
 
       await _authService.updateUserData(_currentUser!.id, data);
-      
+
       // Refresh user data
       _currentUser = await _authService.getUserData(_currentUser!.id);
 

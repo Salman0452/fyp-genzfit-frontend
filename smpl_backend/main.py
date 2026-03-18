@@ -8,8 +8,8 @@ Endpoints:
 Fully offline -- no external avatar APIs.
 """
 
-import base64, logging, os, tempfile
-from datetime import date
+import base64, json, logging, os, tempfile
+from datetime import date, datetime
 from pathlib import Path
 from typing import Optional
 
@@ -58,6 +58,9 @@ SKIN_TONES: dict[str, list[int]] = {
 
 # In-memory snapshot store {user_id: [{date, betas, measurements, glb_path}]}
 _avatar_store: dict = {}
+
+# User preferences store  { user_id: { ...preferences } }
+_user_preferences: dict = {}
 
 # --- SMPL-X availability check at startup ---
 _SMPLX_AVAILABLE = False
@@ -113,6 +116,87 @@ class HealthResponse(BaseModel):
     uv_files_exist: bool
     cloudinary_enabled: bool
 
+class UserPreferences(BaseModel):
+    model_config = ConfigDict(protected_namespaces=())
+    user_id: str
+    # Workout preferences
+    workout_location: str = Field("gym", description="gym | home | outdoor")
+    fitness_level: str = Field("intermediate", description="beginner | intermediate | advanced")
+    workout_days_per_week: int = Field(5, ge=1, le=7)
+    workout_duration_minutes: int = Field(45, ge=15, le=120)
+    available_equipment: list = Field(default=[], description="barbell | dumbbells | cables | machines | bench | squat_rack | resistance_bands | pull_up_bar | yoga_mat")
+    disliked_exercises: list = Field(default=[], description="Exercises user dislikes or cannot do")
+    injury_limitations: list = Field(default=[], description="e.g. ['bad knees', 'shoulder injury']")
+    # Diet preferences
+    dietary_restrictions: list = Field(default=[], description="e.g. ['no pork', 'lactose intolerant', 'vegetarian']")
+    food_allergies: list = Field(default=[], description="e.g. ['nuts', 'shellfish']")
+    cuisine_preference: str = Field("pakistani", description="pakistani | mixed | continental")
+    meals_per_day: int = Field(4, ge=3, le=6)
+    disliked_foods: list = Field(default=[], description="Foods user dislikes")
+    # Health data
+    goal: str = Field("fitness", description="weight_loss | muscle_gain | fitness | endurance")
+    age: int = Field(25, ge=10, le=100)
+    height_cm: float = Field(170.0)
+    weight_kg: float = Field(70.0)
+    gender: str = Field("male")
+    health_conditions: list = Field(default=[], description="e.g. ['diabetes', 'hypertension']")
+
+class AIRecommendationRequest(BaseModel):
+    model_config = ConfigDict(protected_namespaces=())
+    user_id: str
+    request_type: str = Field(..., description="daily_meals | daily_exercises | weekly_meals | weekly_exercises")
+    yesterday_meals_completed: int = 0
+    yesterday_meals_total: int = 0
+    yesterday_exercises_completed: int = 0
+    yesterday_exercises_total: int = 0
+    skipped_meals: list = Field(default=[])
+    favorite_meals: list = Field(default=[])
+    favorite_exercises: list = Field(default=[])
+    recent_meals: list = Field(default=[])
+    recent_exercises: list = Field(default=[])
+    # Inline user preferences — sent by Flutter so backend needs no persistent store
+    preferences: Optional[dict] = Field(default=None, description="Full UserPreferences dict sent from Flutter/Firestore")
+
+class ProgressAnalysisRequest(BaseModel):
+    model_config = ConfigDict(protected_namespaces=())
+    user_id: str
+    daily_nutrition: list = Field(
+        default=[],
+        description='''List of 7 days, each:
+        {
+          "date": "2026-03-01",
+          "calories_consumed": 1850,
+          "protein": 120,
+          "carbs": 200,
+          "fats": 65,
+          "meals_completed": 3,
+          "meals_total": 4,
+          "exercises_completed": 3,
+          "exercises_total": 4,
+          "calories_burned": 320
+        }'''
+    )
+    current_measurements: dict = Field(
+        default={},
+        description='''
+        {
+          "weight": 75.0,
+          "chest": 98.0,
+          "waist": 82.0,
+          "hips": 92.0,
+          "shoulders": 110.0,
+          "thigh": 55.0,
+          "date": "2026-03-01"
+        }'''
+    )
+    previous_measurements: dict = Field(
+        default={},
+        description="Same structure as current, 2 weeks ago"
+    )
+    goal: str = "fitness"
+    fitness_level: str = "intermediate"
+    workout_location: str = "gym"
+
 # --- Health endpoint ---
 @app.get("/health", response_model=HealthResponse)
 def health() -> HealthResponse:
@@ -122,6 +206,363 @@ def health() -> HealthResponse:
         uv_files_exist=(UV_OBJ_PATH.exists() and UV_TEXTURE_PATH.exists()),
         cloudinary_enabled=_CLOUDINARY_ENABLED,
     )
+
+# --- User preferences endpoints ---
+@app.post("/user-preferences")
+def save_user_preferences(prefs: UserPreferences):
+    """Save user preferences for AI personalization."""
+    _user_preferences[prefs.user_id] = prefs.dict()
+    logger.info("Saved preferences for user %s", prefs.user_id)
+    return {"status": "saved", "user_id": prefs.user_id}
+
+@app.get("/user-preferences/{user_id}")
+def get_user_preferences(user_id: str):
+    """Get user preferences."""
+    prefs = _user_preferences.get(user_id)
+    if not prefs:
+        raise HTTPException(
+            status_code=404,
+            detail="Preferences not found for this user"
+        )
+    return prefs
+
+# --- AI plan generation endpoint ---
+@app.post("/generate-ai-plan")
+def generate_ai_plan(req: AIRecommendationRequest):
+    """
+    Generate personalized diet/exercise plan using Groq.
+    Uses user preferences as system prompt for deep personalization.
+    Preferences are sent inline by Flutter (read from Firestore), so
+    no persistent backend store is required.
+    """
+    # Priority: inline preferences from Flutter > in-memory cache > defaults
+    if req.preferences:
+        prefs_data = req.preferences
+        logger.info("Using inline preferences for user %s (goal=%s, location=%s)",
+                    req.user_id,
+                    prefs_data.get('goal', '?'),
+                    prefs_data.get('workout_location', '?'))
+    else:
+        prefs_data = _user_preferences.get(req.user_id, {})
+        if prefs_data:
+            logger.info("Using cached preferences for user %s", req.user_id)
+        else:
+            logger.warning("No preferences found for user %s — using defaults", req.user_id)
+
+    prefs = UserPreferences(
+        user_id=req.user_id,
+        **{k: v for k, v in prefs_data.items() if k != "user_id"}
+    ) if prefs_data else UserPreferences(user_id=req.user_id)
+
+    system_prompt = _build_system_prompt(prefs)
+
+    groq_api_key = os.getenv("GROQ_API_KEY", "")
+    if not groq_api_key:
+        raise HTTPException(status_code=500, detail="GROQ_API_KEY not found in environment")
+
+    from groq import Groq
+    client = Groq(api_key=groq_api_key)
+
+    def _call_groq(prompt: str) -> str:
+        response = client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user",   "content": prompt},
+            ],
+            temperature=0.7,
+            max_tokens=2000,
+        )
+        return response.choices[0].message.content
+
+    try:
+        # ── Weekly plans: one small API call per day ──────────────────────────
+        if req.request_type in ("weekly_meals", "weekly_exercises"):
+            all_days = ["Monday", "Tuesday", "Wednesday", "Thursday",
+                        "Friday", "Saturday", "Sunday"]
+            combined: dict = {}
+            for day in all_days:
+                import time
+                if req.request_type == "weekly_meals":
+                    prompt = _build_single_day_meal_prompt(day, req, prefs)
+                else:
+                    prompt = _build_single_day_exercise_prompt(day, req, prefs)
+
+                logger.info("Generating %s for %s...", req.request_type, day)
+                day_content = _call_groq(prompt)
+
+                # Parse the array response for this single day
+                import json as _json
+                try:
+                    arr_start = day_content.index('[')
+                    arr_end   = day_content.rindex(']') + 1
+                    day_data  = _json.loads(day_content[arr_start:arr_end])
+                except Exception:
+                    logger.warning("Could not parse %s for %s — using []", req.request_type, day)
+                    day_data = []
+
+                combined[day] = day_data
+                # Small pause between calls to respect rate limits (TPM)
+                time.sleep(1.5)
+
+            import json as _json
+            content = _json.dumps(combined)
+            logger.info("Weekly %s complete: %d chars", req.request_type, len(content))
+            return {"status": "ok", "content": content, "request_type": req.request_type}
+
+        # ── Daily plans: single call as before ────────────────────────────────
+        if req.request_type == "daily_meals":
+            user_prompt = _build_daily_meal_prompt(req, prefs)
+        elif req.request_type == "daily_exercises":
+            user_prompt = _build_daily_exercise_prompt(req, prefs)
+        else:
+            raise HTTPException(status_code=400, detail=f"Unknown request_type: {req.request_type}")
+
+        content = _call_groq(user_prompt)
+        logger.info("Groq response for %s: %d chars", req.request_type, len(content))
+        return {"status": "ok", "content": content, "request_type": req.request_type}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("Groq API error: %s", e)
+        raise HTTPException(status_code=500, detail=f"Groq error: {e}")
+
+
+# --- AI prompt helper functions ---
+
+def _build_system_prompt(prefs: UserPreferences) -> str:
+    equipment_str       = ", ".join(prefs.available_equipment)  if prefs.available_equipment  else "bodyweight only"
+    restrictions_str    = ", ".join(prefs.dietary_restrictions) if prefs.dietary_restrictions else "none"
+    allergies_str       = ", ".join(prefs.food_allergies)       if prefs.food_allergies       else "none"
+    injuries_str        = ", ".join(prefs.injury_limitations)   if prefs.injury_limitations   else "none"
+    disliked_ex_str     = ", ".join(prefs.disliked_exercises)   if prefs.disliked_exercises   else "none"
+    disliked_food_str   = ", ".join(str(f) for f in prefs.disliked_foods) if prefs.disliked_foods else "none"
+    health_cond_str     = ", ".join(prefs.health_conditions)    if prefs.health_conditions    else "none"
+    bmi = prefs.weight_kg / ((prefs.height_cm / 100) ** 2)
+
+    home_rule     = "- ONLY suggest exercises that can be done at HOME without gym equipment" if prefs.workout_location == "home" else ""
+    gym_rule      = "- User has gym access. Use barbells, dumbbells, cables, machines as available" if prefs.workout_location == "gym" else ""
+    disliked_rule = f"- NEVER suggest: {disliked_ex_str}" if prefs.disliked_exercises else ""
+    injury_rule   = f"- Avoid exercises that stress: {injuries_str}" if prefs.injury_limitations else ""
+    veg_rule      = "- User is vegetarian. NO meat, chicken, fish in any meal" if "vegetarian" in prefs.dietary_restrictions else ""
+    pork_rule     = "- NO pork or pork products in any meal" if "no pork" in prefs.dietary_restrictions else ""
+    lactose_rule  = "- User is lactose intolerant. No milk, cheese, heavy dairy" if "lactose intolerant" in prefs.dietary_restrictions else ""
+    allergy_rule  = f"- STRICT ALLERGY: Never include {allergies_str}" if prefs.food_allergies else ""
+    food_rule     = f"- Never suggest: {disliked_food_str}" if prefs.disliked_foods else ""
+    diabetes_rule = "- Diabetic user: low glycemic index foods, avoid refined sugar" if "diabetes" in prefs.health_conditions else ""
+    cal_target    = (
+        "1500-1800 calories/day for weight loss" if prefs.goal == "weight_loss"
+        else "2200-2800 calories/day for muscle gain" if prefs.goal == "muscle_gain"
+        else "1800-2200 calories/day for maintenance"
+    )
+    cuisine_note  = "Pakistani/Desi foods using local ingredients" if prefs.cuisine_preference == "pakistani" else "mixed international cuisines"
+
+    return f"""You are an expert personal fitness trainer and nutritionist.
+You are creating a personalized plan for a specific user.
+Always respond with valid JSON only — no markdown, no extra text.
+
+═══ USER PROFILE ═══
+Goal: {prefs.goal}
+Age: {prefs.age} years
+Gender: {prefs.gender}
+Height: {prefs.height_cm} cm
+Weight: {prefs.weight_kg} kg
+BMI: {bmi:.1f}
+Fitness Level: {prefs.fitness_level}
+Health Conditions: {health_cond_str}
+
+═══ WORKOUT PREFERENCES ═══
+Location: {prefs.workout_location}
+Available Equipment: {equipment_str}
+Workout Days Per Week: {prefs.workout_days_per_week}
+Preferred Duration: {prefs.workout_duration_minutes} minutes per session
+Injury Limitations: {injuries_str}
+Disliked Exercises: {disliked_ex_str}
+
+═══ CRITICAL EXERCISE RULES ═══
+{home_rule}
+{gym_rule}
+{disliked_rule}
+{injury_rule}
+- Match difficulty to {prefs.fitness_level} level
+- Keep each session under {prefs.workout_duration_minutes} minutes
+
+═══ DIET PREFERENCES ═══
+Cuisine: {prefs.cuisine_preference}
+Meals Per Day: {prefs.meals_per_day}
+Dietary Restrictions: {restrictions_str}
+Food Allergies: {allergies_str}
+Disliked Foods: {disliked_food_str}
+
+═══ CRITICAL DIET RULES ═══
+{veg_rule}
+{pork_rule}
+{lactose_rule}
+{allergy_rule}
+{food_rule}
+{diabetes_rule}
+- Cuisine focus: {cuisine_note}
+- Calorie target: {cal_target}
+"""
+
+
+def _build_daily_meal_prompt(req: AIRecommendationRequest, prefs: UserPreferences) -> str:
+    day_names = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"]
+    today = day_names[datetime.now().weekday()]
+
+    yesterday_rate = 0
+    if req.yesterday_meals_total > 0:
+        yesterday_rate = int(req.yesterday_meals_completed / req.yesterday_meals_total * 100)
+
+    adaptive = ""
+    if req.yesterday_meals_total > 0:
+        if yesterday_rate < 50:
+            adaptive = f"User only completed {yesterday_rate}% of meals yesterday. Suggest simpler, quicker meals today."
+        elif yesterday_rate >= 80:
+            adaptive = f"User completed {yesterday_rate}% of meals yesterday. Great motivation! Can suggest variety."
+    if req.skipped_meals:
+        adaptive += f" User skipped: {', '.join(req.skipped_meals)}. Avoid similar meals."
+
+    favorites = f"User enjoys: {', '.join(req.favorite_meals)}" if req.favorite_meals else ""
+    avoid     = f"MUST AVOID (shown in last 30 days): {', '.join(req.recent_meals)}" if req.recent_meals else ""
+
+    snack1 = "- 1 Mid-morning snack (150-200 cal)" if prefs.meals_per_day >= 4 else ""
+    snack2 = "- 1 Afternoon snack (150-200 cal)"   if prefs.meals_per_day >= 5 else ""
+
+    return f"""Generate {prefs.meals_per_day} completely new personalized meals for TODAY ({today}).
+
+ADAPTIVE CONTEXT:
+{adaptive}
+{favorites}
+{avoid}
+
+Generate exactly {prefs.meals_per_day} meals:
+- 1 Breakfast (350-450 cal)
+{snack1}
+- 1 Lunch (450-600 cal)
+{snack2}
+- 1 Dinner (400-550 cal)
+
+Return ONLY a JSON array:
+[
+  {{"name": "meal name", "description": "brief description", "calories": 400, "ingredients": ["ingredient1"], "mealType": "breakfast", "macros": {{"protein": 25, "carbs": 45, "fats": 12}}}}
+]"""
+
+
+def _build_daily_exercise_prompt(req: AIRecommendationRequest, prefs: UserPreferences) -> str:
+    day_names = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"]
+    today     = day_names[datetime.now().weekday()]
+    day_index = datetime.now().weekday()
+
+    muscle_groups = [
+        "Chest + Triceps",
+        "Back + Biceps",
+        "Legs + Core",
+        "Shoulders + Abs",
+        "Full Body Cardio",
+        "Arms + Core (Light)",
+        "Active Recovery / Stretching",
+    ]
+    todays_focus = muscle_groups[day_index]
+
+    yesterday_rate = 0
+    if req.yesterday_exercises_total > 0:
+        yesterday_rate = int(req.yesterday_exercises_completed / req.yesterday_exercises_total * 100)
+
+    adaptive = ""
+    if req.yesterday_exercises_total > 0:
+        if yesterday_rate < 50:
+            adaptive = f"User struggled yesterday ({yesterday_rate}%). Keep it simple today."
+        elif yesterday_rate >= 80:
+            adaptive = f"User crushed it yesterday ({yesterday_rate}%)! Can push harder today."
+
+    favorites = f"User enjoys: {', '.join(req.favorite_exercises)}" if req.favorite_exercises else ""
+    avoid     = f"MUST AVOID (done in last 30 days): {', '.join(req.recent_exercises)}" if req.recent_exercises else ""
+    num_ex    = 4 if day_index < 6 else 2
+
+    return f"""Generate {num_ex} exercises for TODAY ({today}).
+
+TODAY'S FOCUS: {todays_focus}
+ADAPTIVE CONTEXT:
+{adaptive}
+{favorites}
+{avoid}
+
+Generate exactly {num_ex} exercises targeting {todays_focus}.
+Each exercise must fit within {prefs.workout_duration_minutes} minutes total.
+
+Return ONLY a JSON array:
+[
+  {{"name": "exercise name", "description": "how to perform it", "sets": 3, "reps": 12, "durationMinutes": 10, "difficulty": "intermediate", "targetMuscles": ["Chest", "Triceps"]}}
+]"""
+
+
+def _build_single_day_meal_prompt(day: str, req: AIRecommendationRequest, prefs: UserPreferences) -> str:
+    avoid = f"MUST AVOID (already seen recently): {', '.join(req.recent_meals)}" if req.recent_meals else ""
+    snack1 = "- 1 Mid-morning snack (150-200 cal)" if prefs.meals_per_day >= 4 else ""
+    snack2 = "- 1 Afternoon snack (150-200 cal)"   if prefs.meals_per_day >= 5 else ""
+
+    return f"""Generate {prefs.meals_per_day} meals for {day}.
+
+{avoid}
+
+Generate exactly {prefs.meals_per_day} meals:
+- 1 Breakfast (350-450 cal, high protein)
+{snack1}
+- 1 Lunch (450-600 cal, balanced)
+{snack2}
+- 1 Dinner (350-500 cal, lighter)
+
+Cuisine focus: {prefs.cuisine_preference}.
+
+Return ONLY a JSON array (no keys, no wrapping object):
+[{{"name": "Meal Name", "description": "short description", "calories": 400, "ingredients": ["item1"], "mealType": "breakfast", "macros": {{"protein": 30, "carbs": 40, "fats": 10}}}}]"""
+
+
+# Muscle group rotation for each day of the week (index 0=Mon … 6=Sun)
+_MUSCLE_SPLITS = [
+    {"focus": "Chest + Triceps",             "exercises": 4},
+    {"focus": "Back + Biceps",               "exercises": 4},
+    {"focus": "Legs + Core",                 "exercises": 4},
+    {"focus": "Shoulders + Abs",             "exercises": 4},
+    {"focus": "Full Body / HIIT Cardio",     "exercises": 4},
+    {"focus": "Arms + Core (Light)",         "exercises": 3},
+    {"focus": "Active Recovery / Stretching","exercises": 2},
+]
+_ALL_DAYS = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"]
+
+
+def _build_single_day_exercise_prompt(day: str, req: AIRecommendationRequest, prefs: UserPreferences) -> str:
+    avoid = f"MUST AVOID (done recently): {', '.join(req.recent_exercises)}" if req.recent_exercises else ""
+    equipment = ', '.join(prefs.available_equipment) if prefs.available_equipment else 'bodyweight only'
+
+    day_idx     = _ALL_DAYS.index(day)
+    workout_days = prefs.workout_days_per_week  # e.g. 5
+
+    # Days 0 … workout_days-1 are workout days; the rest are rest days
+    is_rest = day_idx >= workout_days
+
+    if is_rest:
+        return f"""Today ({day}) is a REST DAY.
+Return ONLY an empty JSON array: []"""
+
+    split     = _MUSCLE_SPLITS[day_idx % len(_MUSCLE_SPLITS)]
+    focus     = split["focus"]
+    ex_count  = split["exercises"]
+
+    return f"""Generate {ex_count} exercises for {day} — focus: {focus}.
+
+{avoid}
+
+Rules:
+- Difficulty: {prefs.fitness_level}
+- Session duration: {prefs.workout_duration_minutes} min total
+- Equipment: {equipment}
+
+Return ONLY a JSON array (no wrapping object):
+[{{"name": "Exercise Name", "description": "how to perform", "sets": 3, "reps": 12, "durationMinutes": 10, "difficulty": "{prefs.fitness_level}", "targetMuscles": ["{focus.split(' + ')[0]}"]}}]"""
+
 
 # --- Main generate-avatar endpoint ---
 @app.post("/generate-avatar", response_model=AvatarResponse)
@@ -512,3 +953,162 @@ def _apply_face_details(
         sclera_mask.sum(), pupil_mask.sum(),
     )
     return colors
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Progress Analysis Endpoint
+# ─────────────────────────────────────────────────────────────────────────────
+
+@app.post("/analyze-progress")
+def analyze_progress(req: ProgressAnalysisRequest):
+    """
+    Analyze user's weekly progress using AI.
+    Returns insights, estimated body changes, and recommendations.
+    """
+    # Calculate totals from daily_nutrition
+    total_calories = sum(d.get('calories_consumed', 0) for d in req.daily_nutrition)
+    total_protein  = sum(d.get('protein', 0) for d in req.daily_nutrition)
+    total_carbs    = sum(d.get('carbs', 0) for d in req.daily_nutrition)
+    total_fats     = sum(d.get('fats', 0) for d in req.daily_nutrition)
+    total_burned   = sum(d.get('calories_burned', 0) for d in req.daily_nutrition)
+
+    meals_done  = sum(d.get('meals_completed', 0) for d in req.daily_nutrition)
+    meals_total = sum(d.get('meals_total', 0) for d in req.daily_nutrition)
+    ex_done     = sum(d.get('exercises_completed', 0) for d in req.daily_nutrition)
+    ex_total    = sum(d.get('exercises_total', 0) for d in req.daily_nutrition)
+
+    meal_rate = int(meals_done / meals_total * 100) if meals_total > 0 else 0
+    ex_rate   = int(ex_done / ex_total * 100) if ex_total > 0 else 0
+
+    avg_daily_calories = int(total_calories / max(len(req.daily_nutrition), 1))
+    calorie_balance    = total_calories - total_burned
+
+    # Measurement changes
+    meas_changes = {}
+    if req.current_measurements and req.previous_measurements:
+        for key in ['weight', 'chest', 'waist', 'hips', 'shoulders', 'thigh']:
+            cur  = req.current_measurements.get(key, 0)
+            prev = req.previous_measurements.get(key, 0)
+            if cur and prev:
+                meas_changes[key] = round(cur - prev, 1)
+
+    # Build AI prompt
+    system_prompt = """You are an expert fitness coach and nutritionist.
+Analyze the user's weekly fitness data and provide honest,
+motivating insights. Always respond with valid JSON only."""
+
+    user_prompt = f"""Analyze this user's weekly fitness progress:
+
+GOAL: {req.goal}
+FITNESS LEVEL: {req.fitness_level}
+
+WEEKLY NUTRITION:
+- Total calories consumed: {total_calories} kcal
+- Average daily calories: {avg_daily_calories} kcal
+- Total protein: {total_protein}g
+- Total carbs: {total_carbs}g
+- Total fats: {total_fats}g
+- Calories burned from exercise: {total_burned} kcal
+- Net calorie balance: {calorie_balance} kcal
+
+COMPLETION RATES:
+- Meal plan: {meal_rate}% ({meals_done}/{meals_total} meals)
+- Exercise plan: {ex_rate}% ({ex_done}/{ex_total} exercises)
+
+MEASUREMENT CHANGES (current vs 2 weeks ago):
+{meas_changes if meas_changes else "No previous measurements to compare"}
+
+DAILY BREAKDOWN:
+{req.daily_nutrition}
+
+Based on this data, provide analysis in this exact JSON:
+{{
+  "overall_score": 85,
+  "grade": "A",
+  "headline": "Strong week! Keep pushing 💪",
+
+  "nutrition_analysis": {{
+    "summary": "2-3 sentence nutrition assessment",
+    "protein_status": "adequate|low|high",
+    "calorie_status": "deficit|surplus|maintenance",
+    "estimated_fat_change_kg": -0.3,
+    "tip": "One specific nutrition tip"
+  }},
+
+  "exercise_analysis": {{
+    "summary": "2-3 sentence exercise assessment",
+    "intensity_feedback": "good|too_easy|too_hard",
+    "estimated_muscle_impact": "slight gain|maintenance|loss",
+    "tip": "One specific exercise tip"
+  }},
+
+  "body_changes": {{
+    "weight_change_kg": -0.3,
+    "fat_change_kg": -0.4,
+    "muscle_change_kg": 0.1,
+    "estimated_measurements": {{
+      "chest_change_cm": 0.5,
+      "waist_change_cm": -0.8,
+      "shoulders_change_cm": 0.3,
+      "thigh_change_cm": 0.2
+    }},
+    "confidence": "low|medium|high",
+    "note": "Honest disclaimer about estimation accuracy"
+  }},
+
+  "streak_feedback": "Motivating message about consistency",
+
+  "next_week_focus": [
+    "Specific actionable tip 1",
+    "Specific actionable tip 2",
+    "Specific actionable tip 3"
+  ],
+
+  "avatar_should_update": true,
+  "avatar_update_reason": "Why avatar should reflect changes"
+}}"""
+
+    try:
+        from groq import Groq
+        client = Groq(api_key=os.getenv("GROQ_API_KEY", ""))
+        response = client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user",   "content": user_prompt},
+            ],
+            temperature=0.4,
+            max_tokens=2000,
+        )
+        content = response.choices[0].message.content
+
+        # Clean JSON
+        import re
+        match = re.search(r'\{.*\}', content, re.DOTALL)
+        if match:
+            import json as json_lib
+            analysis = json_lib.loads(match.group())
+        else:
+            raise ValueError("No JSON found in response")
+
+        return {
+            "status": "ok",
+            "analysis": analysis,
+            "computed_stats": {
+                "total_calories": total_calories,
+                "total_protein": total_protein,
+                "total_carbs": total_carbs,
+                "total_fats": total_fats,
+                "total_burned": total_burned,
+                "meal_completion_rate": meal_rate,
+                "exercise_completion_rate": ex_rate,
+                "calorie_balance": calorie_balance,
+                "measurement_changes": meas_changes,
+            }
+        }
+    except Exception as e:
+        logger.error("Progress analysis error: %s", e)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Analysis error: {e}"
+        )

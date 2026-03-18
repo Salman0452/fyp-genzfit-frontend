@@ -7,6 +7,7 @@ import '../../utils/validators.dart';
 import '../../utils/helpers.dart';
 import '../../widgets/custom_button.dart';
 import '../../widgets/custom_text_field.dart';
+import '../onboarding/onboarding_screen.dart';
 
 class SignupScreen extends StatefulWidget {
   final UserRole role;
@@ -65,17 +66,20 @@ class _SignupScreenState extends State<SignupScreen> {
 
     // Validate role-specific fields
     if (widget.role == UserRole.client && _selectedGoal == null) {
-      Helpers.showSnackBar(context, 'Please select your fitness goal', isError: true);
+      Helpers.showSnackBar(context, 'Please select your fitness goal',
+          isError: true);
       return;
     }
 
     if (widget.role == UserRole.trainer && _selectedExpertise.isEmpty) {
-      Helpers.showSnackBar(context, 'Please select at least one expertise', isError: true);
+      Helpers.showSnackBar(context, 'Please select at least one expertise',
+          isError: true);
       return;
     }
 
     if (widget.role == UserRole.trainer && _hourlyRateController.text.isEmpty) {
-      Helpers.showSnackBar(context, 'Please enter your hourly rate', isError: true);
+      Helpers.showSnackBar(context, 'Please enter your hourly rate',
+          isError: true);
       return;
     }
 
@@ -97,12 +101,18 @@ class _SignupScreenState extends State<SignupScreen> {
 
     if (success) {
       Helpers.showSnackBar(context, 'Account created successfully!');
-      
+
       // Navigate based on role - clear all previous routes
       if (widget.role == UserRole.client) {
-        Navigator.pushNamedAndRemoveUntil(context, '/client-home', (route) => false);
+        // New clients → onboarding flow
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (_) => const OnboardingScreen()),
+          (route) => false,
+        );
       } else if (widget.role == UserRole.trainer) {
-        Navigator.pushNamedAndRemoveUntil(context, '/trainer-home', (route) => false);
+        Navigator.pushNamedAndRemoveUntil(
+            context, '/trainer-home', (route) => false);
       }
     } else {
       Helpers.showSnackBar(
@@ -190,7 +200,7 @@ class _SignupScreenState extends State<SignupScreen> {
                   ),
                 ),
                 const SizedBox(height: AppConstants.paddingMedium),
-                
+
                 // Client-specific fields
                 if (widget.role == UserRole.client) ...[
                   const Text(
@@ -295,7 +305,8 @@ class _SignupScreenState extends State<SignupScreen> {
                       ),
                     ),
                     GestureDetector(
-                      onTap: () => Navigator.pushReplacementNamed(context, '/login'),
+                      onTap: () =>
+                          Navigator.pushReplacementNamed(context, '/login'),
                       child: const Text(
                         'Sign In',
                         style: TextStyle(

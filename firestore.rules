@@ -46,9 +46,9 @@ service cloud.firestore {
       
       // Users can update their own document (except role and status)
       // Admins can update any user
-      allow update: if (isSignedIn() && isOwner(userId) && 
-        request.resource.data.role == resource.data.role &&
-        request.resource.data.status == resource.data.status) || isAdmin();
+      allow update: if (isSignedIn() && isOwner(userId) &&
+        request.resource.data.get('role', resource.data.role) == resource.data.role &&
+        request.resource.data.get('status', resource.data.status) == resource.data.status) || isAdmin();
       
       // Only admins can delete users
       allow delete: if isAdmin();
@@ -146,16 +146,26 @@ service cloud.firestore {
     
     // Meal completions collection
     match /meal_completions/{completionId} {
-      allow read: if isOwner(resource.data.userId) || isAdmin();
+      // Allow reads: direct doc read (resource.data exists) or list queries
+      // (caller always filters by userId == auth.uid in the query)
+      allow read: if isSignedIn() && (
+        (resource != null && resource.data.userId == request.auth.uid) ||
+        isAdmin()
+      );
       allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
-      allow update, delete: if isOwner(resource.data.userId);
+      allow update: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
     }
     
     // Exercise completions collection
     match /exercise_completions/{completionId} {
-      allow read: if isOwner(resource.data.userId) || isAdmin();
+      allow read: if isSignedIn() && (
+        (resource != null && resource.data.userId == request.auth.uid) ||
+        isAdmin()
+      );
       allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
-      allow update, delete: if isOwner(resource.data.userId);
+      allow update: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
     }
     
     // Weekly schedules collection
@@ -164,7 +174,27 @@ service cloud.firestore {
       allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
       allow update, delete: if isOwner(resource.data.userId);
     }
+
+    // Weekly plans collection (two-layer AI planning skeleton)
+    // Doc ID format: "{userId}_{weekStart}" — ownership is encoded in the doc ID prefix.
+    // Using planId.split('_')[0] is not available in rules, so we use resource.data.userId
+    // with a null-safe check so that non-existent doc reads (existence checks) don't crash.
+    match /weekly_plans/{planId} {
+      allow read: if isSignedIn() && (
+        (resource != null && resource.data.userId == request.auth.uid) ||
+        resource == null && planId.matches(request.auth.uid + '_.*') ||
+        isAdmin()
+      );
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow update: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+    }
     
+    // User preferences collection
+    match /user_preferences/{userId} {
+      allow read, write: if isOwner(userId);
+    }
+
     // Chatbot history collection
     match /chatbot_history/{userId} {
       allow read, write: if isOwner(userId);

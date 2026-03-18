@@ -5,11 +5,12 @@ import 'package:genzfit/utils/constants.dart';
 import 'package:genzfit/screens/client/body_scan_screen.dart';
 import 'package:genzfit/screens/client/client_profile_screen.dart';
 import 'package:genzfit/screens/client/avatar_viewer_screen.dart';
-import 'package:genzfit/screens/client/recommendations_screen.dart';
 import 'package:genzfit/screens/client/trainer_marketplace_screen.dart';
 import 'package:genzfit/screens/client/ai_coach_screen.dart';
 import 'package:genzfit/screens/client/daily_plan_screen.dart';
 import 'package:genzfit/screens/chat/chat_list_screen.dart';
+import 'package:genzfit/screens/progress/progress_screen.dart';
+import 'package:genzfit/screens/preferences/preferences_screen.dart';
 import 'package:genzfit/services/body_analysis_service.dart';
 import 'package:genzfit/services/notification_service.dart';
 import 'package:genzfit/models/measurement_model.dart';
@@ -50,7 +51,8 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
       final userId = authProvider.user?.uid;
 
       if (userId != null) {
-        final measurement = await _bodyAnalysisService.getLatestMeasurement(userId);
+        final measurement =
+            await _bodyAnalysisService.getLatestMeasurement(userId);
         setState(() {
           _latestMeasurement = measurement;
           _isLoading = false;
@@ -65,6 +67,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
   Widget build(BuildContext context) {
     final List<Widget> screens = [
       _buildHomeTab(),
+      const ProgressScreen(),
       const TrainerMarketplaceScreen(),
       const ChatListScreen(),
       const ClientProfileScreen(),
@@ -96,6 +99,10 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
             BottomNavigationBarItem(
               icon: Icon(Icons.home),
               label: 'Home',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.show_chart),
+              label: 'Progress',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.fitness_center),
@@ -381,12 +388,14 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                 Icons.smart_toy,
                 Colors.blue,
                 () {
-                  final authProvider = Provider.of<AuthProvider>(context, listen: false);
+                  final authProvider =
+                      Provider.of<AuthProvider>(context, listen: false);
                   if (authProvider.userModel != null) {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => AICoachScreen(user: authProvider.userModel!),
+                        builder: (context) =>
+                            AICoachScreen(user: authProvider.userModel!),
                       ),
                     );
                   }
@@ -410,7 +419,19 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
             ),
             const SizedBox(width: 12),
             Expanded(
-              child: Container(),
+              child: _buildActionCard(
+                'Preferences',
+                Icons.tune,
+                Colors.teal,
+                () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const PreferencesScreen(),
+                    ),
+                  );
+                },
+              ),
             ),
           ],
         ),
