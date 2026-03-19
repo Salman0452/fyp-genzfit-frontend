@@ -201,11 +201,21 @@ class GenZFitApp extends StatelessWidget {
       brightness: Brightness.dark,
       scaffoldBackgroundColor: const Color(0xFF0A0A0A),
       primaryColor: AppColors.brandGreen,
-      colorScheme: const ColorScheme.dark(
-        primary: AppColors.brandGreen,
-        secondary: AppColors.brandBlue,
-        surface: Color(0xFF1A1A1A),
-        error: Color(0xFFCF6679),
+      colorScheme: ColorScheme.dark(
+        primary: AppColors.brandGreen, // Bright green - stands out on dark
+        secondary: AppColors.brandBlue, // Light blue accent
+        tertiary: AppColors.accentViolet, // Blue-gray from palette
+        surface: const Color(0xFF1A1A1A), // Dark gray surface
+        surfaceContainer: const Color(0xFF2A2A2A), // Slightly lighter surface
+        surfaceContainerHigh: const Color(0xFF3A3A3A), // Even lighter
+        error: const Color(0xFFCF6679), // Red for errors
+        onPrimary: const Color(0xFF010101), // Black text on green button
+        onSecondary: const Color(0xFF010101), // Black text on blue
+        onError: const Color(0xFFFFFFFF), // White text on error
+        onSurface: const Color(0xFFFFFFFF), // White text on surface
+        onSurfaceVariant: const Color(0xFFB0B0B0), // Light gray secondary text
+        scrim: const Color(0xFF000000), // Black scrim/overlay
+        brightness: Brightness.dark,
       ),
       appBarTheme: AppBarTheme(
         backgroundColor: const Color(0xFF1A1A1A),
