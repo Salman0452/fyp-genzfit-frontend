@@ -128,19 +128,25 @@ class AppColors {
   static const Color textTertiary = Color(0xFF595959); // Dark gray
   static const Color textOnBrand = Color(0xFFFFFFFF); // White on brand colors
 
-  // Status Colors
-  static const Color error = Color(0xFFE53935);
-  static const Color success = Color(0xFFD5FF5F);
-  static const Color warning = Color(0xFFFFA500);
-  static const Color info = Color(0xFF9AC0D6);
+  // Status Colors (mapped to palette where possible)
+  static const Color error = Color(
+    0xFF595959,
+  ); // Dark gray for errors (from palette)
+  static const Color success = Color(0xFFD5FF5F); // Green (from palette)
+  static const Color warning = Color(
+    0xFF595959,
+  ); // Dark gray for warnings (from palette)
+  static const Color info = Color(0xFF9AC0D6); // Light blue (from palette)
 
-  // Legacy/Accent Colors (kept for compatibility)
-  static const Color accent = Color(0xFFD5FF5F);
-  static const Color accentTeal = Color(0xFF9AC0D6);
-  static const Color accentCyan = Color(0xFF9AC0D6);
-  static const Color accentAmber = Color(0xFFFFA500);
-  static const Color accentCoral = Color(0xFFE53935);
-  static const Color accentViolet = Color(0xFF4E6075);
+  // Secondary Accent Colors (from PRIMARY & SECONDARY palette only)
+  static const Color accent = Color(0xFFD5FF5F); // Green (primary)
+  static const Color accentTeal = Color(0xFF9AC0D6); // Light blue (secondary)
+  static const Color accentCyan = Color(0xFF9AC0D6); // Light blue (secondary)
+  static const Color accentViolet = Color(0xFF4E6075); // Blue-gray (secondary)
+  static const Color accentGray = Color(0xFF9F9F9F); // Gray (secondary)
+  static const Color accentDarkGray = Color(
+    0xFF595959,
+  ); // Dark gray (secondary)
   static const Color muted = Color(0xFF9F9F9F);
   static const Color charcoal = Color(0xFF010101);
 }

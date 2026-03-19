@@ -371,13 +371,13 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                   color: AppColors.background.withOpacity(0.35),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                    color: AppColors.accentAmber.withOpacity(0.5),
+                    color: AppColors.accentViolet.withOpacity(0.5),
                   ),
                 ),
                 child: Text(
                   _getReadinessLabel(),
                   style: const TextStyle(
-                    color: AppColors.accentAmber,
+                    color: AppColors.accentViolet,
                     fontWeight: FontWeight.w700,
                     fontSize: 11,
                   ),
@@ -569,7 +569,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
               child: _buildActionCard(
                 'Today\'s Plan',
                 Icons.today,
-                AppColors.accentAmber,
+                AppColors.accentViolet,
                 () {
                   Navigator.push(
                     context,
@@ -624,7 +624,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
               child: _buildActionCard(
                 'Preferences',
                 Icons.tune,
-                AppColors.accentCoral,
+                AppColors.accentGray,
                 () {
                   Navigator.push(
                     context,
