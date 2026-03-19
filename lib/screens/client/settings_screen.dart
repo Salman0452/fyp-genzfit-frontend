@@ -18,33 +18,34 @@ class SettingsScreen extends StatelessWidget {
   Future<void> _showLogoutDialog(BuildContext context) async {
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppColors.surface,
-        title: const Text(
-          'Logout',
-          style: TextStyle(color: AppColors.textPrimary),
-        ),
-        content: const Text(
-          'Are you sure you want to logout?',
-          style: TextStyle(color: AppColors.textSecondary),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text(
-              'Cancel',
+      builder:
+          (context) => AlertDialog(
+            backgroundColor: AppColors.surface,
+            title: const Text(
+              'Logout',
+              style: TextStyle(color: AppColors.textPrimary),
+            ),
+            content: const Text(
+              'Are you sure you want to logout?',
               style: TextStyle(color: AppColors.textSecondary),
             ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text(
+                  'Cancel',
+                  style: TextStyle(color: AppColors.textSecondary),
+                ),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text(
+                  'Logout',
+                  style: TextStyle(color: AppColors.error),
+                ),
+              ),
+            ],
           ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text(
-              'Logout',
-              style: TextStyle(color: AppColors.error),
-            ),
-          ),
-        ],
-      ),
     );
 
     if (confirmed == true && context.mounted) {
@@ -59,7 +60,7 @@ class SettingsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: const Text('Settings'),
         backgroundColor: AppColors.surface,
@@ -268,10 +269,7 @@ class SettingsScreen extends StatelessWidget {
                   border: Border.all(color: AppColors.error.withOpacity(0.3)),
                 ),
                 child: ListTile(
-                  leading: const Icon(
-                    Icons.logout,
-                    color: AppColors.error,
-                  ),
+                  leading: const Icon(Icons.logout, color: AppColors.error),
                   title: const Text(
                     'Logout',
                     style: TextStyle(
@@ -301,7 +299,9 @@ class SettingsScreen extends StatelessWidget {
   }
 
   Widget _buildThemeSettingsCard(
-      BuildContext context, ThemeProvider themeProvider) {
+    BuildContext context,
+    ThemeProvider themeProvider,
+  ) {
     final modeLabel = switch (themeProvider.themeMode) {
       ThemeMode.system => 'System (Auto)',
       ThemeMode.light => 'Light',
@@ -361,9 +361,10 @@ class SettingsScreen extends StatelessWidget {
             ),
             value: themeProvider.isDarkMode,
             activeColor: AppColors.accent,
-            onChanged: themeProvider.useSystemTheme
-                ? null
-                : (value) => themeProvider.setDarkModeEnabled(value),
+            onChanged:
+                themeProvider.useSystemTheme
+                    ? null
+                    : (value) => themeProvider.setDarkModeEnabled(value),
           ),
         ],
       ),
@@ -384,10 +385,7 @@ class SettingsScreen extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppSizes.borderRadius),
       ),
       child: ListTile(
-        leading: Icon(
-          icon,
-          color: AppColors.accent,
-        ),
+        leading: Icon(icon, color: AppColors.accent),
         title: Text(
           title,
           style: const TextStyle(
@@ -398,10 +396,7 @@ class SettingsScreen extends StatelessWidget {
         ),
         subtitle: Text(
           subtitle,
-          style: const TextStyle(
-            color: AppColors.textSecondary,
-            fontSize: 14,
-          ),
+          style: const TextStyle(color: AppColors.textSecondary, fontSize: 14),
         ),
         trailing: const Icon(
           Icons.chevron_right,

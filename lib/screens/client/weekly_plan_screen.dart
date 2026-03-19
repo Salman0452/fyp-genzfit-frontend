@@ -46,8 +46,8 @@ class _WeeklyPlanScreenState extends State<WeeklyPlanScreen>
       if (user == null) return;
 
       // Check if weekly schedule exists
-      final weeklySchedule =
-          await _recommendationService.getCurrentWeekSchedule(user.id);
+      final weeklySchedule = await _recommendationService
+          .getCurrentWeekSchedule(user.id);
 
       if (weeklySchedule == null) {
         // Generate new weekly schedule
@@ -57,8 +57,9 @@ class _WeeklyPlanScreenState extends State<WeeklyPlanScreen>
       // Load today's tasks
       final meals = await _recommendationService.getTodayMeals(user.id);
       final exercises = await _recommendationService.getTodayExercises(user.id);
-      final stats =
-          await _recommendationService.getUserCompletionHistory(user.id);
+      final stats = await _recommendationService.getUserCompletionHistory(
+        user.id,
+      );
 
       setState(() {
         _todayMeals = meals;
@@ -82,9 +83,10 @@ class _WeeklyPlanScreenState extends State<WeeklyPlanScreen>
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => const Center(
-        child: CircularProgressIndicator(color: Colors.white),
-      ),
+      builder:
+          (context) => const Center(
+            child: CircularProgressIndicator(color: Colors.white),
+          ),
     );
 
     try {
@@ -94,11 +96,8 @@ class _WeeklyPlanScreenState extends State<WeeklyPlanScreen>
         latestMeasurement: null, // Add measurement loading if needed
       );
 
-      final exercisePlan =
-          await _recommendationService.generateWeeklyExercisePlan(
-        user: user,
-        latestMeasurement: null,
-      );
+      final exercisePlan = await _recommendationService
+          .generateWeeklyExercisePlan(user: user, latestMeasurement: null);
 
       // Save to Firestore
       await _recommendationService.saveWeeklySchedule(
@@ -114,9 +113,9 @@ class _WeeklyPlanScreenState extends State<WeeklyPlanScreen>
     } catch (e) {
       if (mounted) {
         Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error generating plan: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error generating plan: $e')));
       }
     }
   }
@@ -124,9 +123,9 @@ class _WeeklyPlanScreenState extends State<WeeklyPlanScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: AppColors.background,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
@@ -158,23 +157,22 @@ class _WeeklyPlanScreenState extends State<WeeklyPlanScreen>
           ],
         ),
       ),
-      body: _isLoading
-          ? const Center(
-              child: CircularProgressIndicator(color: AppColors.accent))
-          : Column(
-              children: [
-                _buildStatsCard(),
-                Expanded(
-                  child: TabBarView(
-                    controller: _tabController,
-                    children: [
-                      _buildMealsTab(),
-                      _buildExercisesTab(),
-                    ],
+      body:
+          _isLoading
+              ? const Center(
+                child: CircularProgressIndicator(color: AppColors.accent),
+              )
+              : Column(
+                children: [
+                  _buildStatsCard(),
+                  Expanded(
+                    child: TabBarView(
+                      controller: _tabController,
+                      children: [_buildMealsTab(), _buildExercisesTab()],
+                    ),
                   ),
-                ),
-              ],
-            ),
+                ],
+              ),
     );
   }
 
@@ -208,11 +206,7 @@ class _WeeklyPlanScreenState extends State<WeeklyPlanScreen>
                 '${completionRate.toStringAsFixed(0)}%',
                 Icons.check_circle,
               ),
-              _buildStatItem(
-                'Tasks Done',
-                '$totalCompleted',
-                Icons.task_alt,
-              ),
+              _buildStatItem('Tasks Done', '$totalCompleted', Icons.task_alt),
               _buildStatItem(
                 'This Week',
                 '${_todayMeals.length + _todayExercises.length}',
@@ -240,10 +234,7 @@ class _WeeklyPlanScreenState extends State<WeeklyPlanScreen>
         ),
         Text(
           label,
-          style: const TextStyle(
-            color: AppColors.textSecondary,
-            fontSize: 12,
-          ),
+          style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
         ),
       ],
     );
@@ -255,8 +246,11 @@ class _WeeklyPlanScreenState extends State<WeeklyPlanScreen>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.restaurant,
-                size: 80, color: AppColors.textSecondary.withOpacity(0.3)),
+            Icon(
+              Icons.restaurant,
+              size: 80,
+              color: AppColors.textSecondary.withOpacity(0.3),
+            ),
             const SizedBox(height: 16),
             const Text(
               'No meals scheduled for today',
@@ -291,8 +285,11 @@ class _WeeklyPlanScreenState extends State<WeeklyPlanScreen>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.fitness_center,
-                size: 80, color: AppColors.textSecondary.withOpacity(0.3)),
+            Icon(
+              Icons.fitness_center,
+              size: 80,
+              color: AppColors.textSecondary.withOpacity(0.3),
+            ),
             const SizedBox(height: 16),
             const Text(
               'No exercises scheduled for today',
@@ -361,8 +358,9 @@ class _WeeklyPlanScreenState extends State<WeeklyPlanScreen>
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: mealTypeColor.withOpacity(0.1),
-              borderRadius:
-                  const BorderRadius.vertical(top: Radius.circular(12)),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(12),
+              ),
             ),
             child: Row(
               children: [
@@ -420,8 +418,9 @@ class _WeeklyPlanScreenState extends State<WeeklyPlanScreen>
                       backgroundColor:
                           isCompleted ? AppColors.success : AppColors.accent,
                       foregroundColor: AppColors.background,
-                      disabledBackgroundColor:
-                          AppColors.success.withOpacity(0.5),
+                      disabledBackgroundColor: AppColors.success.withOpacity(
+                        0.5,
+                      ),
                     ),
                     icon: Icon(
                       isCompleted ? Icons.check_circle : Icons.check,
@@ -475,8 +474,9 @@ class _WeeklyPlanScreenState extends State<WeeklyPlanScreen>
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: difficultyColor.withOpacity(0.1),
-              borderRadius:
-                  const BorderRadius.vertical(top: Radius.circular(12)),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(12),
+              ),
             ),
             child: Row(
               children: [
@@ -486,8 +486,11 @@ class _WeeklyPlanScreenState extends State<WeeklyPlanScreen>
                     color: difficultyColor,
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Icon(Icons.fitness_center,
-                      color: Colors.white, size: 20),
+                  child: const Icon(
+                    Icons.fitness_center,
+                    color: Colors.white,
+                    size: 20,
+                  ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -521,15 +524,17 @@ class _WeeklyPlanScreenState extends State<WeeklyPlanScreen>
               children: [
                 Expanded(
                   child: ElevatedButton.icon(
-                    onPressed: isCompleted
-                        ? null
-                        : () => _completeExercise(exercise.id),
+                    onPressed:
+                        isCompleted
+                            ? null
+                            : () => _completeExercise(exercise.id),
                     style: ElevatedButton.styleFrom(
                       backgroundColor:
                           isCompleted ? AppColors.success : AppColors.accent,
                       foregroundColor: AppColors.background,
-                      disabledBackgroundColor:
-                          AppColors.success.withOpacity(0.5),
+                      disabledBackgroundColor: AppColors.success.withOpacity(
+                        0.5,
+                      ),
                     ),
                     icon: Icon(
                       isCompleted ? Icons.check_circle : Icons.check,
@@ -564,9 +569,9 @@ class _WeeklyPlanScreenState extends State<WeeklyPlanScreen>
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: $e')));
       }
     }
   }
@@ -586,9 +591,9 @@ class _WeeklyPlanScreenState extends State<WeeklyPlanScreen>
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: $e')));
       }
     }
   }

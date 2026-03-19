@@ -44,12 +44,7 @@ class _PreferencesScreenState extends State<PreferencesScreen> {
       'Squat Rack',
       'Machines',
     ],
-    'home': [
-      'Dumbbells',
-      'Resistance Bands',
-      'Pull-up Bar',
-      'Yoga Mat',
-    ],
+    'home': ['Dumbbells', 'Resistance Bands', 'Pull-up Bar', 'Yoga Mat'],
     'outdoor': ['Bodyweight only'],
   };
 
@@ -81,8 +76,9 @@ class _PreferencesScreenState extends State<PreferencesScreen> {
 
         _equipment.clear();
         _equipment.addAll(
-          (prefs['available_equipment'] as List? ?? [])
-              .map((e) => e.toString()),
+          (prefs['available_equipment'] as List? ?? []).map(
+            (e) => e.toString(),
+          ),
         );
         _injuryLimitations.clear();
         _injuryLimitations.addAll(
@@ -90,8 +86,9 @@ class _PreferencesScreenState extends State<PreferencesScreen> {
         );
         _dietaryRestrictions.clear();
         _dietaryRestrictions.addAll(
-          (prefs['dietary_restrictions'] as List? ?? [])
-              .map((e) => e.toString()),
+          (prefs['dietary_restrictions'] as List? ?? []).map(
+            (e) => e.toString(),
+          ),
         );
         _foodAllergies.clear();
         _foodAllergies.addAll(
@@ -115,18 +112,22 @@ class _PreferencesScreenState extends State<PreferencesScreen> {
 
     final equipmentKeys =
         _equipment.map((e) => e.toLowerCase().replaceAll(' ', '_')).toList();
-    final injuryKeys = _injuryLimitations
-        .map((e) => e.toLowerCase().replaceAll(' ', '_'))
-        .toList();
-    final dietKeys = _dietaryRestrictions
-        .map((e) => e.toLowerCase().replaceAll(' ', '_'))
-        .toList();
-    final allergyKeys = _foodAllergies
-        .map((e) => e.toLowerCase().replaceAll(' ', '_'))
-        .toList();
-    final healthKeys = _healthConditions
-        .map((e) => e.toLowerCase().replaceAll(' ', '_'))
-        .toList();
+    final injuryKeys =
+        _injuryLimitations
+            .map((e) => e.toLowerCase().replaceAll(' ', '_'))
+            .toList();
+    final dietKeys =
+        _dietaryRestrictions
+            .map((e) => e.toLowerCase().replaceAll(' ', '_'))
+            .toList();
+    final allergyKeys =
+        _foodAllergies
+            .map((e) => e.toLowerCase().replaceAll(' ', '_'))
+            .toList();
+    final healthKeys =
+        _healthConditions
+            .map((e) => e.toLowerCase().replaceAll(' ', '_'))
+            .toList();
 
     final prefs = {
       'goal': _goal,
@@ -155,7 +156,8 @@ class _PreferencesScreenState extends State<PreferencesScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
-                'Preferences saved. Your AI plans will now be personalised.'),
+              'Preferences saved. Your AI plans will now be personalised.',
+            ),
             backgroundColor: Colors.green,
             duration: Duration(seconds: 3),
           ),
@@ -166,8 +168,9 @@ class _PreferencesScreenState extends State<PreferencesScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content: Text('Error saving preferences: $e'),
-              backgroundColor: Colors.red),
+            content: Text('Error saving preferences: $e'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     } finally {
@@ -178,40 +181,44 @@ class _PreferencesScreenState extends State<PreferencesScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         backgroundColor: AppColors.surface,
-        title: const Text('Fitness Preferences',
-            style: TextStyle(color: AppColors.textPrimary)),
+        title: const Text(
+          'Fitness Preferences',
+          style: TextStyle(color: AppColors.textPrimary),
+        ),
         iconTheme: const IconThemeData(color: AppColors.textPrimary),
         elevation: 0,
       ),
-      body: _isLoading
-          ? const Center(
-              child: CircularProgressIndicator(color: AppColors.accent))
-          : Column(
-              children: [
-                Expanded(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(20),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildIntroCard(),
-                        const SizedBox(height: 24),
-                        _buildSection1(),
-                        const SizedBox(height: 24),
-                        _buildSection2(),
-                        const SizedBox(height: 24),
-                        _buildSection3(),
-                        const SizedBox(height: 32),
-                      ],
+      body:
+          _isLoading
+              ? const Center(
+                child: CircularProgressIndicator(color: AppColors.accent),
+              )
+              : Column(
+                children: [
+                  Expanded(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildIntroCard(),
+                          const SizedBox(height: 24),
+                          _buildSection1(),
+                          const SizedBox(height: 24),
+                          _buildSection2(),
+                          const SizedBox(height: 24),
+                          _buildSection3(),
+                          const SizedBox(height: 32),
+                        ],
+                      ),
                     ),
                   ),
-                ),
-                _buildSaveButton(),
-              ],
-            ),
+                  _buildSaveButton(),
+                ],
+              ),
     );
   }
 
@@ -285,15 +292,16 @@ class _PreferencesScreenState extends State<PreferencesScreen> {
           crossAxisSpacing: 12,
           mainAxisSpacing: 12,
           childAspectRatio: 2.8,
-          children: goals.map((g) {
-            final selected = _goal == g.$1;
-            return _buildSelectCard(
-              label: g.$2,
-              icon: g.$3,
-              selected: selected,
-              onTap: () => setState(() => _goal = g.$1),
-            );
-          }).toList(),
+          children:
+              goals.map((g) {
+                final selected = _goal == g.$1;
+                return _buildSelectCard(
+                  label: g.$2,
+                  icon: g.$3,
+                  selected: selected,
+                  onTap: () => setState(() => _goal = g.$1),
+                );
+              }).toList(),
         ),
       ],
     );
@@ -313,34 +321,37 @@ class _PreferencesScreenState extends State<PreferencesScreen> {
         Row(
           children: [
             _buildToggleChip(
-                'Gym',
-                'gym',
-                Icons.fitness_center,
-                _workoutLocation == 'gym',
-                () => setState(() {
-                      _workoutLocation = 'gym';
-                      _equipment.clear();
-                    })),
+              'Gym',
+              'gym',
+              Icons.fitness_center,
+              _workoutLocation == 'gym',
+              () => setState(() {
+                _workoutLocation = 'gym';
+                _equipment.clear();
+              }),
+            ),
             const SizedBox(width: 8),
             _buildToggleChip(
-                'Home',
-                'home',
-                Icons.home,
-                _workoutLocation == 'home',
-                () => setState(() {
-                      _workoutLocation = 'home';
-                      _equipment.clear();
-                    })),
+              'Home',
+              'home',
+              Icons.home,
+              _workoutLocation == 'home',
+              () => setState(() {
+                _workoutLocation = 'home';
+                _equipment.clear();
+              }),
+            ),
             const SizedBox(width: 8),
             _buildToggleChip(
-                'Outdoor',
-                'outdoor',
-                Icons.park,
-                _workoutLocation == 'outdoor',
-                () => setState(() {
-                      _workoutLocation = 'outdoor';
-                      _equipment.clear();
-                    })),
+              'Outdoor',
+              'outdoor',
+              Icons.park,
+              _workoutLocation == 'outdoor',
+              () => setState(() {
+                _workoutLocation = 'outdoor';
+                _equipment.clear();
+              }),
+            ),
           ],
         ),
         const SizedBox(height: 16),
@@ -351,27 +362,38 @@ class _PreferencesScreenState extends State<PreferencesScreen> {
         Wrap(
           spacing: 8,
           runSpacing: 8,
-          children: (_equipmentOptions[_workoutLocation] ?? []).map((eq) {
-            final key = eq.toLowerCase().replaceAll(' ', '_');
-            final selected =
-                _equipment.contains(key) || _equipment.contains(eq);
-            return FilterChip(
-              label: Text(eq,
-                  style: TextStyle(
-                      color: selected
-                          ? AppColors.background
-                          : AppColors.textSecondary,
-                      fontSize: 12)),
-              selected: selected,
-              onSelected: (_) => setState(() =>
-                  selected ? _equipment.remove(key) : _equipment.add(key)),
-              selectedColor: AppColors.accent,
-              backgroundColor: AppColors.surface,
-              checkmarkColor: AppColors.background,
-              side: BorderSide(
-                  color: selected ? AppColors.accent : AppColors.surface),
-            );
-          }).toList(),
+          children:
+              (_equipmentOptions[_workoutLocation] ?? []).map((eq) {
+                final key = eq.toLowerCase().replaceAll(' ', '_');
+                final selected =
+                    _equipment.contains(key) || _equipment.contains(eq);
+                return FilterChip(
+                  label: Text(
+                    eq,
+                    style: TextStyle(
+                      color:
+                          selected
+                              ? AppColors.background
+                              : AppColors.textSecondary,
+                      fontSize: 12,
+                    ),
+                  ),
+                  selected: selected,
+                  onSelected:
+                      (_) => setState(
+                        () =>
+                            selected
+                                ? _equipment.remove(key)
+                                : _equipment.add(key),
+                      ),
+                  selectedColor: AppColors.accent,
+                  backgroundColor: AppColors.surface,
+                  checkmarkColor: AppColors.background,
+                  side: BorderSide(
+                    color: selected ? AppColors.accent : AppColors.surface,
+                  ),
+                );
+              }).toList(),
         ),
         const SizedBox(height: 20),
 
@@ -379,36 +401,40 @@ class _PreferencesScreenState extends State<PreferencesScreen> {
         _buildLabel('Fitness Level'),
         const SizedBox(height: 10),
         Row(
-          children: ['beginner', 'intermediate', 'advanced'].map((level) {
-            final selected = _fitnessLevel == level;
-            return Expanded(
-              child: GestureDetector(
-                onTap: () => setState(() => _fitnessLevel = level),
-                child: Container(
-                  margin: const EdgeInsets.only(right: 8),
-                  padding: const EdgeInsets.symmetric(vertical: 10),
-                  decoration: BoxDecoration(
-                    color: selected ? AppColors.accent : AppColors.surface,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                        color: selected ? AppColors.accent : AppColors.surface),
-                  ),
-                  child: Text(
-                    level[0].toUpperCase() + level.substring(1),
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: selected
-                          ? AppColors.background
-                          : AppColors.textSecondary,
-                      fontWeight:
-                          selected ? FontWeight.bold : FontWeight.normal,
-                      fontSize: 12,
+          children:
+              ['beginner', 'intermediate', 'advanced'].map((level) {
+                final selected = _fitnessLevel == level;
+                return Expanded(
+                  child: GestureDetector(
+                    onTap: () => setState(() => _fitnessLevel = level),
+                    child: Container(
+                      margin: const EdgeInsets.only(right: 8),
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      decoration: BoxDecoration(
+                        color: selected ? AppColors.accent : AppColors.surface,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color:
+                              selected ? AppColors.accent : AppColors.surface,
+                        ),
+                      ),
+                      child: Text(
+                        level[0].toUpperCase() + level.substring(1),
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color:
+                              selected
+                                  ? AppColors.background
+                                  : AppColors.textSecondary,
+                          fontWeight:
+                              selected ? FontWeight.bold : FontWeight.normal,
+                          fontSize: 12,
+                        ),
+                      ),
                     ),
                   ),
-                ),
-              ),
-            );
-          }).toList(),
+                );
+              }).toList(),
         ),
         const SizedBox(height: 20),
 
@@ -448,14 +474,17 @@ class _PreferencesScreenState extends State<PreferencesScreen> {
             'Back Pain',
             'Wrist Pain',
             'Hip Pain',
-            'None'
+            'None',
           ],
           selected: _injuryLimitations,
           onToggle: (v) {
             final key = v.toLowerCase().replaceAll(' ', '_');
-            setState(() => _injuryLimitations.contains(key)
-                ? _injuryLimitations.remove(key)
-                : _injuryLimitations.add(key));
+            setState(
+              () =>
+                  _injuryLimitations.contains(key)
+                      ? _injuryLimitations.remove(key)
+                      : _injuryLimitations.add(key),
+            );
           },
         ),
       ],
@@ -476,25 +505,28 @@ class _PreferencesScreenState extends State<PreferencesScreen> {
         Row(
           children: [
             _buildToggleChip(
-                'Pakistani',
-                'pakistani',
-                Icons.ramen_dining,
-                _cuisinePreference == 'pakistani',
-                () => setState(() => _cuisinePreference = 'pakistani')),
+              'Pakistani',
+              'pakistani',
+              Icons.ramen_dining,
+              _cuisinePreference == 'pakistani',
+              () => setState(() => _cuisinePreference = 'pakistani'),
+            ),
             const SizedBox(width: 8),
             _buildToggleChip(
-                'Mixed',
-                'mixed',
-                Icons.public,
-                _cuisinePreference == 'mixed',
-                () => setState(() => _cuisinePreference = 'mixed')),
+              'Mixed',
+              'mixed',
+              Icons.public,
+              _cuisinePreference == 'mixed',
+              () => setState(() => _cuisinePreference = 'mixed'),
+            ),
             const SizedBox(width: 8),
             _buildToggleChip(
-                'Continental',
-                'continental',
-                Icons.dining,
-                _cuisinePreference == 'continental',
-                () => setState(() => _cuisinePreference = 'continental')),
+              'Continental',
+              'continental',
+              Icons.dining,
+              _cuisinePreference == 'continental',
+              () => setState(() => _cuisinePreference = 'continental'),
+            ),
           ],
         ),
         const SizedBox(height: 20),
@@ -523,14 +555,17 @@ class _PreferencesScreenState extends State<PreferencesScreen> {
             'Lactose Intolerant',
             'Low Carb',
             'Low Fat',
-            'Gluten Free'
+            'Gluten Free',
           ],
           selected: _dietaryRestrictions,
           onToggle: (v) {
             final key = v.toLowerCase().replaceAll(' ', '_');
-            setState(() => _dietaryRestrictions.contains(key)
-                ? _dietaryRestrictions.remove(key)
-                : _dietaryRestrictions.add(key));
+            setState(
+              () =>
+                  _dietaryRestrictions.contains(key)
+                      ? _dietaryRestrictions.remove(key)
+                      : _dietaryRestrictions.add(key),
+            );
           },
         ),
         const SizedBox(height: 16),
@@ -543,9 +578,12 @@ class _PreferencesScreenState extends State<PreferencesScreen> {
           selected: _foodAllergies,
           onToggle: (v) {
             final key = v.toLowerCase();
-            setState(() => _foodAllergies.contains(key)
-                ? _foodAllergies.remove(key)
-                : _foodAllergies.add(key));
+            setState(
+              () =>
+                  _foodAllergies.contains(key)
+                      ? _foodAllergies.remove(key)
+                      : _foodAllergies.add(key),
+            );
           },
         ),
         const SizedBox(height: 16),
@@ -558,9 +596,12 @@ class _PreferencesScreenState extends State<PreferencesScreen> {
           selected: _healthConditions,
           onToggle: (v) {
             final key = v.toLowerCase().replaceAll(' ', '_');
-            setState(() => _healthConditions.contains(key)
-                ? _healthConditions.remove(key)
-                : _healthConditions.add(key));
+            setState(
+              () =>
+                  _healthConditions.contains(key)
+                      ? _healthConditions.remove(key)
+                      : _healthConditions.add(key),
+            );
           },
         ),
       ],
@@ -575,9 +616,10 @@ class _PreferencesScreenState extends State<PreferencesScreen> {
         color: AppColors.surface,
         boxShadow: [
           BoxShadow(
-              color: Colors.black.withOpacity(0.2),
-              blurRadius: 8,
-              offset: const Offset(0, -2))
+            color: Colors.black.withOpacity(0.2),
+            blurRadius: 8,
+            offset: const Offset(0, -2),
+          ),
         ],
       ),
       child: SizedBox(
@@ -587,20 +629,28 @@ class _PreferencesScreenState extends State<PreferencesScreen> {
           onPressed: _isSaving ? null : _save,
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.accent,
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
           ),
-          icon: _isSaving
-              ? const SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(
-                      strokeWidth: 2, color: Colors.black))
-              : const Icon(Icons.save, color: Colors.black),
+          icon:
+              _isSaving
+                  ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.black,
+                    ),
+                  )
+                  : const Icon(Icons.save, color: Colors.black),
           label: Text(
             _isSaving ? 'Saving...' : 'Save Preferences',
             style: const TextStyle(
-                color: Colors.black, fontWeight: FontWeight.bold, fontSize: 16),
+              color: Colors.black,
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+            ),
           ),
         ),
       ),
@@ -609,11 +659,14 @@ class _PreferencesScreenState extends State<PreferencesScreen> {
 
   // ── Helpers ───────────────────────────────────────────────────────────────
   Widget _buildLabel(String text) {
-    return Text(text,
-        style: const TextStyle(
-            color: AppColors.textSecondary,
-            fontSize: 13,
-            fontWeight: FontWeight.w600));
+    return Text(
+      text,
+      style: const TextStyle(
+        color: AppColors.textSecondary,
+        fontSize: 13,
+        fontWeight: FontWeight.w600,
+      ),
+    );
   }
 
   Widget _buildSelectCard({
@@ -630,27 +683,38 @@ class _PreferencesScreenState extends State<PreferencesScreen> {
           color: selected ? AppColors.accent : AppColors.surface,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
-              color: selected ? AppColors.accent : Colors.transparent),
+            color: selected ? AppColors.accent : Colors.transparent,
+          ),
         ),
         child: Row(
           children: [
-            Icon(icon,
-                color: selected ? Colors.black : AppColors.textSecondary,
-                size: 18),
+            Icon(
+              icon,
+              color: selected ? Colors.black : AppColors.textSecondary,
+              size: 18,
+            ),
             const SizedBox(width: 8),
-            Text(label,
-                style: TextStyle(
-                    color: selected ? Colors.black : AppColors.textSecondary,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 13)),
+            Text(
+              label,
+              style: TextStyle(
+                color: selected ? Colors.black : AppColors.textSecondary,
+                fontWeight: FontWeight.w600,
+                fontSize: 13,
+              ),
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildToggleChip(String label, String value, IconData icon,
-      bool selected, VoidCallback onTap) {
+  Widget _buildToggleChip(
+    String label,
+    String value,
+    IconData icon,
+    bool selected,
+    VoidCallback onTap,
+  ) {
     return Expanded(
       child: GestureDetector(
         onTap: onTap,
@@ -662,16 +726,20 @@ class _PreferencesScreenState extends State<PreferencesScreen> {
           ),
           child: Column(
             children: [
-              Icon(icon,
-                  size: 18,
-                  color: selected ? Colors.black : AppColors.textSecondary),
+              Icon(
+                icon,
+                size: 18,
+                color: selected ? Colors.black : AppColors.textSecondary,
+              ),
               const SizedBox(height: 4),
-              Text(label,
-                  style: TextStyle(
-                      fontSize: 11,
-                      color: selected ? Colors.black : AppColors.textSecondary,
-                      fontWeight:
-                          selected ? FontWeight.bold : FontWeight.normal)),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 11,
+                  color: selected ? Colors.black : AppColors.textSecondary,
+                  fontWeight: selected ? FontWeight.bold : FontWeight.normal,
+                ),
+              ),
             ],
           ),
         ),
@@ -687,26 +755,32 @@ class _PreferencesScreenState extends State<PreferencesScreen> {
     return Wrap(
       spacing: 8,
       runSpacing: 8,
-      children: options.map((opt) {
-        final key = opt.toLowerCase().replaceAll(' ', '_');
-        final isSelected =
-            selected.contains(key) || selected.contains(opt.toLowerCase());
-        return FilterChip(
-          label: Text(opt,
-              style: TextStyle(
-                  color: isSelected
-                      ? AppColors.background
-                      : AppColors.textSecondary,
-                  fontSize: 12)),
-          selected: isSelected,
-          onSelected: (_) => onToggle(opt),
-          selectedColor: AppColors.accent,
-          backgroundColor: AppColors.surface,
-          checkmarkColor: AppColors.background,
-          side: BorderSide(
-              color: isSelected ? AppColors.accent : AppColors.surface),
-        );
-      }).toList(),
+      children:
+          options.map((opt) {
+            final key = opt.toLowerCase().replaceAll(' ', '_');
+            final isSelected =
+                selected.contains(key) || selected.contains(opt.toLowerCase());
+            return FilterChip(
+              label: Text(
+                opt,
+                style: TextStyle(
+                  color:
+                      isSelected
+                          ? AppColors.background
+                          : AppColors.textSecondary,
+                  fontSize: 12,
+                ),
+              ),
+              selected: isSelected,
+              onSelected: (_) => onToggle(opt),
+              selectedColor: AppColors.accent,
+              backgroundColor: AppColors.surface,
+              checkmarkColor: AppColors.background,
+              side: BorderSide(
+                color: isSelected ? AppColors.accent : AppColors.surface,
+              ),
+            );
+          }).toList(),
     );
   }
 }

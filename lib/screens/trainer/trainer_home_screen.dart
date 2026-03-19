@@ -41,14 +41,14 @@ class _TrainerHomeScreenState extends State<TrainerHomeScreen> {
     final List<Widget> screens = [
       _buildHomeTab(),
       const ChatListScreen(),
-      trainer != null 
-          ? TrainerDashboardScreen(trainer: trainer) 
+      trainer != null
+          ? TrainerDashboardScreen(trainer: trainer)
           : const Center(child: CircularProgressIndicator()),
       const TrainerProfileScreen(),
     ];
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: screens[_currentIndex],
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
@@ -70,10 +70,7 @@ class _TrainerHomeScreenState extends State<TrainerHomeScreen> {
           type: BottomNavigationBarType.fixed,
           elevation: 0,
           items: const [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.home),
-              label: 'Home',
-            ),
+            BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
             BottomNavigationBarItem(
               icon: Icon(Icons.chat_bubble_outline),
               label: 'Messages',
@@ -82,10 +79,7 @@ class _TrainerHomeScreenState extends State<TrainerHomeScreen> {
               icon: Icon(Icons.dashboard),
               label: 'Dashboard',
             ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.person),
-              label: 'Profile',
-            ),
+            BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
           ],
         ),
       ),
@@ -152,16 +146,11 @@ class _TrainerHomeScreenState extends State<TrainerHomeScreen> {
                 decoration: BoxDecoration(
                   color: AppColors.warning.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(AppSizes.borderRadius),
-                  border: Border.all(
-                    color: AppColors.warning.withOpacity(0.3),
-                  ),
+                  border: Border.all(color: AppColors.warning.withOpacity(0.3)),
                 ),
                 child: Row(
                   children: [
-                    const Icon(
-                      Icons.info_outline,
-                      color: AppColors.warning,
-                    ),
+                    const Icon(Icons.info_outline, color: AppColors.warning),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Column(
@@ -288,7 +277,12 @@ class _TrainerHomeScreenState extends State<TrainerHomeScreen> {
     );
   }
 
-  Widget _buildStatItem(String label, String value, IconData icon, Color color) {
+  Widget _buildStatItem(
+    String label,
+    String value,
+    IconData icon,
+    Color color,
+  ) {
     return Column(
       children: [
         Icon(icon, color: color, size: 28),
@@ -304,10 +298,7 @@ class _TrainerHomeScreenState extends State<TrainerHomeScreen> {
         const SizedBox(height: 4),
         Text(
           label,
-          style: const TextStyle(
-            fontSize: 12,
-            color: AppColors.textSecondary,
-          ),
+          style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
         ),
       ],
     );
@@ -425,11 +416,7 @@ class _TrainerHomeScreenState extends State<TrainerHomeScreen> {
       ),
       child: const Column(
         children: [
-          Icon(
-            Icons.timeline,
-            size: 64,
-            color: AppColors.textSecondary,
-          ),
+          Icon(Icons.timeline, size: 64, color: AppColors.textSecondary),
           SizedBox(height: 16),
           Text(
             'No recent activity',
@@ -443,10 +430,7 @@ class _TrainerHomeScreenState extends State<TrainerHomeScreen> {
           Text(
             'Your client activities will appear here',
             textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 14,
-              color: AppColors.textSecondary,
-            ),
+            style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
           ),
         ],
       ),

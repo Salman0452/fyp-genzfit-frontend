@@ -93,8 +93,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       // Upload new avatar if selected
       if (_selectedImage != null) {
         setState(() => _isUploadingImage = true);
-        avatarUrl =
-            await _storageService.uploadProfilePicture(_selectedImage!, userId);
+        avatarUrl = await _storageService.uploadProfilePicture(
+          _selectedImage!,
+          userId,
+        );
         setState(() => _isUploadingImage = false);
       }
 
@@ -157,7 +159,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     final user = authProvider.userModel;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: const Text('Edit Profile'),
         backgroundColor: AppColors.surface,
@@ -175,29 +177,33 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   CircleAvatar(
                     radius: 60,
                     backgroundColor: AppColors.accent,
-                    backgroundImage: _selectedImage != null
-                        ? FileImage(_selectedImage!)
-                        : (user?.avatarUrl != null
-                            ? NetworkImage(user!.avatarUrl!) as ImageProvider
-                            : null),
-                    child: _selectedImage == null && user?.avatarUrl == null
-                        ? Text(
-                            (user?.name ?? 'U').substring(0, 1).toUpperCase(),
-                            style: const TextStyle(
-                              fontSize: 48,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.background,
-                            ),
-                          )
-                        : null,
+                    backgroundImage:
+                        _selectedImage != null
+                            ? FileImage(_selectedImage!)
+                            : (user?.avatarUrl != null
+                                ? NetworkImage(user!.avatarUrl!)
+                                    as ImageProvider
+                                : null),
+                    child:
+                        _selectedImage == null && user?.avatarUrl == null
+                            ? Text(
+                              (user?.name ?? 'U').substring(0, 1).toUpperCase(),
+                              style: const TextStyle(
+                                fontSize: 48,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.background,
+                              ),
+                            )
+                            : null,
                   ),
                   if (_isUploadingImage)
                     const Positioned.fill(
                       child: CircleAvatar(
                         radius: 60,
                         backgroundColor: Colors.black54,
-                        child:
-                            CircularProgressIndicator(color: AppColors.accent),
+                        child: CircularProgressIndicator(
+                          color: AppColors.accent,
+                        ),
                       ),
                     ),
                   Positioned(
@@ -210,8 +216,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         decoration: BoxDecoration(
                           color: AppColors.accent,
                           shape: BoxShape.circle,
-                          border:
-                              Border.all(color: AppColors.background, width: 2),
+                          border: Border.all(
+                            color: AppColors.background,
+                            width: 2,
+                          ),
                         ),
                         child: const Icon(
                           Icons.camera_alt,
@@ -257,8 +265,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 decoration: InputDecoration(
                   labelText: 'Email',
                   labelStyle: const TextStyle(color: AppColors.textSecondary),
-                  prefixIcon:
-                      const Icon(Icons.email, color: AppColors.textSecondary),
+                  prefixIcon: const Icon(
+                    Icons.email,
+                    color: AppColors.textSecondary,
+                  ),
                   filled: true,
                   fillColor: AppColors.charcoal,
                   border: OutlineInputBorder(
@@ -267,7 +277,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   ),
                   helperText: 'Email cannot be changed',
                   helperStyle: const TextStyle(
-                      color: AppColors.textSecondary, fontSize: 12),
+                    color: AppColors.textSecondary,
+                    fontSize: 12,
+                  ),
                 ),
               ),
               const SizedBox(height: 16),
@@ -288,12 +300,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     borderSide: BorderSide.none,
                   ),
                 ),
-                items: _goals.map((goal) {
-                  return DropdownMenuItem(
-                    value: goal,
-                    child: Text(goal),
-                  );
-                }).toList(),
+                items:
+                    _goals.map((goal) {
+                      return DropdownMenuItem(value: goal, child: Text(goal));
+                    }).toList(),
                 onChanged: (value) {
                   setState(() => _selectedGoal = value);
                 },
@@ -315,7 +325,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     child: Text(
                       'Avatar Skin Tone',
                       style: TextStyle(
-                          color: AppColors.textSecondary, fontSize: 13),
+                        color: AppColors.textSecondary,
+                        fontSize: 13,
+                      ),
                     ),
                   ),
                   Row(
@@ -325,8 +337,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         color: const Color(0xFFFFDCB9),
                         value: 'light',
                         selected: _selectedSkinTone == 'light',
-                        onTap: () =>
-                            setState(() => _selectedSkinTone = 'light'),
+                        onTap:
+                            () => setState(() => _selectedSkinTone = 'light'),
                       ),
                       const SizedBox(width: 10),
                       _SkinToneChip(
@@ -334,8 +346,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         color: const Color(0xFFD2A882),
                         value: 'medium',
                         selected: _selectedSkinTone == 'medium',
-                        onTap: () =>
-                            setState(() => _selectedSkinTone = 'medium'),
+                        onTap:
+                            () => setState(() => _selectedSkinTone = 'medium'),
                       ),
                       const SizedBox(width: 10),
                       _SkinToneChip(
@@ -343,8 +355,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         color: const Color(0xFFB47850),
                         value: 'brown',
                         selected: _selectedSkinTone == 'brown',
-                        onTap: () =>
-                            setState(() => _selectedSkinTone = 'brown'),
+                        onTap:
+                            () => setState(() => _selectedSkinTone = 'brown'),
                       ),
                       const SizedBox(width: 10),
                       _SkinToneChip(
@@ -415,9 +427,10 @@ class _SkinToneChip extends StatelessWidget {
               color: selected ? Colors.white : Colors.transparent,
               width: 2.5,
             ),
-            boxShadow: selected
-                ? [BoxShadow(color: color.withOpacity(0.5), blurRadius: 8)]
-                : [],
+            boxShadow:
+                selected
+                    ? [BoxShadow(color: color.withOpacity(0.5), blurRadius: 8)]
+                    : [],
           ),
           child: Column(
             children: [

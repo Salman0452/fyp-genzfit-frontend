@@ -153,11 +153,12 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
     ];
 
     return Scaffold(
-      backgroundColor: AppColors.background,
       body: screens[_currentIndex],
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color:
+              Theme.of(context).bottomAppBarTheme.color ??
+              Theme.of(context).scaffoldBackgroundColor,
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.3),
@@ -169,7 +170,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
         child: BottomNavigationBar(
           currentIndex: _currentIndex,
           onTap: (index) => setState(() => _currentIndex = index),
-          backgroundColor: AppColors.surface,
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           selectedItemColor: AppColors.brandGreen,
           unselectedItemColor: AppColors.textSecondary,
           type: BottomNavigationBarType.fixed,
@@ -595,8 +596,9 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) =>
-                            AICoachScreen(user: authProvider.userModel!),
+                        builder:
+                            (context) =>
+                                AICoachScreen(user: authProvider.userModel!),
                       ),
                     );
                   }
@@ -723,11 +725,12 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                   measurement.bmi < 18.5
                       ? Icons.trending_down
                       : measurement.bmi < 25
-                          ? Icons.check_circle
-                          : Icons.trending_up,
-                  color: measurement.bmi < 18.5
-                      ? AppColors.info
-                      : measurement.bmi < 25
+                      ? Icons.check_circle
+                      : Icons.trending_up,
+                  color:
+                      measurement.bmi < 18.5
+                          ? AppColors.info
+                          : measurement.bmi < 25
                           ? AppColors.success
                           : AppColors.warning,
                   size: 20,
@@ -935,9 +938,10 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                 width: _carouselIndex == index ? 28 : 8,
                 height: 8,
                 decoration: BoxDecoration(
-                  color: _carouselIndex == index
-                      ? AppColors.brandGreen
-                      : AppColors.textSecondary.withOpacity(0.3),
+                  color:
+                      _carouselIndex == index
+                          ? AppColors.brandGreen
+                          : AppColors.textSecondary.withOpacity(0.3),
                   borderRadius: BorderRadius.circular(4),
                 ),
               ),

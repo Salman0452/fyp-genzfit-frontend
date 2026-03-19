@@ -9,7 +9,7 @@ class LanguageSelectionScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: const Text('Select Language'),
         backgroundColor: AppColors.surface,
@@ -21,13 +21,10 @@ class LanguageSelectionScreen extends StatelessWidget {
             children: [
               const Text(
                 'Choose your preferred language',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: AppColors.textSecondary,
-                ),
+                style: TextStyle(fontSize: 16, color: AppColors.textSecondary),
               ),
               const SizedBox(height: 20),
-              
+
               _buildLanguageOption(
                 context,
                 languageProvider,
@@ -36,9 +33,9 @@ class LanguageSelectionScreen extends StatelessWidget {
                 'English',
                 Icons.language,
               ),
-              
+
               const SizedBox(height: 12),
-              
+
               _buildLanguageOption(
                 context,
                 languageProvider,
@@ -47,9 +44,9 @@ class LanguageSelectionScreen extends StatelessWidget {
                 'Urdu',
                 Icons.language,
               ),
-              
+
               const SizedBox(height: 32),
-              
+
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
@@ -89,7 +86,7 @@ class LanguageSelectionScreen extends StatelessWidget {
     IconData icon,
   ) {
     final isSelected = languageProvider.locale.languageCode == languageCode;
-    
+
     return GestureDetector(
       onTap: () async {
         await languageProvider.setLanguage(languageCode);
@@ -97,7 +94,7 @@ class LanguageSelectionScreen extends StatelessWidget {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                languageCode == 'en' 
+                languageCode == 'en'
                     ? 'Language changed to English'
                     : 'زبان اردو میں تبدیل ہو گئی',
               ),
@@ -110,7 +107,10 @@ class LanguageSelectionScreen extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.accent.withOpacity(0.1) : AppColors.surface,
+          color:
+              isSelected
+                  ? AppColors.accent.withOpacity(0.1)
+                  : AppColors.surface,
           borderRadius: BorderRadius.circular(AppSizes.borderRadius),
           border: Border.all(
             color: isSelected ? AppColors.accent : AppColors.surface,
@@ -122,16 +122,13 @@ class LanguageSelectionScreen extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: isSelected 
-                    ? AppColors.accent 
-                    : AppColors.charcoal,
+                color: isSelected ? AppColors.accent : AppColors.charcoal,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(
                 icon,
-                color: isSelected 
-                    ? AppColors.background 
-                    : AppColors.textSecondary,
+                color:
+                    isSelected ? AppColors.background : AppColors.textSecondary,
                 size: 28,
               ),
             ),
@@ -145,9 +142,8 @@ class LanguageSelectionScreen extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
-                      color: isSelected 
-                          ? AppColors.accent 
-                          : AppColors.textPrimary,
+                      color:
+                          isSelected ? AppColors.accent : AppColors.textPrimary,
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -162,11 +158,7 @@ class LanguageSelectionScreen extends StatelessWidget {
               ),
             ),
             if (isSelected)
-              const Icon(
-                Icons.check_circle,
-                color: AppColors.accent,
-                size: 28,
-              ),
+              const Icon(Icons.check_circle, color: AppColors.accent, size: 28),
           ],
         ),
       ),

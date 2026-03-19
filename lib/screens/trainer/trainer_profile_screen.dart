@@ -104,11 +104,12 @@ class _TrainerProfileScreenState extends State<TrainerProfileScreen> {
       );
 
       // Get trainer document
-      final trainerSnapshot = await FirebaseFirestore.instance
-          .collection('trainers')
-          .where('userId', isEqualTo: userId)
-          .limit(1)
-          .get();
+      final trainerSnapshot =
+          await FirebaseFirestore.instance
+              .collection('trainers')
+              .where('userId', isEqualTo: userId)
+              .limit(1)
+              .get();
 
       if (trainerSnapshot.docs.isNotEmpty) {
         final trainerId = trainerSnapshot.docs.first.id;
@@ -122,9 +123,7 @@ class _TrainerProfileScreenState extends State<TrainerProfileScreen> {
         await FirebaseFirestore.instance
             .collection('trainers')
             .doc(trainerId)
-            .update({
-          'certifications': certifications,
-        });
+            .update({'certifications': certifications});
       }
 
       // Update local state
@@ -177,7 +176,11 @@ class _TrainerProfileScreenState extends State<TrainerProfileScreen> {
         throw Exception('Cloudinary configuration missing');
       }
 
-      final cloudinary = CloudinaryPublic(cloudName, uploadPreset, cache: false);
+      final cloudinary = CloudinaryPublic(
+        cloudName,
+        uploadPreset,
+        cache: false,
+      );
 
       final response = await cloudinary.uploadFile(
         CloudinaryFile.fromFile(
@@ -190,27 +193,24 @@ class _TrainerProfileScreenState extends State<TrainerProfileScreen> {
       final videoUrl = response.secureUrl;
 
       // Get trainer document
-      final trainerSnapshot = await FirebaseFirestore.instance
-          .collection('trainers')
-          .where('userId', isEqualTo: userId)
-          .limit(1)
-          .get();
+      final trainerSnapshot =
+          await FirebaseFirestore.instance
+              .collection('trainers')
+              .where('userId', isEqualTo: userId)
+              .limit(1)
+              .get();
 
       if (trainerSnapshot.docs.isNotEmpty) {
         final trainerId = trainerSnapshot.docs.first.id;
         final currentData = trainerSnapshot.docs.first.data();
-        final videoUrls = List<String>.from(
-          currentData['videoUrls'] ?? [],
-        );
+        final videoUrls = List<String>.from(currentData['videoUrls'] ?? []);
         videoUrls.add(videoUrl);
 
         // Update trainer profile
         await FirebaseFirestore.instance
             .collection('trainers')
             .doc(trainerId)
-            .update({
-          'videoUrls': videoUrls,
-        });
+            .update({'videoUrls': videoUrls});
       }
 
       // Update local state
@@ -239,11 +239,12 @@ class _TrainerProfileScreenState extends State<TrainerProfileScreen> {
   }
 
   Future<DocumentSnapshot?> _getTrainerData(String userId) async {
-    final snapshot = await FirebaseFirestore.instance
-        .collection('trainers')
-        .where('userId', isEqualTo: userId)
-        .limit(1)
-        .get();
+    final snapshot =
+        await FirebaseFirestore.instance
+            .collection('trainers')
+            .where('userId', isEqualTo: userId)
+            .limit(1)
+            .get();
 
     if (snapshot.docs.isNotEmpty) {
       return snapshot.docs.first;
@@ -254,33 +255,34 @@ class _TrainerProfileScreenState extends State<TrainerProfileScreen> {
   Future<void> _showLogoutDialog() async {
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppColors.surface,
-        title: const Text(
-          'Logout',
-          style: TextStyle(color: AppColors.textPrimary),
-        ),
-        content: const Text(
-          'Are you sure you want to logout?',
-          style: TextStyle(color: AppColors.textSecondary),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text(
-              'Cancel',
+      builder:
+          (context) => AlertDialog(
+            backgroundColor: AppColors.surface,
+            title: const Text(
+              'Logout',
+              style: TextStyle(color: AppColors.textPrimary),
+            ),
+            content: const Text(
+              'Are you sure you want to logout?',
               style: TextStyle(color: AppColors.textSecondary),
             ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text(
+                  'Cancel',
+                  style: TextStyle(color: AppColors.textSecondary),
+                ),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text(
+                  'Logout',
+                  style: TextStyle(color: AppColors.error),
+                ),
+              ),
+            ],
           ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text(
-              'Logout',
-              style: TextStyle(color: AppColors.error),
-            ),
-          ),
-        ],
-      ),
     );
 
     if (confirmed == true && mounted) {
@@ -299,13 +301,11 @@ class _TrainerProfileScreenState extends State<TrainerProfileScreen> {
     final userId = authProvider.user?.uid;
 
     if (userId == null) {
-      return const Scaffold(
-        body: Center(child: Text('Not authenticated')),
-      );
+      return const Scaffold(body: Center(child: Text('Not authenticated')));
     }
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: const Text('My Profile'),
         backgroundColor: AppColors.surface,
@@ -371,19 +371,21 @@ class _TrainerProfileScreenState extends State<TrainerProfileScreen> {
               CircleAvatar(
                 radius: 50,
                 backgroundColor: AppColors.accent,
-                backgroundImage: user?.avatarUrl != null
-                    ? CachedNetworkImageProvider(user!.avatarUrl!)
-                    : null,
-                child: user?.avatarUrl == null
-                    ? Text(
-                        user?.name?.substring(0, 1).toUpperCase() ?? 'T',
-                        style: const TextStyle(
-                          fontSize: 36,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.background,
-                        ),
-                      )
-                    : null,
+                backgroundImage:
+                    user?.avatarUrl != null
+                        ? CachedNetworkImageProvider(user!.avatarUrl!)
+                        : null,
+                child:
+                    user?.avatarUrl == null
+                        ? Text(
+                          user?.name?.substring(0, 1).toUpperCase() ?? 'T',
+                          style: const TextStyle(
+                            fontSize: 36,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.background,
+                          ),
+                        )
+                        : null,
               ),
               Positioned(
                 bottom: 0,
@@ -395,25 +397,23 @@ class _TrainerProfileScreenState extends State<TrainerProfileScreen> {
                     decoration: BoxDecoration(
                       color: AppColors.accent,
                       shape: BoxShape.circle,
-                      border: Border.all(
-                        color: AppColors.surface,
-                        width: 2,
-                      ),
+                      border: Border.all(color: AppColors.surface, width: 2),
                     ),
-                    child: _isLoading
-                        ? const SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
+                    child:
+                        _isLoading
+                            ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: AppColors.background,
+                              ),
+                            )
+                            : const Icon(
+                              Icons.camera_alt,
                               color: AppColors.background,
+                              size: 16,
                             ),
-                          )
-                        : const Icon(
-                            Icons.camera_alt,
-                            color: AppColors.background,
-                            size: 16,
-                          ),
                   ),
                 ),
               ),
@@ -490,14 +490,16 @@ class _TrainerProfileScreenState extends State<TrainerProfileScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isVerified
-            ? AppColors.success.withOpacity(0.1)
-            : AppColors.warning.withOpacity(0.1),
+        color:
+            isVerified
+                ? AppColors.success.withOpacity(0.1)
+                : AppColors.warning.withOpacity(0.1),
         borderRadius: BorderRadius.circular(AppSizes.borderRadius),
         border: Border.all(
-          color: isVerified
-              ? AppColors.success.withOpacity(0.3)
-              : AppColors.warning.withOpacity(0.3),
+          color:
+              isVerified
+                  ? AppColors.success.withOpacity(0.3)
+                  : AppColors.warning.withOpacity(0.3),
         ),
       ),
       child: Row(
@@ -557,23 +559,9 @@ class _TrainerProfileScreenState extends State<TrainerProfileScreen> {
               Icons.star,
             ),
           ),
-          Container(
-            width: 1,
-            height: 40,
-            color: AppColors.charcoal,
-          ),
-          Expanded(
-            child: _buildStatItem(
-              'Clients',
-              '$clients',
-              Icons.people,
-            ),
-          ),
-          Container(
-            width: 1,
-            height: 40,
-            color: AppColors.charcoal,
-          ),
+          Container(width: 1, height: 40, color: AppColors.charcoal),
+          Expanded(child: _buildStatItem('Clients', '$clients', Icons.people)),
+          Container(width: 1, height: 40, color: AppColors.charcoal),
           Expanded(
             child: _buildStatItem(
               'Earnings',
@@ -602,10 +590,7 @@ class _TrainerProfileScreenState extends State<TrainerProfileScreen> {
         const SizedBox(height: 4),
         Text(
           label,
-          style: const TextStyle(
-            fontSize: 12,
-            color: AppColors.textSecondary,
-          ),
+          style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
         ),
       ],
     );
@@ -629,42 +614,45 @@ class _TrainerProfileScreenState extends State<TrainerProfileScreen> {
         const SizedBox(height: 12),
         expertise.isEmpty
             ? const Text(
-                'No expertise added',
-                style: TextStyle(color: AppColors.textSecondary),
-              )
+              'No expertise added',
+              style: TextStyle(color: AppColors.textSecondary),
+            )
             : Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: expertise.map((exp) {
-                  return Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 8,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.accent.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: AppColors.accent.withOpacity(0.3),
+              spacing: 8,
+              runSpacing: 8,
+              children:
+                  expertise.map((exp) {
+                    return Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
                       ),
-                    ),
-                    child: Text(
-                      exp,
-                      style: const TextStyle(
-                        color: AppColors.accent,
-                        fontWeight: FontWeight.w500,
+                      decoration: BoxDecoration(
+                        color: AppColors.accent.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: AppColors.accent.withOpacity(0.3),
+                        ),
                       ),
-                    ),
-                  );
-                }).toList(),
-              ),
+                      child: Text(
+                        exp,
+                        style: const TextStyle(
+                          color: AppColors.accent,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    );
+                  }).toList(),
+            ),
       ],
     );
   }
 
   Widget _buildCertificationsSection(user, DocumentSnapshot? trainerDoc) {
     final trainerData = trainerDoc?.data() as Map<String, dynamic>?;
-    final certifications = List<String>.from(trainerData?['certifications'] ?? []);
+    final certifications = List<String>.from(
+      trainerData?['certifications'] ?? [],
+    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -693,62 +681,64 @@ class _TrainerProfileScreenState extends State<TrainerProfileScreen> {
         const SizedBox(height: 12),
         certifications.isEmpty
             ? Container(
-                padding: const EdgeInsets.all(40),
-                decoration: BoxDecoration(
-                  color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(AppSizes.borderRadius),
+              padding: const EdgeInsets.all(40),
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(AppSizes.borderRadius),
+              ),
+              child: const Center(
+                child: Column(
+                  children: [
+                    Icon(
+                      Icons.workspace_premium,
+                      size: 48,
+                      color: AppColors.textSecondary,
+                    ),
+                    SizedBox(height: 12),
+                    Text(
+                      'No certifications yet',
+                      style: TextStyle(color: AppColors.textSecondary),
+                    ),
+                  ],
                 ),
-                child: const Center(
-                  child: Column(
-                    children: [
-                      Icon(
-                        Icons.workspace_premium,
-                        size: 48,
-                        color: AppColors.textSecondary,
-                      ),
-                      SizedBox(height: 12),
-                      Text(
-                        'No certifications yet',
-                        style: TextStyle(color: AppColors.textSecondary),
-                      ),
-                    ],
-                  ),
-                ),
-              )
+              ),
+            )
             : GridView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  crossAxisSpacing: 12,
-                  mainAxisSpacing: 12,
-                ),
-                itemCount: certifications.length,
-                itemBuilder: (context, index) {
-                  return ClipRRect(
-                    borderRadius: BorderRadius.circular(AppSizes.borderRadius),
-                    child: CachedNetworkImage(
-                      imageUrl: certifications[index],
-                      fit: BoxFit.cover,
-                      placeholder: (context, url) => Container(
-                        color: AppColors.charcoal,
-                        child: const Center(
-                          child: CircularProgressIndicator(
-                            color: AppColors.accent,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                crossAxisSpacing: 12,
+                mainAxisSpacing: 12,
+              ),
+              itemCount: certifications.length,
+              itemBuilder: (context, index) {
+                return ClipRRect(
+                  borderRadius: BorderRadius.circular(AppSizes.borderRadius),
+                  child: CachedNetworkImage(
+                    imageUrl: certifications[index],
+                    fit: BoxFit.cover,
+                    placeholder:
+                        (context, url) => Container(
+                          color: AppColors.charcoal,
+                          child: const Center(
+                            child: CircularProgressIndicator(
+                              color: AppColors.accent,
+                            ),
                           ),
                         ),
-                      ),
-                      errorWidget: (context, url, error) => Container(
-                        color: AppColors.charcoal,
-                        child: const Icon(
-                          Icons.error,
-                          color: AppColors.error,
+                    errorWidget:
+                        (context, url, error) => Container(
+                          color: AppColors.charcoal,
+                          child: const Icon(
+                            Icons.error,
+                            color: AppColors.error,
+                          ),
                         ),
-                      ),
-                    ),
-                  );
-                },
-              ),
+                  ),
+                );
+              },
+            ),
       ],
     );
   }
@@ -773,16 +763,17 @@ class _TrainerProfileScreenState extends State<TrainerProfileScreen> {
             ),
             TextButton.icon(
               onPressed: _isUploadingVideo ? null : _uploadVideo,
-              icon: _isUploadingVideo
-                  ? const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: AppColors.accent,
-                      ),
-                    )
-                  : const Icon(Icons.add, color: AppColors.accent),
+              icon:
+                  _isUploadingVideo
+                      ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: AppColors.accent,
+                        ),
+                      )
+                      : const Icon(Icons.add, color: AppColors.accent),
               label: Text(
                 _isUploadingVideo ? 'Uploading...' : 'Add',
                 style: const TextStyle(color: AppColors.accent),
@@ -793,89 +784,90 @@ class _TrainerProfileScreenState extends State<TrainerProfileScreen> {
         const SizedBox(height: 12),
         videoUrls.isEmpty
             ? Container(
-                padding: const EdgeInsets.all(40),
-                decoration: BoxDecoration(
-                  color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(AppSizes.borderRadius),
-                ),
-                child: const Center(
-                  child: Column(
-                    children: [
-                      Icon(
-                        Icons.video_library,
-                        size: 48,
+              padding: const EdgeInsets.all(40),
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(AppSizes.borderRadius),
+              ),
+              child: const Center(
+                child: Column(
+                  children: [
+                    Icon(
+                      Icons.video_library,
+                      size: 48,
+                      color: AppColors.textSecondary,
+                    ),
+                    SizedBox(height: 12),
+                    Text(
+                      'No videos yet',
+                      style: TextStyle(color: AppColors.textSecondary),
+                    ),
+                    SizedBox(height: 4),
+                    Text(
+                      'Upload training videos to showcase your expertise',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
                         color: AppColors.textSecondary,
+                        fontSize: 12,
                       ),
-                      SizedBox(height: 12),
-                      Text(
-                        'No videos yet',
-                        style: TextStyle(color: AppColors.textSecondary),
+                    ),
+                  ],
+                ),
+              ),
+            )
+            : GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                crossAxisSpacing: 12,
+                mainAxisSpacing: 12,
+                childAspectRatio: 16 / 9,
+              ),
+              itemCount: videoUrls.length,
+              itemBuilder: (context, index) {
+                return ClipRRect(
+                  borderRadius: BorderRadius.circular(AppSizes.borderRadius),
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      Container(
+                        color: AppColors.charcoal,
+                        child: CachedNetworkImage(
+                          imageUrl: videoUrls[index],
+                          fit: BoxFit.cover,
+                          errorWidget:
+                              (context, url, error) => const Icon(
+                                Icons.video_library,
+                                color: AppColors.textSecondary,
+                                size: 40,
+                              ),
+                        ),
                       ),
-                      SizedBox(height: 4),
-                      Text(
-                        'Upload training videos to showcase your expertise',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: AppColors.textSecondary,
-                          fontSize: 12,
+                      Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [
+                              Colors.transparent,
+                              Colors.black.withOpacity(0.5),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const Center(
+                        child: Icon(
+                          Icons.play_circle_outline,
+                          color: Colors.white,
+                          size: 48,
                         ),
                       ),
                     ],
                   ),
-                ),
-              )
-            : GridView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  crossAxisSpacing: 12,
-                  mainAxisSpacing: 12,
-                  childAspectRatio: 16 / 9,
-                ),
-                itemCount: videoUrls.length,
-                itemBuilder: (context, index) {
-                  return ClipRRect(
-                    borderRadius: BorderRadius.circular(AppSizes.borderRadius),
-                    child: Stack(
-                      fit: StackFit.expand,
-                      children: [
-                        Container(
-                          color: AppColors.charcoal,
-                          child: CachedNetworkImage(
-                            imageUrl: videoUrls[index],
-                            fit: BoxFit.cover,
-                            errorWidget: (context, url, error) => const Icon(
-                              Icons.video_library,
-                              color: AppColors.textSecondary,
-                              size: 40,
-                            ),
-                          ),
-                        ),
-                        Container(
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.topCenter,
-                              end: Alignment.bottomCenter,
-                              colors: [
-                                Colors.transparent,
-                                Colors.black.withOpacity(0.5),
-                              ],
-                            ),
-                          ),
-                        ),
-                        const Center(
-                          child: Icon(
-                            Icons.play_circle_outline,
-                            color: Colors.white,
-                            size: 48,
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              ),
+                );
+              },
+            ),
       ],
     );
   }

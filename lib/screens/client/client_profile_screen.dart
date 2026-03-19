@@ -37,7 +37,9 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
       final userId = authProvider.user?.uid;
 
       if (userId != null) {
-        final measurements = await _bodyAnalysisService.getUserMeasurements(userId);
+        final measurements = await _bodyAnalysisService.getUserMeasurements(
+          userId,
+        );
         setState(() {
           _measurements = measurements;
           _isLoading = false;
@@ -59,9 +61,7 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
   void _navigateToSettings() {
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (context) => const SettingsScreen(),
-      ),
+      MaterialPageRoute(builder: (context) => const SettingsScreen()),
     );
   }
 
@@ -82,9 +82,7 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
   void _navigateToBodyScan() {
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (context) => const BodyScanScreen(),
-      ),
+      MaterialPageRoute(builder: (context) => const BodyScanScreen()),
     ).then((_) => _loadMeasurements());
   }
 
@@ -94,7 +92,7 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
     final user = authProvider.userModel;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: const Text('My Profile'),
         backgroundColor: AppColors.surface,
@@ -106,83 +104,88 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
           ),
         ],
       ),
-      body: _isLoading
-          ? const LoadingWidget(message: 'Loading profile...')
-          : RefreshIndicator(
-              onRefresh: _loadMeasurements,
-              color: AppColors.accent,
-              backgroundColor: AppColors.surface,
-              child: SingleChildScrollView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // User info card
-                    _buildUserInfoCard(user),
-                    const SizedBox(height: 24),
+      body:
+          _isLoading
+              ? const LoadingWidget(message: 'Loading profile...')
+              : RefreshIndicator(
+                onRefresh: _loadMeasurements,
+                color: AppColors.accent,
+                backgroundColor: AppColors.surface,
+                child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // User info card
+                      _buildUserInfoCard(user),
+                      const SizedBox(height: 24),
 
-                    // Latest measurement card
-                    if (_measurements.isNotEmpty) ...[
-                      _buildLatestMeasurementCard(_measurements.first),
-                      const SizedBox(height: 16),
-                      // Update measurement button
-                      CustomButton(
-                        text: 'Update Measurements',
-                        onPressed: _navigateToBodyScan,
-                        icon: Icons.camera_alt,
-                      ),
-                    ] else ...[
-                      Container(
-                        padding: const EdgeInsets.all(32),
-                        decoration: BoxDecoration(
-                          color: AppColors.surface,
-                          borderRadius: BorderRadius.circular(AppSizes.borderRadius),
-                          border: Border.all(color: AppColors.accent.withOpacity(0.2)),
+                      // Latest measurement card
+                      if (_measurements.isNotEmpty) ...[
+                        _buildLatestMeasurementCard(_measurements.first),
+                        const SizedBox(height: 16),
+                        // Update measurement button
+                        CustomButton(
+                          text: 'Update Measurements',
+                          onPressed: _navigateToBodyScan,
+                          icon: Icons.camera_alt,
                         ),
-                        child: Column(
-                          children: [
-                            const Icon(
-                              Icons.photo_camera,
-                              size: 64,
-                              color: AppColors.textSecondary,
+                      ] else ...[
+                        Container(
+                          padding: const EdgeInsets.all(32),
+                          decoration: BoxDecoration(
+                            color: AppColors.surface,
+                            borderRadius: BorderRadius.circular(
+                              AppSizes.borderRadius,
                             ),
-                            const SizedBox(height: 16),
-                            const Text(
-                              'No measurements yet',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.textPrimary,
-                              ),
+                            border: Border.all(
+                              color: AppColors.accent.withOpacity(0.2),
                             ),
-                            const SizedBox(height: 8),
-                            const Text(
-                              'Take your first body scan to start tracking',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                fontSize: 14,
+                          ),
+                          child: Column(
+                            children: [
+                              const Icon(
+                                Icons.photo_camera,
+                                size: 64,
                                 color: AppColors.textSecondary,
                               ),
-                            ),
-                            const SizedBox(height: 20),
-                            CustomButton(
-                              text: 'Take Body Scan',
-                              onPressed: _navigateToBodyScan,
-                              icon: Icons.camera_alt,
-                            ),
-                          ],
+                              const SizedBox(height: 16),
+                              const Text(
+                                'No measurements yet',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.textPrimary,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              const Text(
+                                'Take your first body scan to start tracking',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
+                              const SizedBox(height: 20),
+                              CustomButton(
+                                text: 'Take Body Scan',
+                                onPressed: _navigateToBodyScan,
+                                icon: Icons.camera_alt,
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                    ],
-                    const SizedBox(height: 24),
+                      ],
+                      const SizedBox(height: 24),
 
-                    // Measurement history
-                    _buildMeasurementHistory(),
-                  ],
+                      // Measurement history
+                      _buildMeasurementHistory(),
+                    ],
+                  ),
                 ),
               ),
-            ),
     );
   }
 
@@ -200,19 +203,21 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
           CircleAvatar(
             radius: 50,
             backgroundColor: AppColors.accent,
-            backgroundImage: user?.avatarUrl != null
-                ? CachedNetworkImageProvider(user!.avatarUrl!)
-                : null,
-            child: user?.avatarUrl == null
-                ? Text(
-                    user?.name?.substring(0, 1).toUpperCase() ?? 'U',
-                    style: const TextStyle(
-                      fontSize: 36,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.background,
-                    ),
-                  )
-                : null,
+            backgroundImage:
+                user?.avatarUrl != null
+                    ? CachedNetworkImageProvider(user!.avatarUrl!)
+                    : null,
+            child:
+                user?.avatarUrl == null
+                    ? Text(
+                      user?.name?.substring(0, 1).toUpperCase() ?? 'U',
+                      style: const TextStyle(
+                        fontSize: 36,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.background,
+                      ),
+                    )
+                    : null,
           ),
           const SizedBox(height: 16),
 
@@ -247,11 +252,7 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(
-                  Icons.flag,
-                  color: AppColors.accent,
-                  size: 16,
-                ),
+                const Icon(Icons.flag, color: AppColors.accent, size: 16),
                 const SizedBox(width: 8),
                 Text(
                   user?.goals ?? 'No goal set',
@@ -386,9 +387,7 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
                   children: [
                     Text(
                       _formatMeasurementName(entry.key),
-                      style: const TextStyle(
-                        color: AppColors.textSecondary,
-                      ),
+                      style: const TextStyle(color: AppColors.textSecondary),
                     ),
                     Text(
                       '${entry.value.toStringAsFixed(1)} cm',
@@ -524,26 +523,28 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
                   width: 60,
                   height: 60,
                   fit: BoxFit.cover,
-                  placeholder: (context, url) => Container(
-                    width: 60,
-                    height: 60,
-                    color: AppColors.charcoal,
-                    child: const Center(
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: AppColors.accent,
+                  placeholder:
+                      (context, url) => Container(
+                        width: 60,
+                        height: 60,
+                        color: AppColors.charcoal,
+                        child: const Center(
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: AppColors.accent,
+                          ),
+                        ),
                       ),
-                    ),
-                  ),
-                  errorWidget: (context, url, error) => Container(
-                    width: 60,
-                    height: 60,
-                    color: AppColors.charcoal,
-                    child: const Icon(
-                      Icons.image_not_supported,
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
+                  errorWidget:
+                      (context, url, error) => Container(
+                        width: 60,
+                        height: 60,
+                        color: AppColors.charcoal,
+                        child: const Icon(
+                          Icons.image_not_supported,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
                 ),
               )
             else
@@ -599,10 +600,7 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
             ),
 
             // Arrow
-            const Icon(
-              Icons.chevron_right,
-              color: AppColors.accent,
-            ),
+            const Icon(Icons.chevron_right, color: AppColors.accent),
           ],
         ),
       ),

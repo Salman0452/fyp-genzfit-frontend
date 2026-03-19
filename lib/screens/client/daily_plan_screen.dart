@@ -324,7 +324,7 @@ class _DailyPlanScreenState extends State<DailyPlanScreen>
         _dayName.isNotEmpty ? _dayName : dayNames[DateTime.now().weekday - 1];
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         backgroundColor: AppColors.surface,
         elevation: 0,
