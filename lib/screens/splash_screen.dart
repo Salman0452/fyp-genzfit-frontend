@@ -168,7 +168,7 @@ class _SplashScreenState extends State<SplashScreen>
               const SizedBox(height: 32),
               // App Title
               Text(
-                'Fitstreak',
+                'GenZFit',
                 style: GoogleFonts.plusJakartaSans(
                   color: AppColors.textPrimary,
                   fontSize: 42,

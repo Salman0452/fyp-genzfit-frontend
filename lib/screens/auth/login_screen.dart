@@ -97,7 +97,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 32),
                 // App Branding
                 Text(
-                  'Fitstreak',
+                  'GenZFit',
                   style: GoogleFonts.plusJakartaSans(
                     color: AppColors.brandGreen,
                     fontSize: 36,

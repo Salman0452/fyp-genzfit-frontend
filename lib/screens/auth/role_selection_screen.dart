@@ -21,7 +21,7 @@ class RoleSelectionScreen extends StatelessWidget {
               const SizedBox(height: 16),
               // App Branding
               Text(
-                'Fitstreak',
+                'GenZFit',
                 style: GoogleFonts.plusJakartaSans(
                   color: AppColors.brandGreen,
                   fontSize: 36,
