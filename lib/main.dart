@@ -205,72 +205,72 @@ class GenZFitApp extends StatelessWidget {
         primary: AppColors.brandGreen,
         secondary: AppColors.brandBlue,
         surface: Color(0xFF1A1A1A),
-        error: AppColors.error,
+        error: Color(0xFFCF6679),
       ),
       appBarTheme: AppBarTheme(
-        backgroundColor: const Color(0xFF0A0A0A),
+        backgroundColor: const Color(0xFF1A1A1A),
         elevation: 0,
         centerTitle: true,
         titleTextStyle: GoogleFonts.plusJakartaSans(
-          color: AppColors.surface,
+          color: const Color(0xFFFFFFFF),
           fontSize: 24,
           fontWeight: FontWeight.w600,
         ),
-        iconTheme: const IconThemeData(color: AppColors.surface),
+        iconTheme: const IconThemeData(color: Color(0xFFFFFFFF)),
       ),
       textTheme: TextTheme(
         displayLarge: GoogleFonts.plusJakartaSans(
-          color: AppColors.surface,
+          color: const Color(0xFFFFFFFF),
           fontSize: 32,
           fontWeight: FontWeight.w600,
         ),
         displayMedium: GoogleFonts.plusJakartaSans(
-          color: AppColors.surface,
+          color: const Color(0xFFFFFFFF),
           fontSize: 28,
           fontWeight: FontWeight.w600,
         ),
         displaySmall: GoogleFonts.plusJakartaSans(
-          color: AppColors.surface,
+          color: const Color(0xFFFFFFFF),
           fontSize: 24,
           fontWeight: FontWeight.w600,
         ),
         headlineMedium: GoogleFonts.plusJakartaSans(
-          color: AppColors.surface,
+          color: const Color(0xFFFFFFFF),
           fontSize: 20,
           fontWeight: FontWeight.w600,
         ),
         headlineSmall: GoogleFonts.plusJakartaSans(
-          color: AppColors.surface,
+          color: const Color(0xFFFFFFFF),
           fontSize: 18,
           fontWeight: FontWeight.w600,
         ),
         titleLarge: GoogleFonts.plusJakartaSans(
-          color: AppColors.surface,
+          color: const Color(0xFFFFFFFF),
           fontSize: 16,
           fontWeight: FontWeight.w600,
         ),
         titleMedium: GoogleFonts.plusJakartaSans(
-          color: AppColors.textSecondary,
+          color: const Color(0xFFB0B0B0),
           fontSize: 14,
           fontWeight: FontWeight.w500,
         ),
         bodyLarge: GoogleFonts.plusJakartaSans(
-          color: AppColors.surface,
+          color: const Color(0xFFFFFFFF),
           fontSize: 16,
           fontWeight: FontWeight.w400,
         ),
         bodyMedium: GoogleFonts.plusJakartaSans(
-          color: AppColors.textSecondary,
+          color: const Color(0xFFB0B0B0),
           fontSize: 14,
           fontWeight: FontWeight.w400,
         ),
         bodySmall: GoogleFonts.plusJakartaSans(
-          color: AppColors.textTertiary,
+          color: const Color(0xFF808080),
           fontSize: 12,
           fontWeight: FontWeight.w400,
         ),
         labelLarge: GoogleFonts.plusJakartaSans(
-          color: AppColors.surface,
+          color: const Color(0xFFFFFFFF),
           fontSize: 12,
           fontWeight: FontWeight.w600,
         ),
@@ -278,7 +278,7 @@ class GenZFitApp extends StatelessWidget {
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.brandGreen,
-          foregroundColor: AppColors.textPrimary,
+          foregroundColor: const Color(0xFF010101),
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppConstants.radiusMedium),
@@ -329,15 +329,15 @@ class GenZFitApp extends StatelessWidget {
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppConstants.radiusMedium),
-          borderSide: const BorderSide(color: AppColors.error, width: 1),
+          borderSide: const BorderSide(color: Color(0xFFCF6679), width: 1),
         ),
         labelStyle: GoogleFonts.plusJakartaSans(
-          color: AppColors.textSecondary,
+          color: const Color(0xFFB0B0B0),
           fontSize: 14,
           fontWeight: FontWeight.w400,
         ),
         hintStyle: GoogleFonts.plusJakartaSans(
-          color: AppColors.textTertiary,
+          color: const Color(0xFF808080),
           fontSize: 14,
           fontWeight: FontWeight.w400,
         ),
