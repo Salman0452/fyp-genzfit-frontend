@@ -255,10 +255,6 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
             _buildMotivationHero(user),
             const SizedBox(height: 20),
 
-            // Goal card
-            _buildGoalCard(user),
-            const SizedBox(height: 24),
-
             // Quick actions
             Text(
               'Quick Actions',
