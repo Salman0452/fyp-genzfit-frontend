@@ -107,9 +107,11 @@ class AppConstants {
 // Simplified color constants for new screens - Fitstreak Design
 class AppColors {
   // Background and Surface
-  static const Color background = Color(0xFFF7F9FB); // Light background
-  static const Color surface = Color(0xFFFFFFFF); // White surface
-  static const Color surfaceVariant = Color(0xFFD6DFE2); // Light gray surface
+  static const Color background = Color(
+    0xFFF5F5F5,
+  ); // Soft light gray background
+  static const Color surface = Color(0xFFFAFAFA); // Off-white surface
+  static const Color surfaceVariant = Color(0xFFEEEEEE); // Light gray surface
 
   // Brand Colors
   static const Color brandGreen = Color(
