@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:genzfit/providers/auth_provider.dart';
 import 'package:genzfit/utils/constants.dart';
 import 'package:genzfit/utils/design_utils.dart';
@@ -38,22 +37,33 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
     {
       'title': 'AI-Powered Coaching',
       'subtitle': 'Get personalized fitness plans powered by advanced AI',
-      'image': 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=600&h=400&fit=crop',
+      'image': 'assets/images/carousel_1.jpg',
     },
     {
       'title': 'Real-Time Progress',
       'subtitle': 'Track your transformation with 3D body scans',
-      'image': 'https://images.unsplash.com/photo-1516321318423-f06c6b293b80?w=600&h=400&fit=crop',
+      'image': 'assets/images/carousel_2.jpg',
     },
     {
       'title': 'Expert Trainers',
       'subtitle': 'Connect with certified fitness professionals',
-      'image': 'https://images.unsplash.com/photo-1549576528-f245e6f6fdfc?w=600&h=400&fit=crop',
+      'image': 'assets/images/carousel_3.webp',
     },
     {
       'title': 'Community Driven',
       'subtitle': 'Join millions transforming their fitness journey',
-      'image': 'https://images.unsplash.com/photo-1552093974-5b2038a0b916?w=600&h=400&fit=crop',
+      'image': 'assets/images/carousel_4.jpg',
+    },
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadLatestMeasurement();
+    _saveTokenToDatabase();
+  }
+
+  Future<void> _saveTokenToDatabase() async {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final userId = authProvider.user?.uid;
     if (userId != null) {
@@ -843,31 +853,11 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                   child: Stack(
                     children: [
                       // Background Image
-                      CachedNetworkImage(
-                        imageUrl: item['image'] ?? '',
+                      Image.asset(
+                        item['image'] ?? '',
                         fit: BoxFit.cover,
                         width: double.infinity,
                         height: double.infinity,
-                        placeholder: (context, url) => Container(
-                          color: AppColors.surfaceVariant,
-                          child: const Center(
-                            child: CircularProgressIndicator(
-                              valueColor: AlwaysStoppedAnimation<Color>(
-                                AppColors.brandGreen,
-                              ),
-                            ),
-                          ),
-                        ),
-                        errorWidget: (context, url, error) => Container(
-                          color: AppColors.surfaceVariant,
-                          child: const Center(
-                            child: Icon(
-                              Icons.image_not_supported,
-                              color: AppColors.textSecondary,
-                              size: 48,
-                            ),
-                          ),
-                        ),
                       ),
                       // Dark Overlay
                       Container(
