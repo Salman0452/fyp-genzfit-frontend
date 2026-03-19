@@ -213,16 +213,26 @@ class _AvatarViewerScreenState extends State<AvatarViewerScreen>
 
   AppBar _buildAppBar() {
     return AppBar(
-      backgroundColor: Colors.transparent,
+      backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
       elevation: 0,
       leading: IconButton(
-        icon: const Icon(Icons.arrow_back, color: Colors.white),
+        icon: Icon(
+          Icons.arrow_back,
+          color: Theme.of(context).brightness == Brightness.dark
+              ? const Color(0xFFFFFFFF)
+              : Colors.black,
+        ),
         onPressed: () => Navigator.pop(context),
       ),
-      title: const Text(
+      title: Text(
         '3D Body Avatar',
         style: TextStyle(
-            color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+          color: Theme.of(context).brightness == Brightness.dark
+              ? const Color(0xFFFFFFFF)
+              : Colors.black,
+          fontSize: 20,
+          fontWeight: FontWeight.bold,
+        ),
       ),
       actions: [
         Padding(
@@ -240,8 +250,14 @@ class _AvatarViewerScreenState extends State<AvatarViewerScreen>
           ),
         ),
         IconButton(
-            icon: const Icon(Icons.refresh, color: Colors.white),
-            onPressed: _init),
+          icon: Icon(
+            Icons.refresh,
+            color: Theme.of(context).brightness == Brightness.dark
+                ? const Color(0xFFFFFFFF)
+                : Colors.black,
+          ),
+          onPressed: _init,
+        ),
       ],
     );
   }
@@ -293,7 +309,10 @@ class _AvatarViewerScreenState extends State<AvatarViewerScreen>
                           width: 40,
                           height: 4,
                           decoration: BoxDecoration(
-                            color: Colors.grey[600],
+                            color:
+                                Theme.of(context).brightness == Brightness.dark
+                                    ? Colors.grey[500]
+                                    : Colors.grey[600],
                             borderRadius: BorderRadius.circular(2),
                           ),
                         ),
@@ -301,18 +320,29 @@ class _AvatarViewerScreenState extends State<AvatarViewerScreen>
                       if (_showHint)
                         FadeTransition(
                           opacity: _hintOpacity,
-                          child: const Padding(
-                            padding: EdgeInsets.only(top: 8),
+                          child: Padding(
+                            padding: const EdgeInsets.only(top: 8),
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Icon(Icons.keyboard_arrow_down,
-                                    size: 16, color: Colors.white38),
-                                SizedBox(width: 4),
+                                Icon(
+                                  Icons.keyboard_arrow_down,
+                                  size: 16,
+                                  color: Theme.of(context).brightness ==
+                                          Brightness.dark
+                                      ? Colors.white30
+                                      : Colors.white38,
+                                ),
+                                const SizedBox(width: 4),
                                 Text(
                                   'Swipe down for fullscreen',
                                   style: TextStyle(
-                                      color: Colors.white38, fontSize: 12),
+                                    color: Theme.of(context).brightness ==
+                                            Brightness.dark
+                                        ? Colors.white30
+                                        : Colors.white38,
+                                    fontSize: 12,
+                                  ),
                                 ),
                               ],
                             ),

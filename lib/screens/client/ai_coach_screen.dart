@@ -42,7 +42,8 @@ class _AICoachScreenState extends State<AICoachScreen> {
   Future<void> _loadConversationHistory() async {
     setState(() => _isLoadingHistory = true);
     try {
-      final history = await _chatbotService.getConversationHistory(widget.user.id);
+      final history =
+          await _chatbotService.getConversationHistory(widget.user.id);
       setState(() {
         _messages = history;
         _isLoadingHistory = false;
@@ -143,7 +144,8 @@ class _AICoachScreenState extends State<AICoachScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: Text('Cancel', style: GoogleFonts.inter(color: Colors.white70)),
+            child:
+                Text('Cancel', style: GoogleFonts.inter(color: Colors.white70)),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
@@ -162,9 +164,9 @@ class _AICoachScreenState extends State<AICoachScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF171917),
+        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
@@ -291,7 +293,8 @@ class _AICoachScreenState extends State<AICoachScreen> {
               ),
               borderRadius: BorderRadius.circular(60),
             ),
-            child: const Icon(Icons.fitness_center, color: Colors.white, size: 60),
+            child:
+                const Icon(Icons.fitness_center, color: Colors.white, size: 60),
           ),
           const SizedBox(height: 24),
           Text(
@@ -327,7 +330,8 @@ class _AICoachScreenState extends State<AICoachScreen> {
               children: [
                 Row(
                   children: [
-                    const Icon(Icons.check_circle, color: Color(0xFF7FFA88), size: 20),
+                    const Icon(Icons.check_circle,
+                        color: Color(0xFF7FFA88), size: 20),
                     const SizedBox(width: 8),
                     Text(
                       'AI has access to:',
@@ -424,11 +428,12 @@ class _AICoachScreenState extends State<AICoachScreen> {
 
   Widget _buildMessageBubble(ChatMessage message) {
     final isUser = message.role == 'user';
-    
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: Row(
-        mainAxisAlignment: isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
+        mainAxisAlignment:
+            isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (!isUser) ...[
@@ -447,12 +452,13 @@ class _AICoachScreenState extends State<AICoachScreen> {
           ],
           Flexible(
             child: Column(
-              crossAxisAlignment: isUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+              crossAxisAlignment:
+                  isUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
               children: [
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: isUser 
+                    color: isUser
                         ? const Color(0xFF7FFA88)
                         : const Color(0xFF171917),
                     borderRadius: BorderRadius.only(
