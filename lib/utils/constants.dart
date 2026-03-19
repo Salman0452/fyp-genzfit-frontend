@@ -5,35 +5,28 @@ class AppConstants {
   static const String appName = 'GenZFit';
   static const String appVersion = '1.0.0';
 
-  // Primary Colors - Fitstreak Palette
-  static const Color primaryLight = Color(0xFFD6DFE2); // Light gray
-  static const Color primaryDark = Color(0xFF010101); // Almost black
-  static const Color primaryBrand = Color(0xFFD5FF5F); // Lime green
-  static const Color primaryWhite = Color(0xFFFFFFFF); // White
+  // Primary Colors - Fitstreak Design Palette
+  static const Color primaryLight = Color(0xFFD6DFE2); // Light gray (primary)
+  static const Color primaryDark = Color(0xFF010101); // Almost black (primary)
+  static const Color primaryBrand = Color(0xFFD5FF5F); // Lime green (primary)
+  static const Color primaryWhite = Color(0xFFFFFFFF); // White (primary)
 
-  // Secondary Colors - Fitstreak Palette
-  static const Color secondaryGray = Color(0xFF9F9F9F); // Gray
-  static const Color secondaryBlue = Color(0xFF9AC0D6); // Light blue
-  static const Color secondaryDarkGray = Color(0xFF595959); // Dark gray
-  static const Color secondaryBlueGray = Color(0xFF4E6075); // Blue-gray
+  // Secondary Colors - Fitstreak Design Palette
+  static const Color secondaryGray = Color(0xFF9F9F9F); // Gray (secondary)
+  static const Color secondaryBlue = Color(
+    0xFF9AC0D6,
+  ); // Light blue (secondary)
+  static const Color secondaryDarkGray = Color(
+    0xFF595959,
+  ); // Dark gray (secondary)
+  static const Color secondaryBlueGray = Color(
+    0xFF4E6075,
+  ); // Blue-gray (secondary)
 
-  // Legacy colors (for compatibility)
-  static const Color primaryBlack = Color(0xFF010101);
-  static const Color darkGray = Color(0xFF0D0E0D);
-  static const Color charcoalGray = Color(0xFF1F2120);
-  static const Color slateGray = Color(0xFF1F2120);
-  static const Color accentGray = Color(0xFF2A2D2B);
-
-  static const Color primaryGold = Color(0xFFD5FF5F); // Brand lime green
-  static const Color accentGold = Color(0xFF9AC0D6); // Light blue accent
-
-  static const Color errorRed = Color(0xFFE53935);
-  static const Color successGreen = Color(0xFFD5FF5F);
-  static const Color warningYellow = Color(0xFFFFA500);
-
-  static const Color textWhite = Color(0xFFFFFFFF);
-  static const Color textGray = Color(0xFF9F9F9F);
-  static const Color textDarkGray = Color(0xFF010101);
+  // Backward Compatibility Aliases (use AppColors instead for new code)
+  static const Color primaryGold = Color(0xFFD5FF5F); // Alias for primaryBrand
+  static const Color accentGold = Color(0xFF9AC0D6); // Alias for secondaryBlue
+  static const Color charcoalGray = Color(0xFF010101); // Alias for primaryDark
 
   // Firebase Collections
   static const String usersCollection = 'users';

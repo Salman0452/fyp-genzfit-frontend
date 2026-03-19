@@ -31,7 +31,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     }
 
     final authProvider = context.read<AuthProvider>();
-    final success = await authProvider.resetPassword(_emailController.text.trim());
+    final success = await authProvider.resetPassword(
+      _emailController.text.trim(),
+    );
 
     if (!mounted) return;
 
@@ -69,7 +71,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(AppConstants.paddingLarge),
-          child: _emailSent ? _buildSuccessView() : _buildEmailForm(authProvider),
+          child:
+              _emailSent ? _buildSuccessView() : _buildEmailForm(authProvider),
         ),
       ),
     );
@@ -82,7 +85,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const SizedBox(height: AppConstants.paddingXLarge),
-          
+
           // Icon
           Center(
             child: Container(
@@ -99,9 +102,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               ),
             ),
           ),
-          
+
           const SizedBox(height: AppConstants.paddingXLarge),
-          
+
           const Text(
             'Forgot Password?',
             style: TextStyle(
@@ -119,9 +122,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               height: 1.5,
             ),
           ),
-          
+
           const SizedBox(height: AppConstants.paddingXLarge),
-          
+
           CustomTextField(
             label: 'Email Address',
             hint: 'Enter your email',
@@ -130,18 +133,18 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             keyboardType: TextInputType.emailAddress,
             validator: Validators.validateEmail,
           ),
-          
+
           const SizedBox(height: AppConstants.paddingXLarge),
-          
+
           CustomButton(
             text: 'Send Reset Link',
             onPressed: _handleSendResetEmail,
             isLoading: authProvider.isLoading,
             icon: Icons.send,
           ),
-          
+
           const SizedBox(height: AppConstants.paddingMedium),
-          
+
           Center(
             child: TextButton(
               onPressed: _returnToLogin,
@@ -164,7 +167,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     return Column(
       children: [
         const SizedBox(height: AppConstants.paddingXLarge * 2),
-        
+
         // Success Icon
         Container(
           width: 120,
@@ -172,8 +175,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
-                AppConstants.successGreen.withOpacity(0.2),
-                AppConstants.successGreen.withOpacity(0.1),
+                AppColors.success.withOpacity(0.2),
+                AppColors.success.withOpacity(0.1),
               ],
             ),
             shape: BoxShape.circle,
@@ -181,12 +184,12 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           child: const Icon(
             Icons.mark_email_read,
             size: 60,
-            color: AppConstants.successGreen,
+            color: AppColors.success,
           ),
         ),
-        
+
         const SizedBox(height: AppConstants.paddingXLarge),
-        
+
         const Text(
           'Check Your Email!',
           style: TextStyle(
@@ -196,9 +199,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           ),
           textAlign: TextAlign.center,
         ),
-        
+
         const SizedBox(height: AppConstants.paddingMedium),
-        
+
         Text(
           'We\'ve sent a password reset link to:',
           style: const TextStyle(
@@ -207,9 +210,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           ),
           textAlign: TextAlign.center,
         ),
-        
+
         const SizedBox(height: AppConstants.paddingSmall),
-        
+
         Text(
           _emailController.text.trim(),
           style: const TextStyle(
@@ -219,19 +222,16 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           ),
           textAlign: TextAlign.center,
         ),
-        
+
         const SizedBox(height: AppConstants.paddingXLarge),
-        
+
         // Instructions
         Container(
           padding: const EdgeInsets.all(AppConstants.paddingLarge),
           decoration: BoxDecoration(
             color: AppConstants.charcoalGray,
             borderRadius: BorderRadius.circular(AppConstants.radiusMedium),
-            border: Border.all(
-              color: AppConstants.accentGray,
-              width: 1,
-            ),
+            border: Border.all(color: AppConstants.accentGray, width: 1),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -255,9 +255,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             ],
           ),
         ),
-        
+
         const SizedBox(height: AppConstants.paddingXLarge),
-        
+
         // Didn't receive email?
         const Text(
           "Didn't receive the email?",
@@ -276,9 +276,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           ),
           textAlign: TextAlign.center,
         ),
-        
+
         const SizedBox(height: AppConstants.paddingXLarge),
-        
+
         // Resend button
         CustomButton(
           text: 'Resend Email',
@@ -290,9 +290,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           isOutlined: true,
           icon: Icons.refresh,
         ),
-        
+
         const SizedBox(height: AppConstants.paddingMedium),
-        
+
         CustomButton(
           text: 'Back to Login',
           onPressed: _returnToLogin,

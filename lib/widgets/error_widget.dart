@@ -21,11 +21,7 @@ class ErrorWidget extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              icon,
-              size: 64,
-              color: AppConstants.errorRed,
-            ),
+            Icon(icon, size: 64, color: AppColors.error),
             const SizedBox(height: AppConstants.paddingMedium),
             Text(
               message,
@@ -83,11 +79,7 @@ class EmptyStateWidget extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              icon,
-              size: 64,
-              color: AppConstants.textDarkGray,
-            ),
+            Icon(icon, size: 64, color: AppConstants.textDarkGray),
             const SizedBox(height: AppConstants.paddingMedium),
             Text(
               message,
