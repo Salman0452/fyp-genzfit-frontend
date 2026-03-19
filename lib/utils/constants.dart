@@ -27,6 +27,10 @@ class AppConstants {
   static const Color primaryGold = Color(0xFFD5FF5F); // Alias for primaryBrand
   static const Color accentGold = Color(0xFF9AC0D6); // Alias for secondaryBlue
   static const Color charcoalGray = Color(0xFF010101); // Alias for primaryDark
+  static const Color primaryBlack = Color(0xFF010101); // Alias for primaryDark
+  static const Color textWhite = Color(0xFFFFFFFF); // Alias for primaryWhite
+  static const Color textGray = Color(0xFF9F9F9F); // Alias for secondaryGray
+  static const Color textDarkGray = Color(0xFF010101); // Alias for primaryDark
 
   // Firebase Collections
   static const String usersCollection = 'users';
