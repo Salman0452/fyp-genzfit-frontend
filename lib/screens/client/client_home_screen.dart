@@ -27,10 +27,34 @@ class ClientHomeScreen extends StatefulWidget {
 
 class _ClientHomeScreenState extends State<ClientHomeScreen> {
   int _currentIndex = 0;
+  int _carouselIndex = 0;
   final BodyAnalysisService _bodyAnalysisService = BodyAnalysisService();
   final NotificationService _notificationService = NotificationService();
   MeasurementModel? _latestMeasurement;
   bool _isLoading = true;
+
+  final List<Map<String, String>> _carouselItems = [
+    {
+      'title': 'AI-Powered Coaching',
+      'subtitle': 'Get personalized fitness plans powered by advanced AI',
+      'icon': '🤖',
+    },
+    {
+      'title': 'Real-Time Progress',
+      'subtitle': 'Track your transformation with 3D body scans',
+      'icon': '📊',
+    },
+    {
+      'title': 'Expert Trainers',
+      'subtitle': 'Connect with certified fitness professionals',
+      'icon': '💪',
+    },
+    {
+      'title': 'Community Driven',
+      'subtitle': 'Join millions transforming their fitness journey',
+      'icon': '🌟',
+    },
+  ];
 
   @override
   void initState() {
@@ -223,6 +247,10 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                 ),
               ],
             ),
+            const SizedBox(height: 24),
+
+            // Feature Carousel
+            _buildFeatureCarousel(),
             const SizedBox(height: 32),
 
             _buildMotivationHero(user),
@@ -804,6 +832,116 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildFeatureCarousel() {
+    return Column(
+      children: [
+        SizedBox(
+          height: 220,
+          child: PageView.builder(
+            onPageChanged: (index) {
+              setState(() => _carouselIndex = index);
+            },
+            itemCount: _carouselItems.length,
+            itemBuilder: (context, index) {
+              final item = _carouselItems[index];
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                child: Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 4),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        AppColors.brandGreen.withOpacity(0.15),
+                        AppColors.brandBlue.withOpacity(0.1),
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: AppColors.brandGreen.withOpacity(0.3),
+                      width: 2,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.brandGreen.withOpacity(0.1),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Icon
+                        Text(
+                          item['icon'] ?? '✨',
+                          style: const TextStyle(fontSize: 48),
+                        ),
+                        const SizedBox(height: 16),
+                        // Title
+                        Text(
+                          item['title'] ?? '',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        // Subtitle
+                        Text(
+                          item['subtitle'] ?? '',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w400,
+                            color: AppColors.textSecondary,
+                            height: 1.5,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+        const SizedBox(height: 16),
+        // Carousel Dots Indicator
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: List.generate(
+            _carouselItems.length,
+            (index) => GestureDetector(
+              onTap: () {
+                // Jump to page
+                final controller = PageController(initialPage: index);
+              },
+              child: Container(
+                margin: const EdgeInsets.symmetric(horizontal: 4),
+                width: _carouselIndex == index ? 28 : 8,
+                height: 8,
+                decoration: BoxDecoration(
+                  color:
+                      _carouselIndex == index
+                          ? AppColors.brandGreen
+                          : AppColors.textSecondary.withOpacity(0.3),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
