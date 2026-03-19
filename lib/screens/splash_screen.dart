@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../utils/constants.dart';
@@ -19,17 +20,14 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   void initState() {
     super.initState();
-    
+
     _animationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1500),
     );
 
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _animationController,
-        curve: Curves.easeIn,
-      ),
+      CurvedAnimation(parent: _animationController, curve: Curves.easeIn),
     );
 
     _animationController.forward();
@@ -43,7 +41,7 @@ class _SplashScreenState extends State<SplashScreen>
     if (!mounted) return;
 
     final authProvider = context.read<AuthProvider>();
-    
+
     // Wait for Firebase Auth to restore session (max 3 seconds)
     int attempts = 0;
     while (attempts < 30) {
@@ -73,7 +71,7 @@ class _SplashScreenState extends State<SplashScreen>
       try {
         await authProvider.refreshUserData();
         if (!mounted) return;
-        
+
         final refreshedModel = authProvider.userModel;
         if (refreshedModel != null) {
           _navigateToHome(refreshedModel.role);
@@ -99,13 +97,25 @@ class _SplashScreenState extends State<SplashScreen>
 
   void _navigateToHome(UserRole role) {
     if (!mounted) return;
-    
+
     if (role == UserRole.client) {
-      Navigator.pushNamedAndRemoveUntil(context, '/client-home', (route) => false);
+      Navigator.pushNamedAndRemoveUntil(
+        context,
+        '/client-home',
+        (route) => false,
+      );
     } else if (role == UserRole.trainer) {
-      Navigator.pushNamedAndRemoveUntil(context, '/trainer-home', (route) => false);
+      Navigator.pushNamedAndRemoveUntil(
+        context,
+        '/trainer-home',
+        (route) => false,
+      );
     } else if (role == UserRole.admin) {
-      Navigator.pushNamedAndRemoveUntil(context, '/admin-dashboard', (route) => false);
+      Navigator.pushNamedAndRemoveUntil(
+        context,
+        '/admin-dashboard',
+        (route) => false,
+      );
     } else {
       Navigator.pushReplacementNamed(context, '/role-selection');
     }
@@ -120,22 +130,22 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppConstants.primaryBlack,
+      backgroundColor: AppColors.background,
       body: Center(
         child: FadeTransition(
           opacity: _fadeAnimation,
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // App Logo/Icon
+              // App Logo/Icon with Modern Design
               Container(
                 width: 120,
                 height: 120,
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
-                      AppConstants.primaryGold,
-                      AppConstants.accentGold,
+                      AppColors.brandGreen,
+                      AppColors.brandGreen.withOpacity(0.85),
                     ],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
@@ -143,7 +153,7 @@ class _SplashScreenState extends State<SplashScreen>
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: AppConstants.primaryGold.withOpacity(0.3),
+                      color: AppColors.brandGreen.withOpacity(0.25),
                       blurRadius: 20,
                       spreadRadius: 5,
                     ),
@@ -152,39 +162,37 @@ class _SplashScreenState extends State<SplashScreen>
                 child: const Icon(
                   Icons.fitness_center,
                   size: 60,
-                  color: AppConstants.primaryBlack,
+                  color: AppColors.textPrimary,
                 ),
               ),
-              const SizedBox(height: AppConstants.paddingXLarge),
-              const Text(
-                'GenZFit',
-                style: TextStyle(
-                  color: AppConstants.primaryGold,
+              const SizedBox(height: 32),
+              // App Title
+              Text(
+                'Fitstreak',
+                style: GoogleFonts.plusJakartaSans(
+                  color: AppColors.textPrimary,
                   fontSize: 42,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 2,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 1.2,
                 ),
               ),
-              const SizedBox(height: AppConstants.paddingSmall),
-              const Text(
+              const SizedBox(height: 8),
+              // Sub Title
+              Text(
                 'Transform Your Body, Elevate Your Life',
-                style: TextStyle(
-                  color: AppConstants.textGray,
-                  fontSize: AppConstants.fontMedium,
-                  letterSpacing: 0.5,
+                style: GoogleFonts.plusJakartaSans(
+                  color: AppColors.textSecondary,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w400,
+                  letterSpacing: 0.3,
                 ),
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: AppConstants.paddingXLarge * 2),
-              const SizedBox(
-                width: 40,
-                height: 40,
-                child: CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(
-                    AppConstants.primaryGold,
-                  ),
-                  strokeWidth: 3,
-                ),
+              const SizedBox(height: 64),
+              // Loading Indicator
+              CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(AppColors.brandGreen),
+                strokeWidth: 3,
               ),
             ],
           ),

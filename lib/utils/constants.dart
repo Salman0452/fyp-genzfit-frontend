@@ -5,23 +5,35 @@ class AppConstants {
   static const String appName = 'GenZFit';
   static const String appVersion = '1.0.0';
 
-// Colors - Dark neon fitness theme
-  static const Color primaryBlack = Color(0xFF0A0B0A);
+  // Primary Colors - Fitstreak Palette
+  static const Color primaryLight = Color(0xFFD6DFE2); // Light gray
+  static const Color primaryDark = Color(0xFF010101); // Almost black
+  static const Color primaryBrand = Color(0xFFD5FF5F); // Lime green
+  static const Color primaryWhite = Color(0xFFFFFFFF); // White
+
+  // Secondary Colors - Fitstreak Palette
+  static const Color secondaryGray = Color(0xFF9F9F9F); // Gray
+  static const Color secondaryBlue = Color(0xFF9AC0D6); // Light blue
+  static const Color secondaryDarkGray = Color(0xFF595959); // Dark gray
+  static const Color secondaryBlueGray = Color(0xFF4E6075); // Blue-gray
+
+  // Legacy colors (for compatibility)
+  static const Color primaryBlack = Color(0xFF010101);
   static const Color darkGray = Color(0xFF0D0E0D);
-  static const Color charcoalGray = Color(0xFF171917);
+  static const Color charcoalGray = Color(0xFF1F2120);
   static const Color slateGray = Color(0xFF1F2120);
   static const Color accentGray = Color(0xFF2A2D2B);
 
-  static const Color primaryGold = Color(0xFF7FFA88);
-  static const Color accentGold = Color(0xFF83BCB5);
+  static const Color primaryGold = Color(0xFFD5FF5F); // Brand lime green
+  static const Color accentGold = Color(0xFF9AC0D6); // Light blue accent
 
-  static const Color errorRed = Color(0xFFFF5C5C);
-  static const Color successGreen = Color(0xFF7FFA88);
-  static const Color warningYellow = Color(0xFFFFD166);
+  static const Color errorRed = Color(0xFFE53935);
+  static const Color successGreen = Color(0xFFD5FF5F);
+  static const Color warningYellow = Color(0xFFFFA500);
 
   static const Color textWhite = Color(0xFFFFFFFF);
-  static const Color textGray = Color(0xFF5E625F);
-  static const Color textDarkGray = Color(0xFF3D4040);
+  static const Color textGray = Color(0xFF9F9F9F);
+  static const Color textDarkGray = Color(0xFF010101);
 
   // Firebase Collections
   static const String usersCollection = 'users';
@@ -92,24 +104,40 @@ class AppConstants {
   static const String keyOnboardingComplete = 'onboardingComplete';
 }
 
-// Simplified color constants for new screens
+// Simplified color constants for new screens - Fitstreak Design
 class AppColors {
-  static const Color background = Color(0xFF0A0B0A);
-  static const Color surface = Color(0xFF171917);
-  static const Color charcoal = Color(0xFF1F2120);
-  static const Color accent = Color(0xFF7FFA88);
-  static const Color accentTeal = Color(0xFF83BCB5);
-  static const Color accentCyan = Color(0xFF5EDFFF);
-  static const Color accentAmber = Color(0xFFFFC857);
-  static const Color accentCoral = Color(0xFFFF8A65);
-  static const Color accentViolet = Color(0xFFB388FF);
-  static const Color muted = Color(0xFF5E625F);
-  static const Color textPrimary = Color(0xFFFFFFFF);
-  static const Color textSecondary = Color(0xFF5E625F);
-  static const Color error = Color(0xFFFF5C5C);
-  static const Color success = Color(0xFF7FFA88);
-  static const Color warning = Color(0xFFFFD166);
-  static const Color info = Color(0xFF83BCB5);
+  // Background and Surface
+  static const Color background = Color(0xFFF7F9FB); // Light background
+  static const Color surface = Color(0xFFFFFFFF); // White surface
+  static const Color surfaceVariant = Color(0xFFD6DFE2); // Light gray surface
+
+  // Brand Colors
+  static const Color brandGreen = Color(
+    0xFFD5FF5F,
+  ); // Lime green (primary brand)
+  static const Color brandBlue = Color(0xFF9AC0D6); // Light blue (secondary)
+
+  // Text Colors
+  static const Color textPrimary = Color(0xFF010101); // Almost black
+  static const Color textSecondary = Color(0xFF9F9F9F); // Gray
+  static const Color textTertiary = Color(0xFF595959); // Dark gray
+  static const Color textOnBrand = Color(0xFFFFFFFF); // White on brand colors
+
+  // Status Colors
+  static const Color error = Color(0xFFE53935);
+  static const Color success = Color(0xFFD5FF5F);
+  static const Color warning = Color(0xFFFFA500);
+  static const Color info = Color(0xFF9AC0D6);
+
+  // Legacy/Accent Colors (kept for compatibility)
+  static const Color accent = Color(0xFFD5FF5F);
+  static const Color accentTeal = Color(0xFF9AC0D6);
+  static const Color accentCyan = Color(0xFF9AC0D6);
+  static const Color accentAmber = Color(0xFFFFA500);
+  static const Color accentCoral = Color(0xFFE53935);
+  static const Color accentViolet = Color(0xFF4E6075);
+  static const Color muted = Color(0xFF9F9F9F);
+  static const Color charcoal = Color(0xFF010101);
 }
 
 class AppSizes {

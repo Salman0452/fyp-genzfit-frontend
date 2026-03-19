@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:genzfit/providers/auth_provider.dart';
 import 'package:genzfit/utils/constants.dart';
+import 'package:genzfit/utils/design_utils.dart';
 import 'package:genzfit/screens/client/body_scan_screen.dart';
 import 'package:genzfit/screens/client/client_profile_screen.dart';
 import 'package:genzfit/screens/client/avatar_viewer_screen.dart';
@@ -52,8 +54,9 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
       final userId = authProvider.user?.uid;
 
       if (userId != null) {
-        final measurement =
-            await _bodyAnalysisService.getLatestMeasurement(userId);
+        final measurement = await _bodyAnalysisService.getLatestMeasurement(
+          userId,
+        );
         setState(() {
           _latestMeasurement = measurement;
           _isLoading = false;
@@ -144,15 +147,12 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
           currentIndex: _currentIndex,
           onTap: (index) => setState(() => _currentIndex = index),
           backgroundColor: AppColors.surface,
-          selectedItemColor: AppColors.accent,
+          selectedItemColor: AppColors.brandGreen,
           unselectedItemColor: AppColors.textSecondary,
           type: BottomNavigationBarType.fixed,
           elevation: 0,
           items: const [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.home),
-              label: 'Home',
-            ),
+            BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
             BottomNavigationBarItem(
               icon: Icon(Icons.show_chart),
               label: 'Progress',
@@ -165,10 +165,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
               icon: Icon(Icons.chat_bubble_outline),
               label: 'Messages',
             ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.person),
-              label: 'Profile',
-            ),
+            BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
           ],
         ),
       ),
@@ -194,17 +191,18 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                   children: [
                     Text(
                       'Hello, ${user?.name.split(' ').first ?? 'User'}!',
-                      style: const TextStyle(
+                      style: GoogleFonts.plusJakartaSans(
                         fontSize: 28,
-                        fontWeight: FontWeight.bold,
+                        fontWeight: FontWeight.w700,
                         color: AppColors.textPrimary,
                       ),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       'Ready to transform yourself?',
-                      style: TextStyle(
+                      style: GoogleFonts.plusJakartaSans(
                         fontSize: 14,
+                        fontWeight: FontWeight.w400,
                         color: AppColors.textSecondary.withOpacity(0.8),
                       ),
                     ),
@@ -212,12 +210,12 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                 ),
                 Container(
                   decoration: BoxDecoration(
-                    color: AppColors.accent,
+                    color: AppColors.brandGreen,
                     shape: BoxShape.circle,
                   ),
                   child: IconButton(
                     icon: const Icon(Icons.notifications_outlined),
-                    color: AppColors.background,
+                    color: AppColors.textPrimary,
                     onPressed: () {
                       // TODO: Navigate to notifications
                     },
@@ -235,11 +233,11 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
             const SizedBox(height: 24),
 
             // Quick actions
-            const Text(
+            Text(
               'Quick Actions',
-              style: TextStyle(
+              style: GoogleFonts.plusJakartaSans(
                 fontSize: 20,
-                fontWeight: FontWeight.bold,
+                fontWeight: FontWeight.w600,
                 color: AppColors.textPrimary,
               ),
             ),
@@ -252,11 +250,11 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
+                  Text(
                     'Your Progress',
-                    style: TextStyle(
+                    style: GoogleFonts.plusJakartaSans(
                       fontSize: 20,
-                      fontWeight: FontWeight.bold,
+                      fontWeight: FontWeight.w600,
                       color: AppColors.textPrimary,
                     ),
                   ),
@@ -264,9 +262,12 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                     onPressed: () {
                       setState(() => _currentIndex = 3);
                     },
-                    child: const Text(
+                    child: Text(
                       'View All',
-                      style: TextStyle(color: AppColors.accent),
+                      style: GoogleFonts.plusJakartaSans(
+                        color: AppColors.brandGreen,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                 ],
@@ -274,11 +275,11 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
               const SizedBox(height: 12),
               _buildProgressCard(_latestMeasurement!),
             ] else if (!_isLoading) ...[
-              const Text(
+              Text(
                 'Get Started',
-                style: TextStyle(
+                style: GoogleFonts.plusJakartaSans(
                   fontSize: 20,
-                  fontWeight: FontWeight.bold,
+                  fontWeight: FontWeight.w600,
                   color: AppColors.textPrimary,
                 ),
               ),
@@ -339,13 +340,16 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                 ),
               ),
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: AppColors.background.withOpacity(0.35),
                   borderRadius: BorderRadius.circular(20),
-                  border:
-                      Border.all(color: AppColors.accentAmber.withOpacity(0.5)),
+                  border: Border.all(
+                    color: AppColors.accentAmber.withOpacity(0.5),
+                  ),
                 ),
                 child: Text(
                   _getReadinessLabel(),
@@ -370,8 +374,9 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                     elevation: 0,
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     shape: RoundedRectangleBorder(
-                      borderRadius:
-                          BorderRadius.circular(AppConstants.radiusSmall),
+                      borderRadius: BorderRadius.circular(
+                        AppConstants.radiusSmall,
+                      ),
                     ),
                   ),
                   child: const Text(
@@ -384,14 +389,18 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
               OutlinedButton(
                 onPressed: _openAiCoach,
                 style: OutlinedButton.styleFrom(
-                  side:
-                      BorderSide(color: AppColors.accentCyan.withOpacity(0.6)),
+                  side: BorderSide(
+                    color: AppColors.accentCyan.withOpacity(0.6),
+                  ),
                   foregroundColor: AppColors.accentCyan,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
                   shape: RoundedRectangleBorder(
-                    borderRadius:
-                        BorderRadius.circular(AppConstants.radiusSmall),
+                    borderRadius: BorderRadius.circular(
+                      AppConstants.radiusSmall,
+                    ),
                   ),
                 ),
                 child: const Text(
@@ -453,11 +462,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
               color: AppColors.accent.withOpacity(0.2),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(
-              goalIcon,
-              color: AppColors.accent,
-              size: 32,
-            ),
+            child: Icon(goalIcon, color: AppColors.accent, size: 32),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -559,14 +564,17 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                 Icons.smart_toy,
                 AppColors.accentCyan,
                 () {
-                  final authProvider =
-                      Provider.of<AuthProvider>(context, listen: false);
+                  final authProvider = Provider.of<AuthProvider>(
+                    context,
+                    listen: false,
+                  );
                   if (authProvider.userModel != null) {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) =>
-                            AICoachScreen(user: authProvider.userModel!),
+                        builder:
+                            (context) =>
+                                AICoachScreen(user: authProvider.userModel!),
                       ),
                     );
                   }
@@ -693,11 +701,12 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                   measurement.bmi < 18.5
                       ? Icons.trending_down
                       : measurement.bmi < 25
-                          ? Icons.check_circle
-                          : Icons.trending_up,
-                  color: measurement.bmi < 18.5
-                      ? AppColors.info
-                      : measurement.bmi < 25
+                      ? Icons.check_circle
+                      : Icons.trending_up,
+                  color:
+                      measurement.bmi < 18.5
+                          ? AppColors.info
+                          : measurement.bmi < 25
                           ? AppColors.success
                           : AppColors.warning,
                   size: 20,
@@ -734,10 +743,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
         const SizedBox(height: 4),
         Text(
           label,
-          style: const TextStyle(
-            fontSize: 12,
-            color: AppColors.textSecondary,
-          ),
+          style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
         ),
       ],
     );
@@ -770,19 +776,14 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
           const Text(
             'Take your first body scan to start tracking your progress',
             textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 14,
-              color: AppColors.textSecondary,
-            ),
+            style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
           ),
           const SizedBox(height: 24),
           ElevatedButton.icon(
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(
-                  builder: (context) => const BodyScanScreen(),
-                ),
+                MaterialPageRoute(builder: (context) => const BodyScanScreen()),
               ).then((_) => _loadLatestMeasurement());
             },
             style: ElevatedButton.styleFrom(

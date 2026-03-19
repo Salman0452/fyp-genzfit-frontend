@@ -3,6 +3,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'providers/auth_provider.dart';
 import 'providers/language_provider.dart';
 import 'providers/theme_provider.dart';
@@ -45,52 +46,147 @@ class GenZFitApp extends StatelessWidget {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.light,
-      scaffoldBackgroundColor: const Color(0xFFF7F9FB),
-      primaryColor: AppConstants.accentGold,
+      scaffoldBackgroundColor: AppColors.background,
+      primaryColor: AppColors.brandGreen,
       colorScheme: const ColorScheme.light(
-        primary: AppConstants.accentGold,
-        secondary: AppConstants.primaryGold,
-        surface: Colors.white,
-        error: AppConstants.errorRed,
+        primary: AppColors.brandGreen,
+        secondary: AppColors.brandBlue,
+        surface: AppColors.surface,
+        error: AppColors.error,
       ),
-      appBarTheme: const AppBarTheme(
-        backgroundColor: Colors.white,
+      appBarTheme: AppBarTheme(
+        backgroundColor: AppColors.surface,
         elevation: 0,
         centerTitle: true,
-        titleTextStyle: TextStyle(
-          color: Color(0xFF171917),
-          fontSize: AppConstants.fontXLarge,
-          fontWeight: FontWeight.bold,
+        titleTextStyle: GoogleFonts.plusJakartaSans(
+          color: AppColors.textPrimary,
+          fontSize: 24,
+          fontWeight: FontWeight.w600,
         ),
-        iconTheme: IconThemeData(color: Color(0xFF171917)),
+        iconTheme: const IconThemeData(color: AppColors.textPrimary),
       ),
-      textTheme: const TextTheme(
-        displayLarge: TextStyle(
-          color: Color(0xFF171917),
+      textTheme: TextTheme(
+        displayLarge: GoogleFonts.plusJakartaSans(
+          color: AppColors.textPrimary,
           fontSize: 32,
-          fontWeight: FontWeight.bold,
+          fontWeight: FontWeight.w600,
         ),
-        displayMedium: TextStyle(
-          color: Color(0xFF171917),
+        displayMedium: GoogleFonts.plusJakartaSans(
+          color: AppColors.textPrimary,
           fontSize: 28,
-          fontWeight: FontWeight.bold,
+          fontWeight: FontWeight.w600,
         ),
-        bodyLarge: TextStyle(
-          color: Color(0xFF171917),
-          fontSize: AppConstants.fontLarge,
+        displaySmall: GoogleFonts.plusJakartaSans(
+          color: AppColors.textPrimary,
+          fontSize: 24,
+          fontWeight: FontWeight.w600,
         ),
-        bodyMedium: TextStyle(
-          color: Color(0xFF5E625F),
-          fontSize: AppConstants.fontMedium,
+        headlineMedium: GoogleFonts.plusJakartaSans(
+          color: AppColors.textPrimary,
+          fontSize: 20,
+          fontWeight: FontWeight.w600,
+        ),
+        headlineSmall: GoogleFonts.plusJakartaSans(
+          color: AppColors.textPrimary,
+          fontSize: 18,
+          fontWeight: FontWeight.w600,
+        ),
+        titleLarge: GoogleFonts.plusJakartaSans(
+          color: AppColors.textPrimary,
+          fontSize: 16,
+          fontWeight: FontWeight.w600,
+        ),
+        titleMedium: GoogleFonts.plusJakartaSans(
+          color: AppColors.textSecondary,
+          fontSize: 14,
+          fontWeight: FontWeight.w500,
+        ),
+        bodyLarge: GoogleFonts.plusJakartaSans(
+          color: AppColors.textPrimary,
+          fontSize: 16,
+          fontWeight: FontWeight.w400,
+        ),
+        bodyMedium: GoogleFonts.plusJakartaSans(
+          color: AppColors.textSecondary,
+          fontSize: 14,
+          fontWeight: FontWeight.w400,
+        ),
+        bodySmall: GoogleFonts.plusJakartaSans(
+          color: AppColors.textTertiary,
+          fontSize: 12,
+          fontWeight: FontWeight.w400,
+        ),
+        labelLarge: GoogleFonts.plusJakartaSans(
+          color: AppColors.textPrimary,
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
         ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppConstants.accentGold,
-          foregroundColor: Colors.white,
+          backgroundColor: AppColors.brandGreen,
+          foregroundColor: AppColors.textPrimary,
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppConstants.radiusMedium),
           ),
+          textStyle: GoogleFonts.plusJakartaSans(
+            fontWeight: FontWeight.w600,
+            fontSize: 14,
+          ),
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: AppColors.brandGreen,
+          side: const BorderSide(color: AppColors.brandGreen, width: 2),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppConstants.radiusMedium),
+          ),
+          textStyle: GoogleFonts.plusJakartaSans(
+            fontWeight: FontWeight.w600,
+            fontSize: 14,
+          ),
+        ),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          foregroundColor: AppColors.brandGreen,
+          textStyle: GoogleFonts.plusJakartaSans(
+            fontWeight: FontWeight.w600,
+            fontSize: 14,
+          ),
+        ),
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: AppColors.surfaceVariant.withOpacity(0.3),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppConstants.radiusMedium),
+          borderSide: const BorderSide(color: AppColors.textTertiary, width: 1),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppConstants.radiusMedium),
+          borderSide: const BorderSide(color: AppColors.brandGreen, width: 2),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppConstants.radiusMedium),
+          borderSide: const BorderSide(color: AppColors.textTertiary, width: 1),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppConstants.radiusMedium),
+          borderSide: const BorderSide(color: AppColors.error, width: 1),
+        ),
+        labelStyle: GoogleFonts.plusJakartaSans(
+          color: AppColors.textSecondary,
+          fontSize: 14,
+          fontWeight: FontWeight.w400,
+        ),
+        hintStyle: GoogleFonts.plusJakartaSans(
+          color: AppColors.textTertiary,
+          fontSize: 14,
+          fontWeight: FontWeight.w400,
         ),
       ),
     );
@@ -100,52 +196,147 @@ class GenZFitApp extends StatelessWidget {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
-      scaffoldBackgroundColor: AppConstants.primaryBlack,
-      primaryColor: AppConstants.primaryGold,
+      scaffoldBackgroundColor: const Color(0xFF0A0A0A),
+      primaryColor: AppColors.brandGreen,
       colorScheme: const ColorScheme.dark(
-        primary: AppConstants.primaryGold,
-        secondary: AppConstants.accentGold,
-        surface: AppConstants.charcoalGray,
-        error: AppConstants.errorRed,
+        primary: AppColors.brandGreen,
+        secondary: AppColors.brandBlue,
+        surface: Color(0xFF1A1A1A),
+        error: AppColors.error,
       ),
-      appBarTheme: const AppBarTheme(
-        backgroundColor: AppConstants.primaryBlack,
+      appBarTheme: AppBarTheme(
+        backgroundColor: const Color(0xFF0A0A0A),
         elevation: 0,
         centerTitle: true,
-        titleTextStyle: TextStyle(
-          color: AppConstants.textWhite,
-          fontSize: AppConstants.fontXLarge,
-          fontWeight: FontWeight.bold,
+        titleTextStyle: GoogleFonts.plusJakartaSans(
+          color: AppColors.surface,
+          fontSize: 24,
+          fontWeight: FontWeight.w600,
         ),
-        iconTheme: IconThemeData(color: AppConstants.textWhite),
+        iconTheme: const IconThemeData(color: AppColors.surface),
       ),
-      textTheme: const TextTheme(
-        displayLarge: TextStyle(
-          color: AppConstants.textWhite,
+      textTheme: TextTheme(
+        displayLarge: GoogleFonts.plusJakartaSans(
+          color: AppColors.surface,
           fontSize: 32,
-          fontWeight: FontWeight.bold,
+          fontWeight: FontWeight.w600,
         ),
-        displayMedium: TextStyle(
-          color: AppConstants.textWhite,
+        displayMedium: GoogleFonts.plusJakartaSans(
+          color: AppColors.surface,
           fontSize: 28,
-          fontWeight: FontWeight.bold,
+          fontWeight: FontWeight.w600,
         ),
-        bodyLarge: TextStyle(
-          color: AppConstants.textWhite,
-          fontSize: AppConstants.fontLarge,
+        displaySmall: GoogleFonts.plusJakartaSans(
+          color: AppColors.surface,
+          fontSize: 24,
+          fontWeight: FontWeight.w600,
         ),
-        bodyMedium: TextStyle(
-          color: AppConstants.textGray,
-          fontSize: AppConstants.fontMedium,
+        headlineMedium: GoogleFonts.plusJakartaSans(
+          color: AppColors.surface,
+          fontSize: 20,
+          fontWeight: FontWeight.w600,
+        ),
+        headlineSmall: GoogleFonts.plusJakartaSans(
+          color: AppColors.surface,
+          fontSize: 18,
+          fontWeight: FontWeight.w600,
+        ),
+        titleLarge: GoogleFonts.plusJakartaSans(
+          color: AppColors.surface,
+          fontSize: 16,
+          fontWeight: FontWeight.w600,
+        ),
+        titleMedium: GoogleFonts.plusJakartaSans(
+          color: AppColors.textSecondary,
+          fontSize: 14,
+          fontWeight: FontWeight.w500,
+        ),
+        bodyLarge: GoogleFonts.plusJakartaSans(
+          color: AppColors.surface,
+          fontSize: 16,
+          fontWeight: FontWeight.w400,
+        ),
+        bodyMedium: GoogleFonts.plusJakartaSans(
+          color: AppColors.textSecondary,
+          fontSize: 14,
+          fontWeight: FontWeight.w400,
+        ),
+        bodySmall: GoogleFonts.plusJakartaSans(
+          color: AppColors.textTertiary,
+          fontSize: 12,
+          fontWeight: FontWeight.w400,
+        ),
+        labelLarge: GoogleFonts.plusJakartaSans(
+          color: AppColors.surface,
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
         ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppConstants.primaryGold,
-          foregroundColor: AppConstants.primaryBlack,
+          backgroundColor: AppColors.brandGreen,
+          foregroundColor: AppColors.textPrimary,
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppConstants.radiusMedium),
           ),
+          textStyle: GoogleFonts.plusJakartaSans(
+            fontWeight: FontWeight.w600,
+            fontSize: 14,
+          ),
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: AppColors.brandGreen,
+          side: const BorderSide(color: AppColors.brandGreen, width: 2),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppConstants.radiusMedium),
+          ),
+          textStyle: GoogleFonts.plusJakartaSans(
+            fontWeight: FontWeight.w600,
+            fontSize: 14,
+          ),
+        ),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          foregroundColor: AppColors.brandGreen,
+          textStyle: GoogleFonts.plusJakartaSans(
+            fontWeight: FontWeight.w600,
+            fontSize: 14,
+          ),
+        ),
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: const Color(0xFF1A1A1A),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppConstants.radiusMedium),
+          borderSide: const BorderSide(color: Color(0xFF404040), width: 1),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppConstants.radiusMedium),
+          borderSide: const BorderSide(color: AppColors.brandGreen, width: 2),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppConstants.radiusMedium),
+          borderSide: const BorderSide(color: Color(0xFF404040), width: 1),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppConstants.radiusMedium),
+          borderSide: const BorderSide(color: AppColors.error, width: 1),
+        ),
+        labelStyle: GoogleFonts.plusJakartaSans(
+          color: AppColors.textSecondary,
+          fontSize: 14,
+          fontWeight: FontWeight.w400,
+        ),
+        hintStyle: GoogleFonts.plusJakartaSans(
+          color: AppColors.textTertiary,
+          fontSize: 14,
+          fontWeight: FontWeight.w400,
         ),
       ),
     );
@@ -211,22 +402,7 @@ class PlaceholderScreen extends StatelessWidget {
       child: Scaffold(
         appBar: AppBar(
           title: Text(title),
-          automaticallyImplyLeading:
-              false, // Remove back button.  ok i am giving you refrence pics and also linis and also fonts, colors, icons, etc.
-//The link is :
-//https://www.figma.com/design/R28Rvcjfsd3kPpqKw9kkfe/Fitstreak---Fitness-App--Community-?node-id=0-1&m=dev&t=E9ruTL0qoiS6V2Sl-1
-
-//THE IMAGES ARE:
-          ///https://file+.vscode-resource.vscode-cdn.net/Users/salmanahmad/FYP/fyp-genzfit-frontend/assets/images/Fitstreak%20App.png?version%3D1773921834076
-
-//https://file+.vscode-resource.vscode-cdn.net/Users/salmanahmad/FYP/fyp-genzfit-frontend/assets/images/Fitstreak%20App%20%281%29.png?version%3D1773921929562
-
-//the other info is:
-//Fonts: Plus Jakarta Sans - Medium, Plus Jakarta Sans - Regular
-//Colors: Primary(#D6DFE2, #010101, #D5FF5F, #FFFFFF), Secondary(#9F9F9F, #9AC0D6, #595959, #4E6075)
-
-//use these as refrences, customize my all app with these colors and fonts and also see pictures for refrence of how containers are beautifuuly built and use that containers with interesting graphs.
-//You are absolute best Frontend developer and it's your role now to complete this task, not use irrelevant emojis, if you want any pics to download from the web, feel free to download it
+          automaticallyImplyLeading: false, // Remove back button.
           actions: [
             IconButton(
               icon: const Icon(Icons.logout),
@@ -276,22 +452,3 @@ class PlaceholderScreen extends StatelessWidget {
     );
   }
 }
-
-
-
-
-// ok i am giving you refrence pics and also linis and also fonts, colors, icons, etc.
-// The link is : 
-// https://www.figma.com/design/R28Rvcjfsd3kPpqKw9kkfe/Fitstreak---Fitness-App--Community-?node-id=0-1&m=dev&t=E9ruTL0qoiS6V2Sl-1
-
-// THE IMAGES ARE:
-// https://file+.vscode-resource.vscode-cdn.net/Users/salmanahmad/FYP/fyp-genzfit-frontend/assets/images/Fitstreak%20App.png?version%3D1773921834076
-
-// https://file+.vscode-resource.vscode-cdn.net/Users/salmanahmad/FYP/fyp-genzfit-frontend/assets/images/Fitstreak%20App%20%281%29.png?version%3D1773921929562
-
-// the other info is:
-// Fonts: Plus Jakarta Sans - Medium, Plus Jakarta Sans - Regular
-// Colors: Primary(#D6DFE2, #010101, #D5FF5F, #FFFFFF), Secondary(#9F9F9F, #9AC0D6, #595959, #4E6075)
-
-// use these as refrences, customize my all app with these colors and fonts and also see pictures for refrence of how containers are beautifuuly built and use that containers with interesting graphs.
-// You are absolute best Frontend developer and it's your role now to complete this task, not use irrelevant emojis, if you want any pics to download from the web, feel free to download it

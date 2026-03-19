@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../utils/constants.dart';
 import '../../utils/validators.dart';
 import '../../utils/helpers.dart';
+import '../../utils/design_utils.dart';
 import '../../widgets/custom_button.dart';
 import '../../widgets/custom_text_field.dart';
 import '../../models/user_model.dart';
@@ -47,11 +49,23 @@ class _LoginScreenState extends State<LoginScreen> {
 
       // Navigate based on role - clear all previous routes
       if (user.role == UserRole.client) {
-        Navigator.pushNamedAndRemoveUntil(context, '/client-home', (route) => false);
+        Navigator.pushNamedAndRemoveUntil(
+          context,
+          '/client-home',
+          (route) => false,
+        );
       } else if (user.role == UserRole.trainer) {
-        Navigator.pushNamedAndRemoveUntil(context, '/trainer-home', (route) => false);
+        Navigator.pushNamedAndRemoveUntil(
+          context,
+          '/trainer-home',
+          (route) => false,
+        );
       } else if (user.role == UserRole.admin) {
-        Navigator.pushNamedAndRemoveUntil(context, '/admin-dashboard', (route) => false);
+        Navigator.pushNamedAndRemoveUntil(
+          context,
+          '/admin-dashboard',
+          (route) => false,
+        );
       }
     } else {
       Helpers.showSnackBar(
@@ -71,43 +85,48 @@ class _LoginScreenState extends State<LoginScreen> {
     final authProvider = context.watch<AuthProvider>();
 
     return Scaffold(
-      backgroundColor: AppConstants.primaryBlack,
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(AppConstants.paddingLarge),
+          padding: const EdgeInsets.all(24),
           child: Form(
             key: _formKey,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const SizedBox(height: AppConstants.paddingXLarge * 2),
-                const Text(
-                  'GenZFit',
-                  style: TextStyle(
-                    color: AppConstants.primaryGold,
+                const SizedBox(height: 32),
+                // App Branding
+                Text(
+                  'Fitstreak',
+                  style: GoogleFonts.plusJakartaSans(
+                    color: AppColors.brandGreen,
                     fontSize: 36,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1.5,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 1.2,
                   ),
                 ),
-                const SizedBox(height: AppConstants.paddingXLarge),
-                const Text(
+                const SizedBox(height: 32),
+                // Heading
+                Text(
                   'Welcome Back',
-                  style: TextStyle(
-                    color: AppConstants.textWhite,
+                  style: GoogleFonts.plusJakartaSans(
+                    color: AppColors.textPrimary,
                     fontSize: 28,
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
-                const SizedBox(height: AppConstants.paddingSmall),
-                const Text(
+                const SizedBox(height: 8),
+                // Subheading
+                Text(
                   'Sign in to continue your fitness journey',
-                  style: TextStyle(
-                    color: AppConstants.textGray,
-                    fontSize: AppConstants.fontLarge,
+                  style: GoogleFonts.plusJakartaSans(
+                    color: AppColors.textSecondary,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w400,
                   ),
                 ),
-                const SizedBox(height: AppConstants.paddingXLarge * 2),
+                const SizedBox(height: 32),
+                // Email Field
                 CustomTextField(
                   label: 'Email',
                   hint: 'Enter your email',
@@ -116,7 +135,8 @@ class _LoginScreenState extends State<LoginScreen> {
                   keyboardType: TextInputType.emailAddress,
                   validator: Validators.validateEmail,
                 ),
-                const SizedBox(height: AppConstants.paddingMedium),
+                const SizedBox(height: 16),
+                // Password Field
                 CustomTextField(
                   label: 'Password',
                   hint: 'Enter your password',
@@ -125,45 +145,53 @@ class _LoginScreenState extends State<LoginScreen> {
                   obscureText: true,
                   validator: Validators.validatePassword,
                 ),
-                const SizedBox(height: AppConstants.paddingSmall),
+                const SizedBox(height: 12),
+                // Forgot Password Link
                 Align(
                   alignment: Alignment.centerRight,
                   child: TextButton(
                     onPressed: _handleForgotPassword,
-                    child: const Text(
+                    child: Text(
                       'Forgot Password?',
-                      style: TextStyle(
-                        color: AppConstants.primaryGold,
-                        fontSize: AppConstants.fontMedium,
+                      style: GoogleFonts.plusJakartaSans(
+                        color: AppColors.brandGreen,
+                        fontSize: 14,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
                   ),
                 ),
-                const SizedBox(height: AppConstants.paddingLarge),
+                const SizedBox(height: 24),
+                // Sign In Button
                 CustomButton(
                   text: 'Sign In',
                   onPressed: _handleLogin,
                   isLoading: authProvider.isLoading,
                 ),
-                const SizedBox(height: AppConstants.paddingXLarge),
+                const SizedBox(height: 32),
+                // Sign Up Link
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text(
+                    Text(
                       "Don't have an account? ",
-                      style: TextStyle(
-                        color: AppConstants.textGray,
-                        fontSize: AppConstants.fontMedium,
+                      style: GoogleFonts.plusJakartaSans(
+                        color: AppColors.textSecondary,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w400,
                       ),
                     ),
                     GestureDetector(
-                      onTap: () => Navigator.pushReplacementNamed(context, '/role-selection'),
-                      child: const Text(
+                      onTap:
+                          () => Navigator.pushReplacementNamed(
+                            context,
+                            '/role-selection',
+                          ),
+                      child: Text(
                         'Sign Up',
-                        style: TextStyle(
-                          color: AppConstants.primaryGold,
-                          fontSize: AppConstants.fontMedium,
+                        style: GoogleFonts.plusJakartaSans(
+                          color: AppColors.brandGreen,
+                          fontSize: 14,
                           fontWeight: FontWeight.w600,
                         ),
                       ),

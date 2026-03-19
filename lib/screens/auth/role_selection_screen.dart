@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:genzfit/screens/auth/signup_screen.dart';
 import '../../utils/constants.dart';
+import '../../utils/design_utils.dart';
 import '../../models/user_model.dart';
 
 class RoleSelectionScreen extends StatelessWidget {
@@ -9,41 +11,46 @@ class RoleSelectionScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppConstants.primaryBlack,
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.all(AppConstants.paddingLarge),
+          padding: const EdgeInsets.all(24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SizedBox(height: AppConstants.paddingXLarge),
-              const Text(
-                'GenZFit',
-                style: TextStyle(
-                  color: AppConstants.primaryGold,
+              const SizedBox(height: 16),
+              // App Branding
+              Text(
+                'Fitstreak',
+                style: GoogleFonts.plusJakartaSans(
+                  color: AppColors.brandGreen,
                   fontSize: 36,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 1.5,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 1.2,
                 ),
               ),
-              const SizedBox(height: AppConstants.paddingMedium),
-              const Text(
+              const SizedBox(height: 16),
+              // Heading
+              Text(
                 'Choose Your Path',
-                style: TextStyle(
-                  color: AppConstants.textWhite,
-                  fontSize: AppConstants.fontTitle,
-                  fontWeight: FontWeight.bold,
+                style: GoogleFonts.plusJakartaSans(
+                  color: AppColors.textPrimary,
+                  fontSize: 32,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
-              const SizedBox(height: AppConstants.paddingSmall),
-              const Text(
+              const SizedBox(height: 8),
+              // Subheading
+              Text(
                 'Select your role to get started',
-                style: TextStyle(
-                  color: AppConstants.textGray,
-                  fontSize: AppConstants.fontLarge,
+                style: GoogleFonts.plusJakartaSans(
+                  color: AppColors.textSecondary,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w400,
                 ),
               ),
-              const SizedBox(height: AppConstants.paddingXLarge * 2),
+              const SizedBox(height: 40),
+              // Role Cards
               Expanded(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -56,7 +63,7 @@ class RoleSelectionScreen extends StatelessWidget {
                       icon: Icons.fitness_center,
                       onTap: () => _navigateToSignup(context, UserRole.client),
                     ),
-                    const SizedBox(height: AppConstants.paddingLarge),
+                    const SizedBox(height: 24),
                     _RoleCard(
                       role: UserRole.trainer,
                       title: 'Trainer',
@@ -68,24 +75,26 @@ class RoleSelectionScreen extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(height: AppConstants.paddingLarge),
+              const SizedBox(height: 24),
+              // Sign In Link
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Text(
+                  Text(
                     'Already have an account? ',
-                    style: TextStyle(
-                      color: AppConstants.textGray,
-                      fontSize: AppConstants.fontMedium,
+                    style: GoogleFonts.plusJakartaSans(
+                      color: AppColors.textSecondary,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w400,
                     ),
                   ),
                   GestureDetector(
                     onTap: () => Navigator.pushNamed(context, '/login'),
-                    child: const Text(
+                    child: Text(
                       'Sign In',
-                      style: TextStyle(
-                        color: AppConstants.primaryGold,
-                        fontSize: AppConstants.fontMedium,
+                      style: GoogleFonts.plusJakartaSans(
+                        color: AppColors.brandGreen,
+                        fontSize: 14,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -102,9 +111,7 @@ class RoleSelectionScreen extends StatelessWidget {
   void _navigateToSignup(BuildContext context, UserRole role) {
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (context) => SignupScreen(role: role),
-      ),
+      MaterialPageRoute(builder: (context) => SignupScreen(role: role)),
     );
   }
 }
@@ -129,71 +136,67 @@ class _RoleCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.all(AppConstants.paddingLarge),
+        padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              AppConstants.charcoalGray,
-              AppConstants.slateGray,
-            ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          borderRadius: BorderRadius.circular(AppConstants.radiusLarge),
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: AppConstants.accentGray,
-            width: 1,
+            color: AppColors.surfaceVariant.withOpacity(0.3),
+            width: 1.5,
           ),
           boxShadow: [
             BoxShadow(
-              color: AppConstants.primaryGold.withOpacity(0.1),
-              blurRadius: 10,
+              color: AppColors.brandGreen.withOpacity(0.08),
+              blurRadius: 12,
               offset: const Offset(0, 4),
             ),
           ],
         ),
         child: Row(
           children: [
+            // Icon Container
             Container(
-              padding: const EdgeInsets.all(AppConstants.paddingMedium),
+              padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: AppConstants.primaryGold.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(AppConstants.radiusMedium),
+                color: AppColors.brandGreen.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(
-                icon,
-                size: 40,
-                color: AppConstants.primaryGold,
-              ),
+              child: Icon(icon, size: 40, color: AppColors.brandGreen),
             ),
-            const SizedBox(width: AppConstants.paddingMedium),
+            const SizedBox(width: 16),
+            // Content
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     title,
-                    style: const TextStyle(
-                      color: AppConstants.textWhite,
-                      fontSize: AppConstants.fontXLarge,
-                      fontWeight: FontWeight.bold,
+                    style: GoogleFonts.plusJakartaSans(
+                      color: AppColors.textPrimary,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     description,
-                    style: const TextStyle(
-                      color: AppConstants.textGray,
-                      fontSize: AppConstants.fontMedium,
+                    style: GoogleFonts.plusJakartaSans(
+                      color: AppColors.textSecondary,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w400,
+                      height: 1.4,
                     ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ],
               ),
             ),
-            const Icon(
+            // Arrow Icon
+            Icon(
               Icons.arrow_forward_ios,
-              color: AppConstants.primaryGold,
-              size: 20,
+              color: AppColors.brandGreen,
+              size: 18,
             ),
           ],
         ),

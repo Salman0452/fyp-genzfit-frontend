@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../utils/constants.dart';
 
 class CustomTextField extends StatefulWidget {
@@ -53,9 +54,9 @@ class _CustomTextFieldState extends State<CustomTextField> {
       children: [
         Text(
           widget.label,
-          style: const TextStyle(
-            color: AppConstants.textWhite,
-            fontSize: AppConstants.fontMedium,
+          style: GoogleFonts.plusJakartaSans(
+            color: AppColors.textPrimary,
+            fontSize: 14,
             fontWeight: FontWeight.w500,
           ),
         ),
@@ -69,84 +70,83 @@ class _CustomTextFieldState extends State<CustomTextField> {
           enabled: widget.enabled,
           onTap: widget.onTap,
           readOnly: widget.readOnly,
-          style: const TextStyle(
-            color: AppConstants.textWhite,
-            fontSize: AppConstants.fontLarge,
+          style: GoogleFonts.plusJakartaSans(
+            color: AppColors.textPrimary,
+            fontSize: 16,
+            fontWeight: FontWeight.w400,
           ),
           decoration: InputDecoration(
             hintText: widget.hint,
-            hintStyle: const TextStyle(
-              color: AppConstants.textDarkGray,
-              fontSize: AppConstants.fontLarge,
+            hintStyle: GoogleFonts.plusJakartaSans(
+              color: AppColors.textTertiary,
+              fontSize: 16,
+              fontWeight: FontWeight.w400,
             ),
-            prefixIcon: widget.prefixIcon != null
-                ? Icon(
-                    widget.prefixIcon,
-                    color: AppConstants.textGray,
-                  )
-                : null,
-            suffixIcon: widget.obscureText
-                ? IconButton(
-                    icon: Icon(
-                      _obscureText ? Icons.visibility_off : Icons.visibility,
-                      color: AppConstants.textGray,
-                    ),
-                    onPressed: () {
-                      setState(() {
-                        _obscureText = !_obscureText;
-                      });
-                    },
-                  )
-                : widget.suffixIcon != null
+            prefixIcon:
+                widget.prefixIcon != null
+                    ? Icon(widget.prefixIcon, color: AppColors.textSecondary)
+                    : null,
+            suffixIcon:
+                widget.obscureText
                     ? IconButton(
-                        icon: Icon(
-                          widget.suffixIcon,
-                          color: AppConstants.textGray,
-                        ),
-                        onPressed: widget.onSuffixIconTap,
-                      )
+                      icon: Icon(
+                        _obscureText ? Icons.visibility_off : Icons.visibility,
+                        color: AppColors.textSecondary,
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          _obscureText = !_obscureText;
+                        });
+                      },
+                    )
+                    : widget.suffixIcon != null
+                    ? IconButton(
+                      icon: Icon(
+                        widget.suffixIcon,
+                        color: AppColors.textSecondary,
+                      ),
+                      onPressed: widget.onSuffixIconTap,
+                    )
                     : null,
             filled: true,
-            fillColor: AppConstants.charcoalGray,
+            fillColor: AppColors.surfaceVariant.withOpacity(0.3),
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppConstants.radiusMedium),
-              borderSide: BorderSide.none,
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(
+                color: AppColors.textTertiary,
+                width: 1,
+              ),
             ),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppConstants.radiusMedium),
+              borderRadius: BorderRadius.circular(12),
               borderSide: const BorderSide(
-                color: AppConstants.slateGray,
+                color: AppColors.textTertiary,
                 width: 1,
               ),
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppConstants.radiusMedium),
+              borderRadius: BorderRadius.circular(12),
               borderSide: const BorderSide(
-                color: AppConstants.primaryGold,
+                color: AppColors.brandGreen,
                 width: 2,
               ),
             ),
             errorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppConstants.radiusMedium),
-              borderSide: const BorderSide(
-                color: AppConstants.errorRed,
-                width: 1,
-              ),
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: AppColors.error, width: 1),
             ),
             focusedErrorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppConstants.radiusMedium),
-              borderSide: const BorderSide(
-                color: AppConstants.errorRed,
-                width: 2,
-              ),
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: AppColors.error, width: 2),
             ),
-            errorStyle: const TextStyle(
-              color: AppConstants.errorRed,
-              fontSize: AppConstants.fontSmall,
+            errorStyle: GoogleFonts.plusJakartaSans(
+              color: AppColors.error,
+              fontSize: 12,
+              fontWeight: FontWeight.w400,
             ),
             contentPadding: const EdgeInsets.symmetric(
-              horizontal: AppConstants.paddingMedium,
-              vertical: AppConstants.paddingMedium,
+              horizontal: 16,
+              vertical: 16,
             ),
           ),
         ),

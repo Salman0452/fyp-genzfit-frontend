@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../utils/constants.dart';
 
 class CustomButton extends StatelessWidget {
@@ -30,32 +31,33 @@ class CustomButton extends StatelessWidget {
     return SizedBox(
       width: width ?? double.infinity,
       height: height ?? 56,
-      child: isOutlined
-          ? OutlinedButton(
-              onPressed: isLoading ? null : onPressed,
-              style: OutlinedButton.styleFrom(
-                side: BorderSide(
-                  color: backgroundColor ?? AppConstants.primaryGold,
-                  width: 2,
+      child:
+          isOutlined
+              ? OutlinedButton(
+                onPressed: isLoading ? null : onPressed,
+                style: OutlinedButton.styleFrom(
+                  side: BorderSide(
+                    color: backgroundColor ?? AppColors.brandGreen,
+                    width: 2,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(AppConstants.radiusMedium),
+                child: _buildChild(),
+              )
+              : ElevatedButton(
+                onPressed: isLoading ? null : onPressed,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: backgroundColor ?? AppColors.brandGreen,
+                  foregroundColor: textColor ?? AppColors.textPrimary,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  elevation: 0,
                 ),
+                child: _buildChild(),
               ),
-              child: _buildChild(),
-            )
-          : ElevatedButton(
-              onPressed: isLoading ? null : onPressed,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: backgroundColor ?? AppConstants.primaryGold,
-                foregroundColor: textColor ?? AppConstants.primaryBlack,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(AppConstants.radiusMedium),
-                ),
-                elevation: 0,
-              ),
-              child: _buildChild(),
-            ),
     );
   }
 
@@ -79,12 +81,13 @@ class CustomButton extends StatelessWidget {
           const SizedBox(width: 8),
           Text(
             text,
-            style: TextStyle(
-              fontSize: AppConstants.fontLarge,
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 16,
               fontWeight: FontWeight.w600,
-              color: isOutlined
-                  ? (textColor ?? AppConstants.primaryGold)
-                  : (textColor ?? AppConstants.primaryBlack),
+              color:
+                  isOutlined
+                      ? (textColor ?? AppColors.brandGreen)
+                      : (textColor ?? AppColors.textPrimary),
             ),
           ),
         ],
@@ -93,12 +96,13 @@ class CustomButton extends StatelessWidget {
 
     return Text(
       text,
-      style: TextStyle(
-        fontSize: AppConstants.fontLarge,
+      style: GoogleFonts.plusJakartaSans(
+        fontSize: 16,
         fontWeight: FontWeight.w600,
-        color: isOutlined
-            ? (textColor ?? AppConstants.primaryGold)
-            : (textColor ?? AppConstants.primaryBlack),
+        color:
+            isOutlined
+                ? (textColor ?? AppColors.brandGreen)
+                : (textColor ?? AppColors.textPrimary),
       ),
     );
   }
