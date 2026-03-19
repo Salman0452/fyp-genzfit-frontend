@@ -156,8 +156,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
       body: screens[_currentIndex],
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
-          color:
-              Theme.of(context).bottomAppBarTheme.color ??
+          color: Theme.of(context).bottomAppBarTheme.color ??
               Theme.of(context).scaffoldBackgroundColor,
           boxShadow: [
             BoxShadow(
@@ -218,7 +217,9 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 28,
                         fontWeight: FontWeight.w700,
-                        color: AppColors.textPrimary,
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? const Color(0xFFFFFFFF)
+                            : AppColors.textPrimary,
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -227,7 +228,10 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 14,
                         fontWeight: FontWeight.w400,
-                        color: AppColors.textSecondary.withOpacity(0.8),
+                        color: (Theme.of(context).brightness == Brightness.dark
+                                ? const Color(0xFFB0B0B0)
+                                : AppColors.textSecondary)
+                            .withOpacity(0.8),
                       ),
                     ),
                   ],
@@ -239,7 +243,9 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                   ),
                   child: IconButton(
                     icon: const Icon(Icons.notifications_outlined),
-                    color: AppColors.textPrimary,
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? const Color(0xFF010101)
+                        : AppColors.textPrimary,
                     onPressed: () {
                       // TODO: Navigate to notifications
                     },
@@ -262,7 +268,9 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 20,
                 fontWeight: FontWeight.w600,
-                color: AppColors.textPrimary,
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? const Color(0xFFFFFFFF)
+                    : AppColors.textPrimary,
               ),
             ),
             const SizedBox(height: 16),
@@ -345,17 +353,21 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                   children: [
                     Text(
                       '${_getGreeting()}, $userName',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w800,
-                        color: AppColors.textPrimary,
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? const Color(0xFFFFFFFF)
+                            : AppColors.textPrimary,
                       ),
                     ),
                     const SizedBox(height: 6),
                     Text(
                       _getGoalFocus(user?.goals?.toString()),
-                      style: const TextStyle(
-                        color: AppColors.textSecondary,
+                      style: TextStyle(
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? const Color(0xFFB0B0B0)
+                            : AppColors.textSecondary,
                         fontSize: 12,
                         height: 1.4,
                       ),
@@ -596,9 +608,8 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder:
-                            (context) =>
-                                AICoachScreen(user: authProvider.userModel!),
+                        builder: (context) =>
+                            AICoachScreen(user: authProvider.userModel!),
                       ),
                     );
                   }
@@ -653,7 +664,9 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: Theme.of(context).brightness == Brightness.dark
+              ? const Color(0xFF1A1A1A)
+              : AppColors.surface,
           borderRadius: BorderRadius.circular(AppSizes.borderRadius),
           border: Border.all(color: color.withOpacity(0.3)),
         ),
@@ -686,7 +699,9 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: Theme.of(context).brightness == Brightness.dark
+            ? const Color(0xFF1A1A1A)
+            : AppColors.surface,
         borderRadius: BorderRadius.circular(AppSizes.borderRadius),
       ),
       child: Column(
@@ -725,12 +740,11 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                   measurement.bmi < 18.5
                       ? Icons.trending_down
                       : measurement.bmi < 25
-                      ? Icons.check_circle
-                      : Icons.trending_up,
-                  color:
-                      measurement.bmi < 18.5
-                          ? AppColors.info
-                          : measurement.bmi < 25
+                          ? Icons.check_circle
+                          : Icons.trending_up,
+                  color: measurement.bmi < 18.5
+                      ? AppColors.info
+                      : measurement.bmi < 25
                           ? AppColors.success
                           : AppColors.warning,
                   size: 20,
@@ -938,10 +952,9 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                 width: _carouselIndex == index ? 28 : 8,
                 height: 8,
                 decoration: BoxDecoration(
-                  color:
-                      _carouselIndex == index
-                          ? AppColors.brandGreen
-                          : AppColors.textSecondary.withOpacity(0.3),
+                  color: _carouselIndex == index
+                      ? AppColors.brandGreen
+                      : AppColors.textSecondary.withOpacity(0.3),
                   borderRadius: BorderRadius.circular(4),
                 ),
               ),

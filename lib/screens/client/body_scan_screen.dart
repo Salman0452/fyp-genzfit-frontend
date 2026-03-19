@@ -154,309 +154,304 @@ class _BodyScanScreenState extends State<BodyScanScreen> {
       context: context,
       isScrollControlled: true,
       isDismissible: false,
-      backgroundColor: AppColors.surface,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder:
-          (context) => StatefulBuilder(
-            builder:
-                (context, setModalState) => Padding(
-                  padding: EdgeInsets.only(
-                    bottom: MediaQuery.of(context).viewInsets.bottom,
-                    left: 20,
-                    right: 20,
-                    top: 20,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setModalState) => Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
+            left: 20,
+            right: 20,
+            top: 20,
+          ),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Complete Your Scan',
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(
+                        Icons.close,
+                        color: AppColors.textSecondary,
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          _capturedPhotos.clear();
+                          _analysisResult = null;
+                          _predictedMeasurements = null;
+                        });
+                        Navigator.pop(context);
+                      },
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+
+                // Height input
+                TextField(
+                  controller: _heightController,
+                  keyboardType: TextInputType.number,
+                  style: const TextStyle(color: AppColors.textPrimary),
+                  decoration: InputDecoration(
+                    labelText: 'Height (cm) *',
+                    labelStyle: const TextStyle(
+                      color: AppColors.textSecondary,
+                    ),
+                    filled: true,
+                    fillColor: AppColors.charcoal,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(
+                        AppSizes.borderRadius,
+                      ),
+                      borderSide: BorderSide.none,
+                    ),
+                    prefixIcon: const Icon(
+                      Icons.height,
+                      color: AppColors.accent,
+                    ),
                   ),
-                  child: SingleChildScrollView(
+                  onChanged: (value) => _updatePredictions(setModalState),
+                ),
+                const SizedBox(height: 16),
+
+                // Weight input
+                TextField(
+                  controller: _weightController,
+                  keyboardType: TextInputType.number,
+                  style: const TextStyle(color: AppColors.textPrimary),
+                  decoration: InputDecoration(
+                    labelText: 'Weight (kg) *',
+                    labelStyle: const TextStyle(
+                      color: AppColors.textSecondary,
+                    ),
+                    filled: true,
+                    fillColor: AppColors.charcoal,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(
+                        AppSizes.borderRadius,
+                      ),
+                      borderSide: BorderSide.none,
+                    ),
+                    prefixIcon: const Icon(
+                      Icons.monitor_weight,
+                      color: AppColors.accent,
+                    ),
+                  ),
+                  onChanged: (value) => _updatePredictions(setModalState),
+                ),
+                const SizedBox(height: 16),
+
+                // Age input
+                TextField(
+                  controller: _ageController,
+                  keyboardType: TextInputType.number,
+                  style: const TextStyle(color: AppColors.textPrimary),
+                  decoration: InputDecoration(
+                    labelText: 'Age *',
+                    labelStyle: const TextStyle(
+                      color: AppColors.textSecondary,
+                    ),
+                    filled: true,
+                    fillColor: AppColors.charcoal,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(
+                        AppSizes.borderRadius,
+                      ),
+                      borderSide: BorderSide.none,
+                    ),
+                    prefixIcon: const Icon(
+                      Icons.cake,
+                      color: AppColors.accent,
+                    ),
+                  ),
+                  onChanged: (value) => _updatePredictions(setModalState),
+                ),
+                const SizedBox(height: 16),
+
+                // Gender selection
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: AppColors.charcoal,
+                    borderRadius: BorderRadius.circular(
+                      AppSizes.borderRadius,
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Gender *',
+                        style: TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 14,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: RadioListTile<String>(
+                              title: const Text(
+                                'Male',
+                                style: TextStyle(
+                                  color: AppColors.textPrimary,
+                                ),
+                              ),
+                              value: 'male',
+                              groupValue: _selectedGender,
+                              activeColor: AppColors.accent,
+                              onChanged: (value) {
+                                setModalState(
+                                  () => _selectedGender = value!,
+                                );
+                                _updatePredictions(setModalState);
+                              },
+                              contentPadding: EdgeInsets.zero,
+                              dense: true,
+                            ),
+                          ),
+                          Expanded(
+                            child: RadioListTile<String>(
+                              title: const Text(
+                                'Female',
+                                style: TextStyle(
+                                  color: AppColors.textPrimary,
+                                ),
+                              ),
+                              value: 'female',
+                              groupValue: _selectedGender,
+                              activeColor: AppColors.accent,
+                              onChanged: (value) {
+                                setModalState(
+                                  () => _selectedGender = value!,
+                                );
+                                _updatePredictions(setModalState);
+                              },
+                              contentPadding: EdgeInsets.zero,
+                              dense: true,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // Predicted measurements section
+                if (_predictedMeasurements != null) ...[
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          AppColors.accent.withOpacity(0.1),
+                          AppColors.accent.withOpacity(0.05),
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(
+                        AppSizes.borderRadius,
+                      ),
+                      border: Border.all(
+                        color: AppColors.accent.withOpacity(0.3),
+                      ),
+                    ),
                     child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            const Text(
-                              'Complete Your Scan',
-                              style: TextStyle(
-                                fontSize: 24,
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.textPrimary,
-                              ),
+                            const Icon(
+                              Icons.auto_awesome,
+                              color: AppColors.accent,
+                              size: 20,
                             ),
-                            IconButton(
-                              icon: const Icon(
-                                Icons.close,
-                                color: AppColors.textSecondary,
+                            const SizedBox(width: 8),
+                            const Text(
+                              'AI-Predicted Body Measurements',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.accent,
                               ),
-                              onPressed: () {
-                                setState(() {
-                                  _capturedPhotos.clear();
-                                  _analysisResult = null;
-                                  _predictedMeasurements = null;
-                                });
-                                Navigator.pop(context);
-                              },
                             ),
                           ],
                         ),
-                        const SizedBox(height: 20),
-
-                        // Height input
-                        TextField(
-                          controller: _heightController,
-                          keyboardType: TextInputType.number,
-                          style: const TextStyle(color: AppColors.textPrimary),
-                          decoration: InputDecoration(
-                            labelText: 'Height (cm) *',
-                            labelStyle: const TextStyle(
-                              color: AppColors.textSecondary,
-                            ),
-                            filled: true,
-                            fillColor: AppColors.charcoal,
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(
-                                AppSizes.borderRadius,
-                              ),
-                              borderSide: BorderSide.none,
-                            ),
-                            prefixIcon: const Icon(
-                              Icons.height,
-                              color: AppColors.accent,
-                            ),
-                          ),
-                          onChanged:
-                              (value) => _updatePredictions(setModalState),
-                        ),
-                        const SizedBox(height: 16),
-
-                        // Weight input
-                        TextField(
-                          controller: _weightController,
-                          keyboardType: TextInputType.number,
-                          style: const TextStyle(color: AppColors.textPrimary),
-                          decoration: InputDecoration(
-                            labelText: 'Weight (kg) *',
-                            labelStyle: const TextStyle(
-                              color: AppColors.textSecondary,
-                            ),
-                            filled: true,
-                            fillColor: AppColors.charcoal,
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(
-                                AppSizes.borderRadius,
-                              ),
-                              borderSide: BorderSide.none,
-                            ),
-                            prefixIcon: const Icon(
-                              Icons.monitor_weight,
-                              color: AppColors.accent,
-                            ),
-                          ),
-                          onChanged:
-                              (value) => _updatePredictions(setModalState),
-                        ),
-                        const SizedBox(height: 16),
-
-                        // Age input
-                        TextField(
-                          controller: _ageController,
-                          keyboardType: TextInputType.number,
-                          style: const TextStyle(color: AppColors.textPrimary),
-                          decoration: InputDecoration(
-                            labelText: 'Age *',
-                            labelStyle: const TextStyle(
-                              color: AppColors.textSecondary,
-                            ),
-                            filled: true,
-                            fillColor: AppColors.charcoal,
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(
-                                AppSizes.borderRadius,
-                              ),
-                              borderSide: BorderSide.none,
-                            ),
-                            prefixIcon: const Icon(
-                              Icons.cake,
-                              color: AppColors.accent,
-                            ),
-                          ),
-                          onChanged:
-                              (value) => _updatePredictions(setModalState),
-                        ),
-                        const SizedBox(height: 16),
-
-                        // Gender selection
-                        Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: AppColors.charcoal,
-                            borderRadius: BorderRadius.circular(
-                              AppSizes.borderRadius,
-                            ),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                'Gender *',
-                                style: TextStyle(
-                                  color: AppColors.textSecondary,
-                                  fontSize: 14,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: RadioListTile<String>(
-                                      title: const Text(
-                                        'Male',
-                                        style: TextStyle(
-                                          color: AppColors.textPrimary,
-                                        ),
-                                      ),
-                                      value: 'male',
-                                      groupValue: _selectedGender,
-                                      activeColor: AppColors.accent,
-                                      onChanged: (value) {
-                                        setModalState(
-                                          () => _selectedGender = value!,
-                                        );
-                                        _updatePredictions(setModalState);
-                                      },
-                                      contentPadding: EdgeInsets.zero,
-                                      dense: true,
-                                    ),
-                                  ),
-                                  Expanded(
-                                    child: RadioListTile<String>(
-                                      title: const Text(
-                                        'Female',
-                                        style: TextStyle(
-                                          color: AppColors.textPrimary,
-                                        ),
-                                      ),
-                                      value: 'female',
-                                      groupValue: _selectedGender,
-                                      activeColor: AppColors.accent,
-                                      onChanged: (value) {
-                                        setModalState(
-                                          () => _selectedGender = value!,
-                                        );
-                                        _updatePredictions(setModalState);
-                                      },
-                                      contentPadding: EdgeInsets.zero,
-                                      dense: true,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-
-                        // Predicted measurements section
-                        if (_predictedMeasurements != null) ...[
-                          Container(
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [
-                                  AppColors.accent.withOpacity(0.1),
-                                  AppColors.accent.withOpacity(0.05),
-                                ],
-                              ),
-                              borderRadius: BorderRadius.circular(
-                                AppSizes.borderRadius,
-                              ),
-                              border: Border.all(
-                                color: AppColors.accent.withOpacity(0.3),
-                              ),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    const Icon(
-                                      Icons.auto_awesome,
-                                      color: AppColors.accent,
-                                      size: 20,
-                                    ),
-                                    const SizedBox(width: 8),
-                                    const Text(
-                                      'AI-Predicted Body Measurements',
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
-                                        color: AppColors.accent,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 12),
-                                ..._buildMeasurementsList(),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                        ],
-
-                        // Notes input
-                        TextField(
-                          controller: _notesController,
-                          maxLines: 2,
-                          style: const TextStyle(color: AppColors.textPrimary),
-                          decoration: InputDecoration(
-                            labelText: 'Notes (optional)',
-                            labelStyle: const TextStyle(
-                              color: AppColors.textSecondary,
-                            ),
-                            filled: true,
-                            fillColor: AppColors.charcoal,
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(
-                                AppSizes.borderRadius,
-                              ),
-                              borderSide: BorderSide.none,
-                            ),
-                            prefixIcon: const Icon(
-                              Icons.notes,
-                              color: AppColors.accent,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 24),
-
-                        // Save button
-                        CustomButton(
-                          text: 'Save Measurement',
-                          onPressed: _saveMeasurement,
-                          isLoading: _isProcessing,
-                        ),
-                        const SizedBox(height: 16),
-
-                        // Cancel button
-                        CustomButton(
-                          text: 'Retake Photo',
-                          onPressed: () {
-                            setState(() {
-                              _capturedPhotos.clear();
-                              _analysisResult = null;
-                              _predictedMeasurements = null;
-                            });
-                            Navigator.pop(context);
-                          },
-                          isOutlined: true,
-                        ),
-                        const SizedBox(height: 20),
+                        const SizedBox(height: 12),
+                        ..._buildMeasurementsList(),
                       ],
                     ),
                   ),
+                  const SizedBox(height: 16),
+                ],
+
+                // Notes input
+                TextField(
+                  controller: _notesController,
+                  maxLines: 2,
+                  style: const TextStyle(color: AppColors.textPrimary),
+                  decoration: InputDecoration(
+                    labelText: 'Notes (optional)',
+                    labelStyle: const TextStyle(
+                      color: AppColors.textSecondary,
+                    ),
+                    filled: true,
+                    fillColor: AppColors.charcoal,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(
+                        AppSizes.borderRadius,
+                      ),
+                      borderSide: BorderSide.none,
+                    ),
+                    prefixIcon: const Icon(
+                      Icons.notes,
+                      color: AppColors.accent,
+                    ),
+                  ),
                 ),
+                const SizedBox(height: 24),
+
+                // Save button
+                CustomButton(
+                  text: 'Save Measurement',
+                  onPressed: _saveMeasurement,
+                  isLoading: _isProcessing,
+                ),
+                const SizedBox(height: 16),
+
+                // Cancel button
+                CustomButton(
+                  text: 'Retake Photo',
+                  onPressed: () {
+                    setState(() {
+                      _capturedPhotos.clear();
+                      _analysisResult = null;
+                      _predictedMeasurements = null;
+                    });
+                    Navigator.pop(context);
+                  },
+                  isOutlined: true,
+                ),
+                const SizedBox(height: 20),
+              ],
+            ),
           ),
+        ),
+      ),
     );
   }
 
@@ -620,39 +615,38 @@ class _BodyScanScreenState extends State<BodyScanScreen> {
     return measurements
         .where((m) => _predictedMeasurements!.containsKey(m['key']))
         .map((m) {
-          final value = _predictedMeasurements![m['key'] as String];
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: Row(
-              children: [
-                Icon(
-                  m['icon'] as IconData,
-                  size: 16,
-                  color: AppColors.textSecondary,
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    m['label'] as String,
-                    style: const TextStyle(
-                      color: AppColors.textPrimary,
-                      fontSize: 14,
-                    ),
-                  ),
-                ),
-                Text(
-                  '${value?.toStringAsFixed(1)} cm',
-                  style: const TextStyle(
-                    color: AppColors.accent,
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
+      final value = _predictedMeasurements![m['key'] as String];
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 8),
+        child: Row(
+          children: [
+            Icon(
+              m['icon'] as IconData,
+              size: 16,
+              color: AppColors.textSecondary,
             ),
-          );
-        })
-        .toList();
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                m['label'] as String,
+                style: const TextStyle(
+                  color: AppColors.textPrimary,
+                  fontSize: 14,
+                ),
+              ),
+            ),
+            Text(
+              '${value?.toStringAsFixed(1)} cm',
+              style: const TextStyle(
+                color: AppColors.accent,
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+      );
+    }).toList();
   }
 
   @override
@@ -671,7 +665,7 @@ class _BodyScanScreenState extends State<BodyScanScreen> {
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: const Text('Body Scan'),
-        backgroundColor: AppColors.surface,
+        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
         actions: [
           IconButton(
             icon: Icon(
@@ -684,120 +678,119 @@ class _BodyScanScreenState extends State<BodyScanScreen> {
           ),
         ],
       ),
-      body:
-          _isInitialized
-              ? Stack(
-                children: [
-                  // Camera preview
-                  Positioned.fill(child: CameraPreview(_cameraController!)),
+      body: _isInitialized
+          ? Stack(
+              children: [
+                // Camera preview
+                Positioned.fill(child: CameraPreview(_cameraController!)),
 
-                  // Pose overlay guidelines
-                  if (_showGuidelines)
-                    Positioned.fill(
-                      child: PoseOverlay(
-                        showGuidelines: _showGuidelines,
-                        guidelineColor: AppColors.accent,
-                      ),
-                    ),
-
-                  // Instructions
-                  Positioned(
-                    top: 20,
-                    left: 20,
-                    right: 20,
-                    child: Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: AppColors.surface.withOpacity(0.8),
-                        borderRadius: BorderRadius.circular(
-                          AppSizes.borderRadius,
-                        ),
-                      ),
-                      child: const Text(
-                        'Stand in the center with your arms slightly away from your body. Ensure good lighting.',
-                        style: TextStyle(
-                          color: AppColors.textPrimary,
-                          fontSize: 14,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
+                // Pose overlay guidelines
+                if (_showGuidelines)
+                  Positioned.fill(
+                    child: PoseOverlay(
+                      showGuidelines: _showGuidelines,
+                      guidelineColor: AppColors.accent,
                     ),
                   ),
 
-                  // Capture button
+                // Instructions
+                Positioned(
+                  top: 20,
+                  left: 20,
+                  right: 20,
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? const Color(0xFF1A1A1A).withOpacity(0.9)
+                          : AppColors.surface.withOpacity(0.8),
+                      borderRadius: BorderRadius.circular(
+                        AppSizes.borderRadius,
+                      ),
+                    ),
+                    child: const Text(
+                      'Stand in the center with your arms slightly away from your body. Ensure good lighting.',
+                      style: TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 14,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ),
+
+                // Capture button
+                Positioned(
+                  bottom: 40,
+                  left: 0,
+                  right: 0,
+                  child: Center(
+                    child: GestureDetector(
+                      onTap: _isProcessing ? null : _capturePhoto,
+                      child: Container(
+                        width: 70,
+                        height: 70,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: _isProcessing
+                              ? AppColors.textSecondary
+                              : AppColors.accent,
+                          border: Border.all(
+                            color: AppColors.textPrimary,
+                            width: 4,
+                          ),
+                        ),
+                        child: _isProcessing
+                            ? const Padding(
+                                padding: EdgeInsets.all(20),
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 3,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    AppColors.textPrimary,
+                                  ),
+                                ),
+                              )
+                            : const Icon(
+                                Icons.camera_alt,
+                                color: AppColors.background,
+                                size: 32,
+                              ),
+                      ),
+                    ),
+                  ),
+                ),
+
+                // Photo count indicator
+                if (_capturedPhotos.isNotEmpty)
                   Positioned(
-                    bottom: 40,
+                    bottom: 120,
                     left: 0,
                     right: 0,
                     child: Center(
-                      child: GestureDetector(
-                        onTap: _isProcessing ? null : _capturePhoto,
-                        child: Container(
-                          width: 70,
-                          height: 70,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color:
-                                _isProcessing
-                                    ? AppColors.textSecondary
-                                    : AppColors.accent,
-                            border: Border.all(
-                              color: AppColors.textPrimary,
-                              width: 4,
-                            ),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.accent,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          '${_capturedPhotos.length} photo${_capturedPhotos.length > 1 ? 's' : ''} captured',
+                          style: const TextStyle(
+                            color: AppColors.background,
+                            fontWeight: FontWeight.bold,
                           ),
-                          child:
-                              _isProcessing
-                                  ? const Padding(
-                                    padding: EdgeInsets.all(20),
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 3,
-                                      valueColor: AlwaysStoppedAnimation<Color>(
-                                        AppColors.textPrimary,
-                                      ),
-                                    ),
-                                  )
-                                  : const Icon(
-                                    Icons.camera_alt,
-                                    color: AppColors.background,
-                                    size: 32,
-                                  ),
                         ),
                       ),
                     ),
                   ),
-
-                  // Photo count indicator
-                  if (_capturedPhotos.isNotEmpty)
-                    Positioned(
-                      bottom: 120,
-                      left: 0,
-                      right: 0,
-                      child: Center(
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 8,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppColors.accent,
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Text(
-                            '${_capturedPhotos.length} photo${_capturedPhotos.length > 1 ? 's' : ''} captured',
-                            style: const TextStyle(
-                              color: AppColors.background,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                ],
-              )
-              : const Center(
-                child: CircularProgressIndicator(color: AppColors.accent),
-              ),
+              ],
+            )
+          : const Center(
+              child: CircularProgressIndicator(color: AppColors.accent),
+            ),
     );
   }
 }

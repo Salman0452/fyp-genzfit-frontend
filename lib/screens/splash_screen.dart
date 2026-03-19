@@ -159,10 +159,12 @@ class _SplashScreenState extends State<SplashScreen>
                     ),
                   ],
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.fitness_center,
                   size: 60,
-                  color: AppColors.textPrimary,
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? const Color(0xFF010101)
+                      : AppColors.textPrimary,
                 ),
               ),
               const SizedBox(height: 32),
@@ -170,7 +172,9 @@ class _SplashScreenState extends State<SplashScreen>
               Text(
                 'GenZFit',
                 style: GoogleFonts.plusJakartaSans(
-                  color: AppColors.textPrimary,
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? const Color(0xFFFFFFFF)
+                      : AppColors.textPrimary,
                   fontSize: 42,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 1.2,
@@ -181,7 +185,9 @@ class _SplashScreenState extends State<SplashScreen>
               Text(
                 'Transform Your Body, Elevate Your Life',
                 style: GoogleFonts.plusJakartaSans(
-                  color: AppColors.textSecondary,
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? const Color(0xFFB0B0B0)
+                      : AppColors.textSecondary,
                   fontSize: 14,
                   fontWeight: FontWeight.w400,
                   letterSpacing: 0.3,

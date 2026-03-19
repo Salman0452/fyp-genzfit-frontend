@@ -266,7 +266,9 @@ class _AvatarViewerScreenState extends State<AvatarViewerScreen>
           builder: (context, scrollController) {
             return Container(
               decoration: BoxDecoration(
-                color: AppColors.surface,
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? const Color(0xFF1A1A1A)
+                    : AppColors.surface,
                 borderRadius:
                     const BorderRadius.vertical(top: Radius.circular(24)),
                 boxShadow: const [
@@ -323,7 +325,9 @@ class _AvatarViewerScreenState extends State<AvatarViewerScreen>
                   // ── Progress timeline ─────────────────────────────────────
                   if (_snapshots.isNotEmpty)
                     Container(
-                      color: AppColors.surface,
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? const Color(0xFF1A1A1A)
+                          : AppColors.surface,
                       padding: const EdgeInsets.symmetric(vertical: 4),
                       child: AvatarProgressSlider(
                         snapshots: _snapshots,
@@ -355,7 +359,9 @@ class _AvatarViewerScreenState extends State<AvatarViewerScreen>
 
     if (src == null || src.isEmpty) {
       return Container(
-        color: AppColors.surface,
+        color: Theme.of(context).brightness == Brightness.dark
+            ? const Color(0xFF0A0A0A)
+            : AppColors.surface,
         child: Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,
