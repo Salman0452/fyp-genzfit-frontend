@@ -138,8 +138,8 @@ class GenZFitApp extends StatelessWidget {
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          foregroundColor: AppColors.brandGreen,
-          side: const BorderSide(color: AppColors.brandGreen, width: 2),
+          foregroundColor: AppColors.brandGreenDeep,
+          side: const BorderSide(color: AppColors.brandGreenDeep, width: 2),
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppConstants.radiusMedium),
@@ -152,7 +152,7 @@ class GenZFitApp extends StatelessWidget {
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
-          foregroundColor: AppColors.brandGreen,
+          foregroundColor: AppColors.brandGreenDeep,
           textStyle: GoogleFonts.plusJakartaSans(
             fontWeight: FontWeight.w600,
             fontSize: 14,
@@ -168,7 +168,10 @@ class GenZFitApp extends StatelessWidget {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppConstants.radiusMedium),
-          borderSide: const BorderSide(color: AppColors.brandGreen, width: 2),
+          borderSide: const BorderSide(
+            color: AppColors.brandGreenDeep,
+            width: 2,
+          ),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppConstants.radiusMedium),

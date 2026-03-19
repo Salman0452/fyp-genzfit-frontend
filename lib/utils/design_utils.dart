@@ -363,10 +363,14 @@ class AchievementBadge extends StatelessWidget {
         Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: backgroundColor ?? AppColors.brandGreen.withOpacity(0.1),
+            color: backgroundColor ?? AppColors.brandGreenDeep.withOpacity(0.1),
             shape: BoxShape.circle,
           ),
-          child: Icon(icon, color: iconColor ?? AppColors.brandGreen, size: 28),
+          child: Icon(
+            icon,
+            color: iconColor ?? AppColors.brandGreenDeep,
+            size: 28,
+          ),
         ),
         const SizedBox(height: 8),
         Text(
@@ -435,8 +439,8 @@ class ActionButton extends StatelessWidget {
           padding:
               padding ??
               const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-          foregroundColor: AppColors.brandGreen,
-          side: const BorderSide(color: AppColors.brandGreen, width: 2),
+          foregroundColor: AppColors.brandGreenDeep,
+          side: const BorderSide(color: AppColors.brandGreenDeep, width: 2),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
@@ -470,16 +474,16 @@ class InfoBox extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: backgroundColor ?? AppColors.brandGreen.withOpacity(0.05),
+        color: backgroundColor ?? AppColors.brandGreenDeep.withOpacity(0.05),
         border: Border.all(
-          color: borderColor ?? AppColors.brandGreen.withOpacity(0.3),
+          color: borderColor ?? AppColors.brandGreenDeep.withOpacity(0.3),
           width: 1,
         ),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
         children: [
-          Icon(icon, color: iconColor ?? AppColors.brandGreen, size: 24),
+          Icon(icon, color: iconColor ?? AppColors.brandGreenDeep, size: 24),
           const SizedBox(width: 12),
           Expanded(
             child: Column(

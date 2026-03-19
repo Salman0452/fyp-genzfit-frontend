@@ -116,7 +116,10 @@ class AppColors {
   // Brand Colors
   static const Color brandGreen = Color(
     0xFFD5FF5F,
-  ); // Lime green (primary brand)
+  ); // Lime green (primary brand - for dark backgrounds)
+  static const Color brandGreenDeep = Color(
+    0xFF8BDD3C,
+  ); // Deeper green (for white backgrounds - less exhausting)
   static const Color brandBlue = Color(0xFF9AC0D6); // Light blue (secondary)
 
   // Text Colors
