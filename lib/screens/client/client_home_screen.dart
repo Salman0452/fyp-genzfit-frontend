@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:genzfit/providers/auth_provider.dart';
 import 'package:genzfit/utils/constants.dart';
 import 'package:genzfit/utils/design_utils.dart';
@@ -37,34 +38,22 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
     {
       'title': 'AI-Powered Coaching',
       'subtitle': 'Get personalized fitness plans powered by advanced AI',
-      'icon': '🤖',
+      'image': 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=600&h=400&fit=crop',
     },
     {
       'title': 'Real-Time Progress',
       'subtitle': 'Track your transformation with 3D body scans',
-      'icon': '📊',
+      'image': 'https://images.unsplash.com/photo-1516321318423-f06c6b293b80?w=600&h=400&fit=crop',
     },
     {
       'title': 'Expert Trainers',
       'subtitle': 'Connect with certified fitness professionals',
-      'icon': '💪',
+      'image': 'https://images.unsplash.com/photo-1549576528-f245e6f6fdfc?w=600&h=400&fit=crop',
     },
     {
       'title': 'Community Driven',
       'subtitle': 'Join millions transforming their fitness journey',
-      'icon': '🌟',
-    },
-  ];
-
-  @override
-  void initState() {
-    super.initState();
-    _loadLatestMeasurement();
-    _initializeNotifications();
-  }
-
-  Future<void> _initializeNotifications() async {
-    await _notificationService.initialize();
+      'image': 'https://images.unsplash.com/photo-1552093974-5b2038a0b916?w=600&h=400&fit=crop',
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final userId = authProvider.user?.uid;
     if (userId != null) {
@@ -849,66 +838,97 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
               final item = _carouselItems[index];
               return Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 8),
-                child: Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 4),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        AppColors.brandGreen.withOpacity(0.15),
-                        AppColors.brandBlue.withOpacity(0.1),
-                      ],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: AppColors.brandGreen.withOpacity(0.3),
-                      width: 2,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.brandGreen.withOpacity(0.1),
-                        blurRadius: 12,
-                        offset: const Offset(0, 4),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(20),
+                  child: Stack(
+                    children: [
+                      // Background Image
+                      CachedNetworkImage(
+                        imageUrl: item['image'] ?? '',
+                        fit: BoxFit.cover,
+                        width: double.infinity,
+                        height: double.infinity,
+                        placeholder: (context, url) => Container(
+                          color: AppColors.surfaceVariant,
+                          child: const Center(
+                            child: CircularProgressIndicator(
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                AppColors.brandGreen,
+                              ),
+                            ),
+                          ),
+                        ),
+                        errorWidget: (context, url, error) => Container(
+                          color: AppColors.surfaceVariant,
+                          child: const Center(
+                            child: Icon(
+                              Icons.image_not_supported,
+                              color: AppColors.textSecondary,
+                              size: 48,
+                            ),
+                          ),
+                        ),
+                      ),
+                      // Dark Overlay
+                      Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [
+                              Colors.black.withOpacity(0.3),
+                              Colors.black.withOpacity(0.6),
+                            ],
+                          ),
+                        ),
+                      ),
+                      // Text Content
+                      Positioned(
+                        bottom: 0,
+                        left: 0,
+                        right: 0,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                Colors.transparent,
+                                Colors.black.withOpacity(0.7),
+                              ],
+                            ),
+                          ),
+                          padding: const EdgeInsets.all(20),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Title
+                              Text(
+                                item['title'] ?? '',
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              // Subtitle
+                              Text(
+                                item['subtitle'] ?? '',
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w400,
+                                  color: Colors.white.withOpacity(0.9),
+                                  height: 1.4,
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
                     ],
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(24),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Icon
-                        Text(
-                          item['icon'] ?? '✨',
-                          style: const TextStyle(fontSize: 48),
-                        ),
-                        const SizedBox(height: 16),
-                        // Title
-                        Text(
-                          item['title'] ?? '',
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 22,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        // Subtitle
-                        Text(
-                          item['subtitle'] ?? '',
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w400,
-                            color: AppColors.textSecondary,
-                            height: 1.5,
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
-                    ),
                   ),
                 ),
               );
@@ -931,10 +951,9 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                 width: _carouselIndex == index ? 28 : 8,
                 height: 8,
                 decoration: BoxDecoration(
-                  color:
-                      _carouselIndex == index
-                          ? AppColors.brandGreen
-                          : AppColors.textSecondary.withOpacity(0.3),
+                  color: _carouselIndex == index
+                      ? AppColors.brandGreen
+                      : AppColors.textSecondary.withOpacity(0.3),
                   borderRadius: BorderRadius.circular(4),
                 ),
               ),
@@ -943,5 +962,6 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
         ),
       ],
     );
+  }
   }
 }
