@@ -595,9 +595,8 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder:
-                            (context) =>
-                                AICoachScreen(user: authProvider.userModel!),
+                        builder: (context) =>
+                            AICoachScreen(user: authProvider.userModel!),
                       ),
                     );
                   }
@@ -724,12 +723,11 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                   measurement.bmi < 18.5
                       ? Icons.trending_down
                       : measurement.bmi < 25
-                      ? Icons.check_circle
-                      : Icons.trending_up,
-                  color:
-                      measurement.bmi < 18.5
-                          ? AppColors.info
-                          : measurement.bmi < 25
+                          ? Icons.check_circle
+                          : Icons.trending_up,
+                  color: measurement.bmi < 18.5
+                      ? AppColors.info
+                      : measurement.bmi < 25
                           ? AppColors.success
                           : AppColors.warning,
                   size: 20,
@@ -948,6 +946,5 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
         ),
       ],
     );
-  }
   }
 }
