@@ -211,7 +211,22 @@ class PlaceholderScreen extends StatelessWidget {
       child: Scaffold(
         appBar: AppBar(
           title: Text(title),
-          automaticallyImplyLeading: false, // Remove back button
+          automaticallyImplyLeading:
+              false, // Remove back button.  ok i am giving you refrence pics and also linis and also fonts, colors, icons, etc.
+//The link is :
+//https://www.figma.com/design/R28Rvcjfsd3kPpqKw9kkfe/Fitstreak---Fitness-App--Community-?node-id=0-1&m=dev&t=E9ruTL0qoiS6V2Sl-1
+
+//THE IMAGES ARE:
+          ///https://file+.vscode-resource.vscode-cdn.net/Users/salmanahmad/FYP/fyp-genzfit-frontend/assets/images/Fitstreak%20App.png?version%3D1773921834076
+
+//https://file+.vscode-resource.vscode-cdn.net/Users/salmanahmad/FYP/fyp-genzfit-frontend/assets/images/Fitstreak%20App%20%281%29.png?version%3D1773921929562
+
+//the other info is:
+//Fonts: Plus Jakarta Sans - Medium, Plus Jakarta Sans - Regular
+//Colors: Primary(#D6DFE2, #010101, #D5FF5F, #FFFFFF), Secondary(#9F9F9F, #9AC0D6, #595959, #4E6075)
+
+//use these as refrences, customize my all app with these colors and fonts and also see pictures for refrence of how containers are beautifuuly built and use that containers with interesting graphs.
+//You are absolute best Frontend developer and it's your role now to complete this task, not use irrelevant emojis, if you want any pics to download from the web, feel free to download it
           actions: [
             IconButton(
               icon: const Icon(Icons.logout),
