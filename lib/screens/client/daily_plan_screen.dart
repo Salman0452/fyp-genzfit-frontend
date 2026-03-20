@@ -158,8 +158,9 @@ class _DailyPlanScreenState extends State<DailyPlanScreen>
           Provider.of<AuthProvider>(context, listen: false).currentUser;
       if (user == null) return;
 
-      final measurements =
-          await _bodyAnalysisService.getUserMeasurements(user.id);
+      final measurements = await _bodyAnalysisService.getUserMeasurements(
+        user.id,
+      );
       final latestMeasurement =
           measurements.isNotEmpty ? measurements.first : null;
 
@@ -180,9 +181,9 @@ class _DailyPlanScreenState extends State<DailyPlanScreen>
     } catch (e) {
       print('Error loading plan: $e');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error loading plan: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error loading plan: $e')));
       }
     } finally {
       setState(() => _isLoading = false);
@@ -197,8 +198,9 @@ class _DailyPlanScreenState extends State<DailyPlanScreen>
     try {
       final user =
           Provider.of<AuthProvider>(context, listen: false).currentUser!;
-      final measurements =
-          await _bodyAnalysisService.getUserMeasurements(user.id);
+      final measurements = await _bodyAnalysisService.getUserMeasurements(
+        user.id,
+      );
       final latestMeasurement =
           measurements.isNotEmpty ? measurements.first : null;
 
@@ -238,8 +240,9 @@ class _DailyPlanScreenState extends State<DailyPlanScreen>
     try {
       final user =
           Provider.of<AuthProvider>(context, listen: false).currentUser!;
-      final measurements =
-          await _bodyAnalysisService.getUserMeasurements(user.id);
+      final measurements = await _bodyAnalysisService.getUserMeasurements(
+        user.id,
+      );
       final latestMeasurement =
           measurements.isNotEmpty ? measurements.first : null;
 
@@ -268,9 +271,10 @@ class _DailyPlanScreenState extends State<DailyPlanScreen>
   void _updateCompletionCounts() {
     _completedMeals =
         _todayMeals.where((m) => m.status == CompletionStatus.completed).length;
-    _completedExercises = _todayExercises
-        .where((e) => e.status == CompletionStatus.completed)
-        .length;
+    _completedExercises =
+        _todayExercises
+            .where((e) => e.status == CompletionStatus.completed)
+            .length;
   }
 
   Future<void> _completeMeal(MealCompletion meal) async {
@@ -282,7 +286,7 @@ class _DailyPlanScreenState extends State<DailyPlanScreen>
       _showMotivationSnackBar(
         title: 'Meal completed',
         message: '${meal.mealName} logged. Fuel discipline matters.',
-        accent: AppColors.accentAmber,
+        accent: AppColors.accentViolet,
       );
     } catch (e) {
       print('Error completing meal: $e');
@@ -344,18 +348,23 @@ class _DailyPlanScreenState extends State<DailyPlanScreen>
                 if (_isRestDay) ...[
                   const SizedBox(width: 8),
                   Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 2,
+                    ),
                     decoration: BoxDecoration(
                       color: AppColors.accentTeal.withOpacity(0.2),
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
-                          color: AppColors.accentTeal.withOpacity(0.5)),
+                        color: AppColors.accentTeal.withOpacity(0.5),
+                      ),
                     ),
                     child: const Text(
                       'Rest Day',
-                      style:
-                          TextStyle(color: AppColors.accentTeal, fontSize: 11),
+                      style: TextStyle(
+                        color: AppColors.accentTeal,
+                        fontSize: 11,
+                      ),
                     ),
                   ),
                 ],
@@ -371,27 +380,43 @@ class _DailyPlanScreenState extends State<DailyPlanScreen>
               if (val == 'today') _regenerateToday();
               if (val == 'week') _regenerateWeek();
             },
-            itemBuilder: (_) => [
-              PopupMenuItem(
-                value: 'today',
-                child: Row(children: [
-                  const Icon(Icons.refresh, size: 18, color: AppColors.accent),
-                  const SizedBox(width: 10),
-                  Text('Refresh Today',
-                      style: const TextStyle(color: AppColors.textPrimary)),
-                ]),
-              ),
-              PopupMenuItem(
-                value: 'week',
-                child: Row(children: [
-                  const Icon(Icons.calendar_month,
-                      size: 18, color: AppColors.accentTeal),
-                  const SizedBox(width: 10),
-                  const Text('New Week Plan',
-                      style: TextStyle(color: AppColors.textPrimary)),
-                ]),
-              ),
-            ],
+            itemBuilder:
+                (_) => [
+                  PopupMenuItem(
+                    value: 'today',
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.refresh,
+                          size: 18,
+                          color: AppColors.accent,
+                        ),
+                        const SizedBox(width: 10),
+                        Text(
+                          'Refresh Today',
+                          style: const TextStyle(color: AppColors.textPrimary),
+                        ),
+                      ],
+                    ),
+                  ),
+                  PopupMenuItem(
+                    value: 'week',
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.calendar_month,
+                          size: 18,
+                          color: AppColors.accentTeal,
+                        ),
+                        const SizedBox(width: 10),
+                        const Text(
+                          'New Week Plan',
+                          style: TextStyle(color: AppColors.textPrimary),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
           ),
         ],
         bottom: TabBar(
@@ -400,42 +425,39 @@ class _DailyPlanScreenState extends State<DailyPlanScreen>
           indicatorWeight: 2,
           labelColor: AppColors.accent,
           unselectedLabelColor: AppColors.muted,
-          tabs: const [
-            Tab(text: 'Meals'),
-            Tab(text: 'Workouts'),
-          ],
+          tabs: const [Tab(text: 'Meals'), Tab(text: 'Workouts')],
         ),
       ),
-      body: _isLoading
-          ? Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
+      body:
+          _isLoading
+              ? Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const CircularProgressIndicator(color: AppColors.accent),
+                    const SizedBox(height: 16),
+                    Text(
+                      _loadingStatus,
+                      style: const TextStyle(
+                        color: AppColors.muted,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
+              )
+              : Column(
                 children: [
-                  const CircularProgressIndicator(color: AppColors.accent),
-                  const SizedBox(height: 16),
-                  Text(
-                    _loadingStatus,
-                    style:
-                        const TextStyle(color: AppColors.muted, fontSize: 14),
+                  _buildMotivationHero(displayDay),
+                  _buildStatsCard(),
+                  Expanded(
+                    child: TabBarView(
+                      controller: _tabController,
+                      children: [_buildMealsList(), _buildExercisesList()],
+                    ),
                   ),
                 ],
               ),
-            )
-          : Column(
-              children: [
-                _buildMotivationHero(displayDay),
-                _buildStatsCard(),
-                Expanded(
-                  child: TabBarView(
-                    controller: _tabController,
-                    children: [
-                      _buildMealsList(),
-                      _buildExercisesList(),
-                    ],
-                  ),
-                ),
-              ],
-            ),
     );
   }
 
@@ -488,19 +510,21 @@ class _DailyPlanScreenState extends State<DailyPlanScreen>
                 ),
               ),
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: AppColors.background.withOpacity(0.35),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                    color: AppColors.accentAmber.withOpacity(0.45),
+                    color: AppColors.accentViolet.withOpacity(0.45),
                   ),
                 ),
                 child: Text(
                   'Momentum: ${_getMomentumLabel()}',
                   style: const TextStyle(
-                    color: AppColors.accentAmber,
+                    color: AppColors.accentViolet,
                     fontWeight: FontWeight.w700,
                     fontSize: 11,
                   ),
@@ -520,8 +544,9 @@ class _DailyPlanScreenState extends State<DailyPlanScreen>
                   value: value,
                   minHeight: 9,
                   backgroundColor: AppColors.charcoal,
-                  valueColor:
-                      AlwaysStoppedAnimation<Color>(AppColors.accentTeal),
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    AppColors.accentTeal,
+                  ),
                 );
               },
             ),
@@ -580,7 +605,11 @@ class _DailyPlanScreenState extends State<DailyPlanScreen>
   }
 
   Widget _buildStatItem(
-      String label, String value, IconData icon, Color color) {
+    String label,
+    String value,
+    IconData icon,
+    Color color,
+  ) {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -624,9 +653,10 @@ class _DailyPlanScreenState extends State<DailyPlanScreen>
             color: AppColors.surface,
             borderRadius: BorderRadius.circular(AppConstants.radiusMedium),
             border: Border.all(
-              color: isCompleted
-                  ? AppColors.accent.withOpacity(0.4)
-                  : AppColors.charcoal,
+              color:
+                  isCompleted
+                      ? AppColors.accent.withOpacity(0.4)
+                      : AppColors.charcoal,
             ),
           ),
           child: Padding(
@@ -638,12 +668,15 @@ class _DailyPlanScreenState extends State<DailyPlanScreen>
                   children: [
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 4),
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
                         color: AppColors.warning.withOpacity(0.15),
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(
-                            color: AppColors.warning.withOpacity(0.4)),
+                          color: AppColors.warning.withOpacity(0.4),
+                        ),
                       ),
                       child: Text(
                         meal.mealType.toUpperCase(),
@@ -657,8 +690,11 @@ class _DailyPlanScreenState extends State<DailyPlanScreen>
                     ),
                     const Spacer(),
                     if (isCompleted)
-                      const Icon(Icons.check_circle,
-                          color: AppColors.accent, size: 22),
+                      const Icon(
+                        Icons.check_circle,
+                        color: AppColors.accent,
+                        size: 22,
+                      ),
                   ],
                 ),
                 const SizedBox(height: 10),
@@ -676,14 +712,23 @@ class _DailyPlanScreenState extends State<DailyPlanScreen>
                 const SizedBox(height: 10),
                 Row(
                   children: [
-                    _buildMacroChip('${meal.calories} kcal',
-                        Icons.local_fire_department, AppColors.accentCoral),
+                    _buildMacroChip(
+                      '${meal.calories} kcal',
+                      Icons.local_fire_department,
+                      AppColors.accentDarkGray,
+                    ),
                     const SizedBox(width: 8),
-                    _buildMacroChip('P ${meal.macros['protein']}g',
-                        Icons.egg_outlined, AppColors.accentCyan),
+                    _buildMacroChip(
+                      'P ${meal.macros['protein']}g',
+                      Icons.egg_outlined,
+                      AppColors.accentCyan,
+                    ),
                     const SizedBox(width: 8),
-                    _buildMacroChip('C ${meal.macros['carbs']}g', Icons.grain,
-                        AppColors.accentAmber),
+                    _buildMacroChip(
+                      'C ${meal.macros['carbs']}g',
+                      Icons.grain,
+                      AppColors.accentViolet,
+                    ),
                   ],
                 ),
                 if (!isCompleted) ...[
@@ -693,19 +738,22 @@ class _DailyPlanScreenState extends State<DailyPlanScreen>
                     child: ElevatedButton(
                       onPressed: () => _completeMeal(meal),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.accentAmber,
+                        backgroundColor: AppColors.accentViolet,
                         foregroundColor: AppColors.background,
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         shape: RoundedRectangleBorder(
-                          borderRadius:
-                              BorderRadius.circular(AppConstants.radiusSmall),
+                          borderRadius: BorderRadius.circular(
+                            AppConstants.radiusSmall,
+                          ),
                         ),
                         elevation: 0,
                       ),
                       child: const Text(
                         'Mark as Done',
                         style: TextStyle(
-                            fontWeight: FontWeight.bold, fontSize: 14),
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
                       ),
                     ),
                   ),
@@ -750,11 +798,15 @@ class _DailyPlanScreenState extends State<DailyPlanScreen>
                   color: AppColors.accentTeal.withOpacity(0.08),
                   shape: BoxShape.circle,
                   border: Border.all(
-                      color: AppColors.accentTeal.withOpacity(0.25),
-                      width: 1.5),
+                    color: AppColors.accentTeal.withOpacity(0.25),
+                    width: 1.5,
+                  ),
                 ),
-                child: const Icon(Icons.self_improvement,
-                    size: 60, color: AppColors.accentTeal),
+                child: const Icon(
+                  Icons.self_improvement,
+                  size: 60,
+                  color: AppColors.accentTeal,
+                ),
               ),
               const SizedBox(height: 24),
               const Text(
@@ -770,33 +822,44 @@ class _DailyPlanScreenState extends State<DailyPlanScreen>
                 'Recovery is part of training.\nYour muscles grow during rest.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                    color: AppColors.muted, fontSize: 14, height: 1.6),
+                  color: AppColors.muted,
+                  fontSize: 14,
+                  height: 1.6,
+                ),
               ),
               const SizedBox(height: 8),
               Text(
                 'Next workout: ${_getNextWorkoutDay()}',
                 style: const TextStyle(
-                    color: AppColors.accentTeal,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600),
+                  color: AppColors.accentTeal,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
               const SizedBox(height: 28),
               OutlinedButton.icon(
                 onPressed: _regenerateToday,
-                icon: const Icon(Icons.refresh,
-                    color: AppColors.accentTeal, size: 18),
+                icon: const Icon(
+                  Icons.refresh,
+                  color: AppColors.accentTeal,
+                  size: 18,
+                ),
                 label: const Text(
                   'Override – Add Light Workout',
                   style: TextStyle(color: AppColors.accentTeal, fontSize: 13),
                 ),
                 style: OutlinedButton.styleFrom(
-                  side:
-                      BorderSide(color: AppColors.accentTeal.withOpacity(0.5)),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  side: BorderSide(
+                    color: AppColors.accentTeal.withOpacity(0.5),
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 12,
+                  ),
                   shape: RoundedRectangleBorder(
-                    borderRadius:
-                        BorderRadius.circular(AppConstants.radiusSmall),
+                    borderRadius: BorderRadius.circular(
+                      AppConstants.radiusSmall,
+                    ),
                   ),
                 ),
               ),
@@ -820,11 +883,12 @@ class _DailyPlanScreenState extends State<DailyPlanScreen>
         final exercise = _todayExercises[index];
         final isCompleted = exercise.status == CompletionStatus.completed;
 
-        final difficultyColor = exercise.difficulty == 'beginner'
-            ? AppColors.accentTeal
-            : exercise.difficulty == 'intermediate'
-                ? AppColors.accentAmber
-                : AppColors.accentCoral;
+        final difficultyColor =
+            exercise.difficulty == 'beginner'
+                ? AppColors.accentTeal
+                : exercise.difficulty == 'intermediate'
+                ? AppColors.accentViolet
+                : AppColors.accentDarkGray;
 
         return Container(
           margin: const EdgeInsets.only(bottom: 12),
@@ -832,9 +896,10 @@ class _DailyPlanScreenState extends State<DailyPlanScreen>
             color: AppColors.surface,
             borderRadius: BorderRadius.circular(AppConstants.radiusMedium),
             border: Border.all(
-              color: isCompleted
-                  ? AppColors.accent.withOpacity(0.4)
-                  : AppColors.charcoal,
+              color:
+                  isCompleted
+                      ? AppColors.accent.withOpacity(0.4)
+                      : AppColors.charcoal,
             ),
           ),
           child: Padding(
@@ -846,12 +911,15 @@ class _DailyPlanScreenState extends State<DailyPlanScreen>
                   children: [
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 4),
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
                         color: difficultyColor.withOpacity(0.12),
                         borderRadius: BorderRadius.circular(20),
-                        border:
-                            Border.all(color: difficultyColor.withOpacity(0.4)),
+                        border: Border.all(
+                          color: difficultyColor.withOpacity(0.4),
+                        ),
                       ),
                       child: Text(
                         exercise.difficulty.toUpperCase(),
@@ -865,8 +933,11 @@ class _DailyPlanScreenState extends State<DailyPlanScreen>
                     ),
                     const Spacer(),
                     if (isCompleted)
-                      const Icon(Icons.check_circle,
-                          color: AppColors.accent, size: 22),
+                      const Icon(
+                        Icons.check_circle,
+                        color: AppColors.accent,
+                        size: 22,
+                      ),
                   ],
                 ),
                 const SizedBox(height: 10),
@@ -884,14 +955,23 @@ class _DailyPlanScreenState extends State<DailyPlanScreen>
                 const SizedBox(height: 10),
                 Row(
                   children: [
-                    _buildExerciseInfo('${exercise.sets} sets', Icons.repeat,
-                        AppColors.accentViolet),
+                    _buildExerciseInfo(
+                      '${exercise.sets} sets',
+                      Icons.repeat,
+                      AppColors.accentViolet,
+                    ),
                     const SizedBox(width: 16),
-                    _buildExerciseInfo('${exercise.reps} reps',
-                        Icons.fitness_center, AppColors.accentCyan),
+                    _buildExerciseInfo(
+                      '${exercise.reps} reps',
+                      Icons.fitness_center,
+                      AppColors.accentCyan,
+                    ),
                     const SizedBox(width: 16),
-                    _buildExerciseInfo('${exercise.durationMinutes} min',
-                        Icons.timer_outlined, AppColors.accentAmber),
+                    _buildExerciseInfo(
+                      '${exercise.durationMinutes} min',
+                      Icons.timer_outlined,
+                      AppColors.accentViolet,
+                    ),
                   ],
                 ),
                 if (exercise.targetMuscles.isNotEmpty) ...[
@@ -899,21 +979,28 @@ class _DailyPlanScreenState extends State<DailyPlanScreen>
                   Wrap(
                     spacing: 6,
                     runSpacing: 4,
-                    children: exercise.targetMuscles
-                        .map((muscle) => Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 3),
-                              decoration: BoxDecoration(
-                                color: AppColors.charcoal,
-                                borderRadius: BorderRadius.circular(20),
+                    children:
+                        exercise.targetMuscles
+                            .map(
+                              (muscle) => Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 3,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppColors.charcoal,
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: Text(
+                                  muscle,
+                                  style: const TextStyle(
+                                    color: AppColors.muted,
+                                    fontSize: 11,
+                                  ),
+                                ),
                               ),
-                              child: Text(
-                                muscle,
-                                style: const TextStyle(
-                                    color: AppColors.muted, fontSize: 11),
-                              ),
-                            ))
-                        .toList(),
+                            )
+                            .toList(),
                   ),
                 ],
                 if (!isCompleted) ...[
@@ -927,15 +1014,18 @@ class _DailyPlanScreenState extends State<DailyPlanScreen>
                         foregroundColor: AppColors.background,
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         shape: RoundedRectangleBorder(
-                          borderRadius:
-                              BorderRadius.circular(AppConstants.radiusSmall),
+                          borderRadius: BorderRadius.circular(
+                            AppConstants.radiusSmall,
+                          ),
                         ),
                         elevation: 0,
                       ),
                       child: const Text(
                         'Mark as Done',
                         style: TextStyle(
-                            fontWeight: FontWeight.bold, fontSize: 14),
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
                       ),
                     ),
                   ),
@@ -1002,7 +1092,10 @@ class _DailyPlanScreenState extends State<DailyPlanScreen>
           Text(
             text,
             style: TextStyle(
-                color: color, fontSize: 11, fontWeight: FontWeight.w600),
+              color: color,
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ],
       ),
@@ -1018,7 +1111,10 @@ class _DailyPlanScreenState extends State<DailyPlanScreen>
         Text(
           text,
           style: TextStyle(
-              color: color, fontSize: 13, fontWeight: FontWeight.w500),
+            color: color,
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+          ),
         ),
       ],
     );
