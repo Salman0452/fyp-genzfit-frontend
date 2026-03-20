@@ -13,10 +13,11 @@ class WeeklyPlanScreen extends StatefulWidget {
   State<WeeklyPlanScreen> createState() => _WeeklyPlanScreenState();
 }
 
-class _WeeklyPlanScreenState extends State<WeeklyPlanScreen> with SingleTickerProviderStateMixin {
+class _WeeklyPlanScreenState extends State<WeeklyPlanScreen>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final RecommendationService _recommendationService = RecommendationService();
-  
+
   List<MealCompletion> _todayMeals = [];
   List<ExerciseCompletion> _todayExercises = [];
   bool _isLoading = true;
@@ -37,16 +38,17 @@ class _WeeklyPlanScreenState extends State<WeeklyPlanScreen> with SingleTickerPr
 
   Future<void> _loadTodayPlan() async {
     setState(() => _isLoading = true);
-    
+
     try {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       final user = authProvider.currentUser;
-      
+
       if (user == null) return;
 
       // Check if weekly schedule exists
-      final weeklySchedule = await _recommendationService.getCurrentWeekSchedule(user.id);
-      
+      final weeklySchedule =
+          await _recommendationService.getCurrentWeekSchedule(user.id);
+
       if (weeklySchedule == null) {
         // Generate new weekly schedule
         await _generateWeeklyPlan();
@@ -55,7 +57,8 @@ class _WeeklyPlanScreenState extends State<WeeklyPlanScreen> with SingleTickerPr
       // Load today's tasks
       final meals = await _recommendationService.getTodayMeals(user.id);
       final exercises = await _recommendationService.getTodayExercises(user.id);
-      final stats = await _recommendationService.getUserCompletionHistory(user.id);
+      final stats =
+          await _recommendationService.getUserCompletionHistory(user.id);
 
       setState(() {
         _todayMeals = meals;
@@ -72,7 +75,7 @@ class _WeeklyPlanScreenState extends State<WeeklyPlanScreen> with SingleTickerPr
   Future<void> _generateWeeklyPlan() async {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final user = authProvider.currentUser;
-    
+
     if (user == null) return;
 
     // Show loading dialog
@@ -90,8 +93,9 @@ class _WeeklyPlanScreenState extends State<WeeklyPlanScreen> with SingleTickerPr
         user: user,
         latestMeasurement: null, // Add measurement loading if needed
       );
-      
-      final exercisePlan = await _recommendationService.generateWeeklyExercisePlan(
+
+      final exercisePlan =
+          await _recommendationService.generateWeeklyExercisePlan(
         user: user,
         latestMeasurement: null,
       );
@@ -155,7 +159,8 @@ class _WeeklyPlanScreenState extends State<WeeklyPlanScreen> with SingleTickerPr
         ),
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: AppColors.accent))
+          ? const Center(
+              child: CircularProgressIndicator(color: AppColors.accent))
           : Column(
               children: [
                 _buildStatsCard(),
@@ -178,7 +183,7 @@ class _WeeklyPlanScreenState extends State<WeeklyPlanScreen> with SingleTickerPr
 
     final completionRate = _completionStats!['completionRate'] as double;
     final totalCompleted = _completionStats!['totalMealsCompleted'] as int;
-        _completionStats!['totalExercisesCompleted'] as int;
+    _completionStats!['totalExercisesCompleted'] as int;
 
     return Container(
       margin: const EdgeInsets.all(16),
@@ -250,7 +255,8 @@ class _WeeklyPlanScreenState extends State<WeeklyPlanScreen> with SingleTickerPr
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.restaurant, size: 80, color: AppColors.textSecondary.withOpacity(0.3)),
+            Icon(Icons.restaurant,
+                size: 80, color: AppColors.textSecondary.withOpacity(0.3)),
             const SizedBox(height: 16),
             const Text(
               'No meals scheduled for today',
@@ -285,7 +291,8 @@ class _WeeklyPlanScreenState extends State<WeeklyPlanScreen> with SingleTickerPr
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.fitness_center, size: 80, color: AppColors.textSecondary.withOpacity(0.3)),
+            Icon(Icons.fitness_center,
+                size: 80, color: AppColors.textSecondary.withOpacity(0.3)),
             const SizedBox(height: 16),
             const Text(
               'No exercises scheduled for today',
@@ -316,7 +323,7 @@ class _WeeklyPlanScreenState extends State<WeeklyPlanScreen> with SingleTickerPr
 
   Widget _buildMealCompletionCard(MealCompletion meal) {
     final isCompleted = meal.status == CompletionStatus.completed;
-    
+
     Color mealTypeColor;
     IconData mealTypeIcon;
 
@@ -354,7 +361,8 @@ class _WeeklyPlanScreenState extends State<WeeklyPlanScreen> with SingleTickerPr
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: mealTypeColor.withOpacity(0.1),
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(12)),
             ),
             child: Row(
               children: [
@@ -406,11 +414,14 @@ class _WeeklyPlanScreenState extends State<WeeklyPlanScreen> with SingleTickerPr
               children: [
                 Expanded(
                   child: ElevatedButton.icon(
-                    onPressed: isCompleted ? null : () => _completeMeal(meal.id),
+                    onPressed:
+                        isCompleted ? null : () => _completeMeal(meal.id),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: isCompleted ? AppColors.success : AppColors.accent,
+                      backgroundColor:
+                          isCompleted ? AppColors.success : AppColors.accent,
                       foregroundColor: AppColors.background,
-                      disabledBackgroundColor: AppColors.success.withOpacity(0.5),
+                      disabledBackgroundColor:
+                          AppColors.success.withOpacity(0.5),
                     ),
                     icon: Icon(
                       isCompleted ? Icons.check_circle : Icons.check,
@@ -432,7 +443,7 @@ class _WeeklyPlanScreenState extends State<WeeklyPlanScreen> with SingleTickerPr
 
   Widget _buildExerciseCompletionCard(ExerciseCompletion exercise) {
     final isCompleted = exercise.status == CompletionStatus.completed;
-    
+
     Color difficultyColor;
     switch (exercise.difficulty.toLowerCase()) {
       case 'beginner':
@@ -464,7 +475,8 @@ class _WeeklyPlanScreenState extends State<WeeklyPlanScreen> with SingleTickerPr
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: difficultyColor.withOpacity(0.1),
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(12)),
             ),
             child: Row(
               children: [
@@ -474,7 +486,8 @@ class _WeeklyPlanScreenState extends State<WeeklyPlanScreen> with SingleTickerPr
                     color: difficultyColor,
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Icon(Icons.fitness_center, color: Colors.white, size: 20),
+                  child: const Icon(Icons.fitness_center,
+                      color: Colors.white, size: 20),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -508,11 +521,15 @@ class _WeeklyPlanScreenState extends State<WeeklyPlanScreen> with SingleTickerPr
               children: [
                 Expanded(
                   child: ElevatedButton.icon(
-                    onPressed: isCompleted ? null : () => _completeExercise(exercise.id),
+                    onPressed: isCompleted
+                        ? null
+                        : () => _completeExercise(exercise.id),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: isCompleted ? AppColors.success : AppColors.accent,
+                      backgroundColor:
+                          isCompleted ? AppColors.success : AppColors.accent,
                       foregroundColor: AppColors.background,
-                      disabledBackgroundColor: AppColors.success.withOpacity(0.5),
+                      disabledBackgroundColor:
+                          AppColors.success.withOpacity(0.5),
                     ),
                     icon: Icon(
                       isCompleted ? Icons.check_circle : Icons.check,
@@ -536,11 +553,11 @@ class _WeeklyPlanScreenState extends State<WeeklyPlanScreen> with SingleTickerPr
     try {
       await _recommendationService.completeMeal(mealId);
       await _loadTodayPlan();
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Meal marked as completed! 🎉'),
+            content: Text('Meal marked as completed.'),
             backgroundColor: AppColors.success,
           ),
         );
@@ -558,11 +575,11 @@ class _WeeklyPlanScreenState extends State<WeeklyPlanScreen> with SingleTickerPr
     try {
       await _recommendationService.completeExercise(exerciseId);
       await _loadTodayPlan();
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Exercise completed! Great job! 💪'),
+            content: Text('Exercise completed. Great job.'),
             backgroundColor: AppColors.success,
           ),
         );

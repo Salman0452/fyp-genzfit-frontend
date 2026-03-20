@@ -99,6 +99,10 @@ class AppColors {
   static const Color charcoal = Color(0xFF1F2120);
   static const Color accent = Color(0xFF7FFA88);
   static const Color accentTeal = Color(0xFF83BCB5);
+  static const Color accentCyan = Color(0xFF5EDFFF);
+  static const Color accentAmber = Color(0xFFFFC857);
+  static const Color accentCoral = Color(0xFFFF8A65);
+  static const Color accentViolet = Color(0xFFB388FF);
   static const Color muted = Color(0xFF5E625F);
   static const Color textPrimary = Color(0xFFFFFFFF);
   static const Color textSecondary = Color(0xFF5E625F);

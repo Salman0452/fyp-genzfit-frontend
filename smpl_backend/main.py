@@ -254,7 +254,7 @@ def generate_ai_plan(req: AIRecommendationRequest):
         **{k: v for k, v in prefs_data.items() if k != "user_id"}
     ) if prefs_data else UserPreferences(user_id=req.user_id)
 
-    system_prompt = _build_system_prompt(prefs)
+    system_prompt = _build_compact_system_prompt(prefs)
 
     groq_api_key = os.getenv("GROQ_API_KEY", "")
     if not groq_api_key:
@@ -263,51 +263,30 @@ def generate_ai_plan(req: AIRecommendationRequest):
     from groq import Groq
     client = Groq(api_key=groq_api_key)
 
-    def _call_groq(prompt: str) -> str:
+    def _call_groq(prompt: str, max_tokens: int = 700) -> str:
         response = client.chat.completions.create(
             model="llama-3.3-70b-versatile",
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user",   "content": prompt},
             ],
-            temperature=0.7,
-            max_tokens=2000,
+            temperature=0.3,
+            max_tokens=max_tokens,
         )
         return response.choices[0].message.content
 
     try:
-        # ── Weekly plans: one small API call per day ──────────────────────────
-        if req.request_type in ("weekly_meals", "weekly_exercises"):
-            all_days = ["Monday", "Tuesday", "Wednesday", "Thursday",
-                        "Friday", "Saturday", "Sunday"]
-            combined: dict = {}
-            for day in all_days:
-                import time
-                if req.request_type == "weekly_meals":
-                    prompt = _build_single_day_meal_prompt(day, req, prefs)
-                else:
-                    prompt = _build_single_day_exercise_prompt(day, req, prefs)
+        # ── Weekly plans: single compact call (lowest token usage) ────────────
+        if req.request_type == "weekly_meals":
+            user_prompt = _build_weekly_meal_prompt(req, prefs)
+            content = _call_groq(user_prompt, max_tokens=1100)
+            logger.info("Groq response for %s: %d chars", req.request_type, len(content))
+            return {"status": "ok", "content": content, "request_type": req.request_type}
 
-                logger.info("Generating %s for %s...", req.request_type, day)
-                day_content = _call_groq(prompt)
-
-                # Parse the array response for this single day
-                import json as _json
-                try:
-                    arr_start = day_content.index('[')
-                    arr_end   = day_content.rindex(']') + 1
-                    day_data  = _json.loads(day_content[arr_start:arr_end])
-                except Exception:
-                    logger.warning("Could not parse %s for %s — using []", req.request_type, day)
-                    day_data = []
-
-                combined[day] = day_data
-                # Small pause between calls to respect rate limits (TPM)
-                time.sleep(1.5)
-
-            import json as _json
-            content = _json.dumps(combined)
-            logger.info("Weekly %s complete: %d chars", req.request_type, len(content))
+        if req.request_type == "weekly_exercises":
+            user_prompt = _build_weekly_exercise_prompt(req, prefs)
+            content = _call_groq(user_prompt, max_tokens=1100)
+            logger.info("Groq response for %s: %d chars", req.request_type, len(content))
             return {"status": "ok", "content": content, "request_type": req.request_type}
 
         # ── Daily plans: single call as before ────────────────────────────────
@@ -318,7 +297,7 @@ def generate_ai_plan(req: AIRecommendationRequest):
         else:
             raise HTTPException(status_code=400, detail=f"Unknown request_type: {req.request_type}")
 
-        content = _call_groq(user_prompt)
+        content = _call_groq(user_prompt, max_tokens=700)
         logger.info("Groq response for %s: %d chars", req.request_type, len(content))
         return {"status": "ok", "content": content, "request_type": req.request_type}
 
@@ -330,6 +309,35 @@ def generate_ai_plan(req: AIRecommendationRequest):
 
 
 # --- AI prompt helper functions ---
+
+def _build_compact_system_prompt(prefs: UserPreferences) -> str:
+    restrictions = ", ".join(prefs.dietary_restrictions) if prefs.dietary_restrictions else "none"
+    allergies = ", ".join(prefs.food_allergies) if prefs.food_allergies else "none"
+    disliked_foods = ", ".join(str(x) for x in prefs.disliked_foods) if prefs.disliked_foods else "none"
+    disliked_exercises = ", ".join(prefs.disliked_exercises) if prefs.disliked_exercises else "none"
+    injuries = ", ".join(prefs.injury_limitations) if prefs.injury_limitations else "none"
+
+    return f"""You are a strict JSON generator for fitness plans.
+Return only valid JSON. No markdown, no extra text.
+Keep values short to save tokens.
+
+User profile:
+- Goal: {prefs.goal}
+- Fitness level: {prefs.fitness_level}
+- Workout location: {prefs.workout_location}
+- Workout days/week: {prefs.workout_days_per_week}
+- Workout duration: {prefs.workout_duration_minutes} min
+- Cuisine: {prefs.cuisine_preference}
+- Meals/day: {prefs.meals_per_day}
+- Dietary restrictions: {restrictions}
+- Allergies: {allergies}
+- Disliked foods: {disliked_foods}
+- Disliked exercises: {disliked_exercises}
+- Injury limits: {injuries}
+
+Never include restricted/allergy/disliked items.
+Keep descriptions tiny (or empty string).
+Prefer short names and compact arrays."""
 
 def _build_system_prompt(prefs: UserPreferences) -> str:
     equipment_str       = ", ".join(prefs.available_equipment)  if prefs.available_equipment  else "bodyweight only"
@@ -430,7 +438,7 @@ def _build_daily_meal_prompt(req: AIRecommendationRequest, prefs: UserPreference
     snack1 = "- 1 Mid-morning snack (150-200 cal)" if prefs.meals_per_day >= 4 else ""
     snack2 = "- 1 Afternoon snack (150-200 cal)"   if prefs.meals_per_day >= 5 else ""
 
-    return f"""Generate {prefs.meals_per_day} completely new personalized meals for TODAY ({today}).
+    return f"""Generate {prefs.meals_per_day} compact meals for TODAY ({today}).
 
 ADAPTIVE CONTEXT:
 {adaptive}
@@ -444,9 +452,9 @@ Generate exactly {prefs.meals_per_day} meals:
 {snack2}
 - 1 Dinner (400-550 cal)
 
-Return ONLY a JSON array:
+Return ONLY a JSON array using compact keys:
 [
-  {{"name": "meal name", "description": "brief description", "calories": 400, "ingredients": ["ingredient1"], "mealType": "breakfast", "macros": {{"protein": 25, "carbs": 45, "fats": 12}}}}
+    {{"n": "meal name", "d": "", "c": 400, "i": "ingredient1,ingredient2", "t": "breakfast", "p": 25, "ca": 45, "f": 12}}
 ]"""
 
 
@@ -481,7 +489,7 @@ def _build_daily_exercise_prompt(req: AIRecommendationRequest, prefs: UserPrefer
     avoid     = f"MUST AVOID (done in last 30 days): {', '.join(req.recent_exercises)}" if req.recent_exercises else ""
     num_ex    = 4 if day_index < 6 else 2
 
-    return f"""Generate {num_ex} exercises for TODAY ({today}).
+    return f"""Generate {num_ex} compact exercises for TODAY ({today}).
 
 TODAY'S FOCUS: {todays_focus}
 ADAPTIVE CONTEXT:
@@ -492,10 +500,75 @@ ADAPTIVE CONTEXT:
 Generate exactly {num_ex} exercises targeting {todays_focus}.
 Each exercise must fit within {prefs.workout_duration_minutes} minutes total.
 
-Return ONLY a JSON array:
+Return ONLY a JSON array using compact keys:
 [
-  {{"name": "exercise name", "description": "how to perform it", "sets": 3, "reps": 12, "durationMinutes": 10, "difficulty": "intermediate", "targetMuscles": ["Chest", "Triceps"]}}
+    {{"n": "exercise name", "d": "", "s": 3, "r": 12, "du": 10, "di": "intermediate", "m": "chest,triceps"}}
 ]"""
+
+
+def _build_weekly_meal_prompt(req: AIRecommendationRequest, prefs: UserPreferences) -> str:
+    avoid = f"Avoid recent meals: {', '.join(req.recent_meals)}" if req.recent_meals else ""
+    return f"""Generate a full weekly meal plan in one compact JSON object.
+
+Days required: Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday.
+Meals/day: {prefs.meals_per_day}
+{avoid}
+
+For each day, include meal array with compact meal objects.
+Meal object keys:
+- n: name
+- d: description (keep empty string if possible)
+- c: calories
+- i: comma-separated ingredients string
+- t: mealType (breakfast|snack|lunch|dinner)
+- p: protein
+- ca: carbs
+- f: fats
+
+Return ONLY JSON object format:
+{{
+    "Monday": [{{"n":"...","d":"","c":400,"i":"egg,oats","t":"breakfast","p":25,"ca":40,"f":12}}],
+    "Tuesday": [],
+    "Wednesday": [],
+    "Thursday": [],
+    "Friday": [],
+    "Saturday": [],
+    "Sunday": []
+}}"""
+
+
+def _build_weekly_exercise_prompt(req: AIRecommendationRequest, prefs: UserPreferences) -> str:
+    avoid = f"Avoid recent exercises: {', '.join(req.recent_exercises)}" if req.recent_exercises else ""
+    equipment = ', '.join(prefs.available_equipment) if prefs.available_equipment else 'bodyweight only'
+
+    return f"""Generate a full weekly exercise plan in one compact JSON object.
+
+Days required: Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday.
+Workout days/week: {prefs.workout_days_per_week}. Remaining days should be [].
+Fitness level: {prefs.fitness_level}
+Duration/session: {prefs.workout_duration_minutes} minutes
+Equipment: {equipment}
+{avoid}
+
+Exercise object keys:
+- n: name
+- d: description (keep empty string if possible)
+- s: sets
+- r: reps
+- du: durationMinutes
+- di: difficulty
+- m: comma-separated target muscles
+
+Return ONLY JSON object format:
+{{
+    "Monday": [{{"n":"...","d":"","s":3,"r":12,"du":10,"di":"intermediate","m":"chest,triceps"}}],
+    "Tuesday": [],
+    "Wednesday": [],
+    "Thursday": [],
+    "Friday": [],
+    "Saturday": [],
+    "Sunday": []
+}}"""
 
 
 def _build_single_day_meal_prompt(day: str, req: AIRecommendationRequest, prefs: UserPreferences) -> str:

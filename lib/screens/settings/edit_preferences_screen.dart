@@ -107,7 +107,7 @@ class _EditPreferencesScreenState extends State<EditPreferencesScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: const Text(
-              'Preferences updated! Your next plan will reflect these changes 🎯',
+              'Preferences updated. Your next plan will reflect these changes.',
             ),
             backgroundColor: _green,
             behavior: SnackBarBehavior.floating,
@@ -145,7 +145,7 @@ class _EditPreferencesScreenState extends State<EditPreferencesScreen> {
   String get _bmiCategory {
     final b = _bmi;
     if (b < 18.5) return 'Underweight';
-    if (b < 25) return 'Normal ✅';
+    if (b < 25) return 'Normal';
     if (b < 30) return 'Overweight';
     return 'Obese';
   }
@@ -250,7 +250,7 @@ class _EditPreferencesScreenState extends State<EditPreferencesScreen> {
           backgroundColor: _surface,
           elevation: 0,
           title: const Text(
-            'Edit Preferences ⚙️',
+            'Edit Preferences',
             style: TextStyle(
               color: _white,
               fontSize: 18,
@@ -312,25 +312,17 @@ class _EditPreferencesScreenState extends State<EditPreferencesScreen> {
   // ─────────────────────────────────────────────────────────────────────────
   static const _goals = [
     {
-      'emoji': '🔥',
       'title': 'Lose Weight',
       'value': 'weight_loss',
       'color': Color(0xFFEF4444)
     },
     {
-      'emoji': '💪',
       'title': 'Build Muscle',
       'value': 'muscle_gain',
       'color': Color(0xFF6C63FF)
     },
+    {'title': 'Stay Fit', 'value': 'fitness', 'color': Color(0xFF10B981)},
     {
-      'emoji': '⚡',
-      'title': 'Stay Fit',
-      'value': 'fitness',
-      'color': Color(0xFF10B981)
-    },
-    {
-      'emoji': '🏃',
       'title': 'Boost Endurance',
       'value': 'endurance',
       'color': Color(0xFF3B82F6)
@@ -341,7 +333,7 @@ class _EditPreferencesScreenState extends State<EditPreferencesScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _sectionHeader('🎯 Fitness Goal'),
+        _sectionHeader('Fitness Goal'),
         SizedBox(
           height: 90,
           child: ListView(
@@ -373,9 +365,6 @@ class _EditPreferencesScreenState extends State<EditPreferencesScreen> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text(g['emoji'] as String,
-                          style: const TextStyle(fontSize: 22)),
-                      const SizedBox(height: 4),
                       Text(
                         g['title'] as String,
                         style: TextStyle(
@@ -401,31 +390,20 @@ class _EditPreferencesScreenState extends State<EditPreferencesScreen> {
   // Section 2: Fitness Level
   // ─────────────────────────────────────────────────────────────────────────
   static const _levels = [
+    {'title': 'Beginner', 'value': 'beginner', 'color': Color(0xFF10B981)},
     {
-      'emoji': '🌱',
-      'title': 'Beginner',
-      'value': 'beginner',
-      'color': Color(0xFF10B981)
-    },
-    {
-      'emoji': '⚡',
       'title': 'Intermediate',
       'value': 'intermediate',
       'color': Color(0xFF6C63FF)
     },
-    {
-      'emoji': '🔥',
-      'title': 'Advanced',
-      'value': 'advanced',
-      'color': Color(0xFFEF4444)
-    },
+    {'title': 'Advanced', 'value': 'advanced', 'color': Color(0xFFEF4444)},
   ];
 
   Widget _buildFitnessLevelSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _sectionHeader('💪 Fitness Level'),
+        _sectionHeader('Fitness Level'),
         Row(
           children: _levels.map((l) {
             final selected = _data.fitnessLevel == l['value'];
@@ -448,9 +426,6 @@ class _EditPreferencesScreenState extends State<EditPreferencesScreen> {
                   ),
                   child: Column(
                     children: [
-                      Text(l['emoji'] as String,
-                          style: const TextStyle(fontSize: 22)),
-                      const SizedBox(height: 6),
                       Text(
                         l['title'] as String,
                         style: TextStyle(
@@ -478,22 +453,22 @@ class _EditPreferencesScreenState extends State<EditPreferencesScreen> {
   // ─────────────────────────────────────────────────────────────────────────
   static const Map<String, List<Map<String, String>>> _equipmentOptions = {
     'gym': [
-      {'emoji': '🏋️', 'label': 'Barbell'},
-      {'emoji': '🥊', 'label': 'Dumbbells'},
-      {'emoji': '📡', 'label': 'Cable Machine'},
-      {'emoji': '🪑', 'label': 'Bench Press'},
-      {'emoji': '🦵', 'label': 'Squat Rack'},
-      {'emoji': '🤸', 'label': 'Resistance Machines'},
-      {'emoji': '🧘', 'label': 'Yoga Mat'},
-      {'emoji': '🏃', 'label': 'Treadmill/Cardio'},
+      {'label': 'Barbell'},
+      {'label': 'Dumbbells'},
+      {'label': 'Cable Machine'},
+      {'label': 'Bench Press'},
+      {'label': 'Squat Rack'},
+      {'label': 'Resistance Machines'},
+      {'label': 'Yoga Mat'},
+      {'label': 'Treadmill/Cardio'},
     ],
     'home': [
-      {'emoji': '🥊', 'label': 'Dumbbells'},
-      {'emoji': '🎗️', 'label': 'Resistance Bands'},
-      {'emoji': '🔝', 'label': 'Pull-up Bar'},
-      {'emoji': '🧘', 'label': 'Yoga Mat'},
-      {'emoji': '⚽', 'label': 'Stability Ball'},
-      {'emoji': '🪢', 'label': 'Jump Rope'},
+      {'label': 'Dumbbells'},
+      {'label': 'Resistance Bands'},
+      {'label': 'Pull-up Bar'},
+      {'label': 'Yoga Mat'},
+      {'label': 'Stability Ball'},
+      {'label': 'Jump Rope'},
     ],
   };
 
@@ -505,7 +480,7 @@ class _EditPreferencesScreenState extends State<EditPreferencesScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _sectionHeader('🏋️ Workout Setup'),
+          _sectionHeader('Workout Setup'),
 
           // Location chips
           const Text('Location', style: TextStyle(color: _muted, fontSize: 13)),
@@ -514,13 +489,13 @@ class _EditPreferencesScreenState extends State<EditPreferencesScreen> {
             spacing: 10,
             runSpacing: 8,
             children: [
-              {'emoji': '🏋️', 'label': 'Gym', 'value': 'gym'},
-              {'emoji': '🏠', 'label': 'Home', 'value': 'home'},
-              {'emoji': '🌳', 'label': 'Outdoor', 'value': 'outdoor'},
+              {'label': 'Gym', 'value': 'gym'},
+              {'label': 'Home', 'value': 'home'},
+              {'label': 'Outdoor', 'value': 'outdoor'},
             ].map((l) {
               final selected = loc == l['value'];
               return _chip(
-                label: '${l['emoji']} ${l['label']}',
+                label: '${l['label']}',
                 selected: selected,
                 onTap: () => setState(() {
                   _data.workoutLocation = l['value'];
@@ -543,7 +518,7 @@ class _EditPreferencesScreenState extends State<EditPreferencesScreen> {
                 ),
                 child: const Row(
                   children: [
-                    Text('🌿', style: TextStyle(fontSize: 20)),
+                    Icon(Icons.park_outlined, color: _blue, size: 20),
                     SizedBox(width: 10),
                     Expanded(
                       child: Text(
@@ -565,7 +540,7 @@ class _EditPreferencesScreenState extends State<EditPreferencesScreen> {
                   final label = item['label']!;
                   final isSelected = _data.availableEquipment.contains(label);
                   return _chip(
-                    label: '${item['emoji']} $label',
+                    label: label,
                     selected: isSelected,
                     onTap: () => setState(() {
                       if (isSelected) {
@@ -670,7 +645,7 @@ class _EditPreferencesScreenState extends State<EditPreferencesScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _sectionHeader('📊 Body Measurements'),
+          _sectionHeader('Body Measurements'),
           Row(
             children: [
               Expanded(
@@ -858,19 +833,19 @@ class _EditPreferencesScreenState extends State<EditPreferencesScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _sectionHeader('🍽️ Diet Preferences'),
+          _sectionHeader('Diet Preferences'),
           _subLabel('Cuisine Style'),
           const SizedBox(height: 8),
           Wrap(
             spacing: 8,
             runSpacing: 8,
             children: [
-              {'emoji': '🍛', 'label': 'Pakistani', 'value': 'pakistani'},
-              {'emoji': '🌍', 'label': 'Mixed', 'value': 'mixed'},
-              {'emoji': '🥗', 'label': 'Continental', 'value': 'continental'},
+              {'label': 'Pakistani', 'value': 'pakistani'},
+              {'label': 'Mixed', 'value': 'mixed'},
+              {'label': 'Continental', 'value': 'continental'},
             ]
                 .map((c) => _chip(
-                      label: '${c['emoji']} ${c['label']}',
+                      label: '${c['label']}',
                       selected: _data.cuisinePreference == c['value'],
                       onTap: () =>
                           setState(() => _data.cuisinePreference = c['value']!),
@@ -903,16 +878,16 @@ class _EditPreferencesScreenState extends State<EditPreferencesScreen> {
             spacing: 8,
             runSpacing: 8,
             children: [
-              {'emoji': '🚫', 'label': 'No Pork', 'value': 'no_pork'},
-              {'emoji': '🥗', 'label': 'Vegetarian', 'value': 'vegetarian'},
-              {'emoji': '🥛', 'label': 'No Dairy', 'value': 'no_dairy'},
-              {'emoji': '🌾', 'label': 'Gluten Free', 'value': 'gluten_free'},
-              {'emoji': '🍬', 'label': 'No Sugar', 'value': 'no_sugar'},
-              {'emoji': '🧂', 'label': 'Low Sodium', 'value': 'low_sodium'},
+              {'label': 'No Pork', 'value': 'no_pork'},
+              {'label': 'Vegetarian', 'value': 'vegetarian'},
+              {'label': 'No Dairy', 'value': 'no_dairy'},
+              {'label': 'Gluten Free', 'value': 'gluten_free'},
+              {'label': 'No Sugar', 'value': 'no_sugar'},
+              {'label': 'Low Sodium', 'value': 'low_sodium'},
             ].map((item) {
               final v = item['value']!;
               return _chip(
-                label: '${item['emoji']} ${item['label']}',
+                label: '${item['label']}',
                 selected: _data.dietaryRestrictions.contains(v),
                 onTap: () => setState(() {
                   if (_data.dietaryRestrictions.contains(v)) {
@@ -931,15 +906,15 @@ class _EditPreferencesScreenState extends State<EditPreferencesScreen> {
             spacing: 8,
             runSpacing: 8,
             children: [
-              {'emoji': '🥜', 'label': 'Nuts', 'value': 'nuts'},
-              {'emoji': '🦐', 'label': 'Shellfish', 'value': 'shellfish'},
-              {'emoji': '🥚', 'label': 'Eggs', 'value': 'eggs'},
-              {'emoji': '🐟', 'label': 'Fish', 'value': 'fish'},
-              {'emoji': '✅', 'label': 'No Allergies', 'value': 'none'},
+              {'label': 'Nuts', 'value': 'nuts'},
+              {'label': 'Shellfish', 'value': 'shellfish'},
+              {'label': 'Eggs', 'value': 'eggs'},
+              {'label': 'Fish', 'value': 'fish'},
+              {'label': 'No Allergies', 'value': 'none'},
             ].map((item) {
               final v = item['value']!;
               return _chip(
-                label: '${item['emoji']} ${item['label']}',
+                label: '${item['label']}',
                 selected: _data.foodAllergies.contains(v),
                 onTap: () => setState(() {
                   if (v == 'none') {
@@ -965,19 +940,15 @@ class _EditPreferencesScreenState extends State<EditPreferencesScreen> {
             spacing: 8,
             runSpacing: 8,
             children: [
-              {'emoji': '💉', 'label': 'Diabetes', 'value': 'diabetes'},
-              {
-                'emoji': '❤️',
-                'label': 'Heart Disease',
-                'value': 'heart_disease'
-              },
-              {'emoji': '🩸', 'label': 'Hypertension', 'value': 'hypertension'},
-              {'emoji': '🦴', 'label': 'Joint Issues', 'value': 'joint_issues'},
-              {'emoji': '✅', 'label': 'None', 'value': 'none'},
+              {'label': 'Diabetes', 'value': 'diabetes'},
+              {'label': 'Heart Disease', 'value': 'heart_disease'},
+              {'label': 'Hypertension', 'value': 'hypertension'},
+              {'label': 'Joint Issues', 'value': 'joint_issues'},
+              {'label': 'None', 'value': 'none'},
             ].map((item) {
               final v = item['value']!;
               return _chip(
-                label: '${item['emoji']} ${item['label']}',
+                label: '${item['label']}',
                 selected: _data.healthConditions.contains(v),
                 onTap: () => setState(() {
                   if (v == 'none') {

@@ -100,19 +100,61 @@ class _ProgressScreenState extends State<ProgressScreen>
 // Shared helpers
 // ─────────────────────────────────────────────────────────────────────────────
 Widget _shimmer({double height = 80, double? width, double radius = 12}) {
-  return TweenAnimationBuilder<double>(
-    tween: Tween(begin: 0.3, end: 0.7),
-    duration: const Duration(milliseconds: 900),
-    builder: (_, v, __) => Container(
-      height: height,
-      width: width,
-      decoration: BoxDecoration(
-        color: Color.lerp(const Color(0xFF1E1E1E), const Color(0xFF2E2E2E), v),
-        borderRadius: BorderRadius.circular(radius),
+  return _BlinkingSkeleton(height: height, width: width, radius: radius);
+}
+
+class _BlinkingSkeleton extends StatefulWidget {
+  final double height;
+  final double? width;
+  final double radius;
+
+  const _BlinkingSkeleton({
+    required this.height,
+    this.width,
+    required this.radius,
+  });
+
+  @override
+  State<_BlinkingSkeleton> createState() => _BlinkingSkeletonState();
+}
+
+class _BlinkingSkeletonState extends State<_BlinkingSkeleton>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<double> _opacity;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 850),
+    )..repeat(reverse: true);
+    _opacity = Tween<double>(begin: 0.45, end: 0.95).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FadeTransition(
+      opacity: _opacity,
+      child: Container(
+        height: widget.height,
+        width: widget.width,
+        decoration: BoxDecoration(
+          color: const Color(0xFF2A2A2A),
+          borderRadius: BorderRadius.circular(widget.radius),
+        ),
       ),
-    ),
-    onEnd: () {},
-  );
+    );
+  }
 }
 
 Widget _sectionTitle(String t) => Padding(
@@ -136,7 +178,7 @@ class _TodayTab extends StatefulWidget {
 class _TodayTabState extends State<_TodayTab>
     with AutomaticKeepAliveClientMixin {
   @override
-  bool get wantKeepAlive => false; // always refresh
+  bool get wantKeepAlive => true;
 
   Map<String, int>? _nutrition;
   Map<String, int>? _counts;
@@ -148,12 +190,6 @@ class _TodayTabState extends State<_TodayTab>
   @override
   void initState() {
     super.initState();
-    _load();
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
     _load();
   }
 
@@ -279,10 +315,10 @@ class _ScoreCard extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             score >= 80
-                ? 'Killing it! 🔥'
+                ? 'Excellent consistency'
                 : score >= 60
-                    ? 'Good progress 💪'
-                    : 'Let\'s catch up! 🎯',
+                    ? 'Good progress'
+                    : 'Let\'s catch up',
             style: TextStyle(
                 color: Colors.white.withValues(alpha: 0.85), fontSize: 13),
           ),
@@ -487,7 +523,7 @@ class _StreakCard extends StatelessWidget {
       children: [
         Expanded(
           child: _StatBox(
-            icon: '🔥',
+            icon: 'S',
             value: '${streak['current'] ?? 0}',
             label: 'Day Streak',
             sub: 'Keep it up!',
@@ -497,7 +533,7 @@ class _StreakCard extends StatelessWidget {
         const SizedBox(width: 12),
         Expanded(
           child: _StatBox(
-            icon: '🏆',
+            icon: 'PB',
             value: '${streak['longest'] ?? 0}',
             label: 'Best Streak',
             sub: 'Personal best',
@@ -564,7 +600,7 @@ class _WeeklyTab extends StatefulWidget {
 class _WeeklyTabState extends State<_WeeklyTab>
     with AutomaticKeepAliveClientMixin {
   @override
-  bool get wantKeepAlive => false;
+  bool get wantKeepAlive => true;
 
   List<Map<String, dynamic>>? _weeklyData;
   Map<String, dynamic>? _prefs;
@@ -573,12 +609,6 @@ class _WeeklyTabState extends State<_WeeklyTab>
   @override
   void initState() {
     super.initState();
-    _load();
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
     _load();
   }
 
@@ -1005,9 +1035,9 @@ class _CalorieBalanceCard extends StatelessWidget {
   String get _status {
     final isLoss = goal == 'weight_loss' || goal == 'weightLoss';
     final isGain = goal == 'muscle_gain' || goal == 'weightGain';
-    if (isLoss && net < 0) return 'Good deficit! 🎉';
-    if (isGain && net > 0) return 'Good surplus! 💪';
-    return 'Adjust your intake 📊';
+    if (isLoss && net < 0) return 'Good deficit';
+    if (isGain && net > 0) return 'Good surplus';
+    return 'Adjust your intake';
   }
 
   Color get _statusColor {
@@ -1391,7 +1421,7 @@ class _NutritionInsightCard extends StatelessWidget {
     final tip = n['tip'] as String? ?? '';
 
     return _InsightCard(
-      title: '🥗 Nutrition Insights',
+      title: 'Nutrition Insights',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1412,7 +1442,9 @@ class _NutritionInsightCard extends StatelessWidget {
           const SizedBox(height: 12),
           Row(
             children: [
-              const Text('🔥 ', style: TextStyle(fontSize: 16)),
+              const Icon(Icons.local_fire_department,
+                  size: 16, color: _kOrange),
+              const SizedBox(width: 6),
               Text(
                 '${fatChange >= 0 ? '+' : ''}${fatChange.toStringAsFixed(2)} kg fat this week',
                 style: TextStyle(
@@ -1446,7 +1478,7 @@ class _ExerciseInsightCard extends StatelessWidget {
     final tip = e['tip'] as String? ?? '';
 
     return _InsightCard(
-      title: '💪 Exercise Insights',
+      title: 'Exercise Insights',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1496,22 +1528,22 @@ class _BodyChangesCard extends StatelessWidget {
     };
 
     return _InsightCard(
-      title: '📊 Estimated Body Changes',
+      title: 'Estimated Body Changes',
       subtitle: 'Based on your activity (approximate)',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _ChangeRow('⚖️', 'Weight', weightChange, 'kg'),
-          _ChangeRow('🔥', 'Fat', fatChange, 'kg'),
-          _ChangeRow('💪', 'Muscle', muscleChange, 'kg'),
+          _ChangeRow('WT', 'Weight', weightChange, 'kg'),
+          _ChangeRow('FT', 'Fat', fatChange, 'kg'),
+          _ChangeRow('MS', 'Muscle', muscleChange, 'kg'),
           if (meas['waist_change_cm'] != null)
-            _ChangeRow('📏', 'Waist',
+            _ChangeRow('WS', 'Waist',
                 (meas['waist_change_cm'] as num).toDouble(), 'cm'),
           if (meas['chest_change_cm'] != null)
-            _ChangeRow('💪', 'Chest',
+            _ChangeRow('CH', 'Chest',
                 (meas['chest_change_cm'] as num).toDouble(), 'cm'),
           if (meas['thigh_change_cm'] != null)
-            _ChangeRow('🦵', 'Thigh',
+            _ChangeRow('TH', 'Thigh',
                 (meas['thigh_change_cm'] as num).toDouble(), 'cm'),
           const SizedBox(height: 12),
           Row(
@@ -1522,8 +1554,7 @@ class _BodyChangesCard extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: confColor.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(6),
-                  border:
-                      Border.all(color: confColor.withValues(alpha: 0.4)),
+                  border: Border.all(color: confColor.withValues(alpha: 0.4)),
                 ),
                 child: Text(
                   '${confidence[0].toUpperCase()}${confidence.substring(1)} Confidence',
@@ -1589,7 +1620,7 @@ class _NextWeekFocusCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final tips = (analysis['next_week_focus'] as List?)?.cast<String>() ?? [];
     return _InsightCard(
-      title: '🎯 Focus for Next Week',
+      title: 'Focus for Next Week',
       child: Column(
         children: List.generate(tips.length, (i) {
           return Padding(

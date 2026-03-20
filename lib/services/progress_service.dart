@@ -15,73 +15,85 @@ class ProgressService {
 
   // ── Get daily nutrition + exercise summary for last 7 days ─────────────────
   Future<List<Map<String, dynamic>>> getLast7DaysData(String userId) async {
-    final List<Map<String, dynamic>> result = [];
+    final now = DateTime.now();
+    final todayStart = DateTime(now.year, now.month, now.day);
+    final rangeStart = todayStart.subtract(const Duration(days: 6));
+    final rangeEnd = todayStart.add(const Duration(days: 1));
 
+    final mealsFuture = _firestore
+        .collection('meal_completions')
+        .where('userId', isEqualTo: userId)
+        .where('scheduledDate',
+            isGreaterThanOrEqualTo: Timestamp.fromDate(rangeStart))
+        .where('scheduledDate', isLessThan: Timestamp.fromDate(rangeEnd))
+        .get();
+
+    final exercisesFuture = _firestore
+        .collection('exercise_completions')
+        .where('userId', isEqualTo: userId)
+        .where('scheduledDate',
+            isGreaterThanOrEqualTo: Timestamp.fromDate(rangeStart))
+        .where('scheduledDate', isLessThan: Timestamp.fromDate(rangeEnd))
+        .get();
+
+    final results = await Future.wait([mealsFuture, exercisesFuture]);
+    final mealsSnap = results[0];
+    final exercisesSnap = results[1];
+
+    final Map<String, Map<String, dynamic>> byDay = {};
     for (int i = 6; i >= 0; i--) {
-      final date = DateTime.now().subtract(Duration(days: i));
-      final start = DateTime(date.year, date.month, date.day);
-      final end = start.add(const Duration(days: 1));
-
-      // Get meals for this day
-      final mealsSnap = await _firestore
-          .collection('meal_completions')
-          .where('userId', isEqualTo: userId)
-          .where('scheduledDate',
-              isGreaterThanOrEqualTo: Timestamp.fromDate(start))
-          .where('scheduledDate', isLessThan: Timestamp.fromDate(end))
-          .get();
-
-      // Get exercises for this day
-      final exercisesSnap = await _firestore
-          .collection('exercise_completions')
-          .where('userId', isEqualTo: userId)
-          .where('scheduledDate',
-              isGreaterThanOrEqualTo: Timestamp.fromDate(start))
-          .where('scheduledDate', isLessThan: Timestamp.fromDate(end))
-          .get();
-
-      final meals =
-          mealsSnap.docs.map((d) => MealCompletion.fromFirestore(d)).toList();
-      final exercises = exercisesSnap.docs
-          .map((d) => ExerciseCompletion.fromFirestore(d))
-          .toList();
-
-      final completedMeals =
-          meals.where((m) => m.status == CompletionStatus.completed).toList();
-      final completedExercises = exercises
-          .where((e) => e.status == CompletionStatus.completed)
-          .toList();
-
-      // Sum nutrition from completed meals only
-      int calories = 0, protein = 0, carbs = 0, fats = 0;
-      for (final meal in completedMeals) {
-        calories += meal.calories;
-        protein += (meal.macros['protein'] as num?)?.toInt() ?? 0;
-        carbs += (meal.macros['carbs'] as num?)?.toInt() ?? 0;
-        fats += (meal.macros['fats'] as num?)?.toInt() ?? 0;
-      }
-
-      // Estimate calories burned from completed exercises
-      int burned = 0;
-      for (final ex in completedExercises) {
-        burned += _estimateCaloriesBurned(ex.durationMinutes, ex.difficulty);
-      }
-
-      result.add({
-        'date': start.toIso8601String().split('T')[0],
-        'calories_consumed': calories,
-        'protein': protein,
-        'carbs': carbs,
-        'fats': fats,
-        'calories_burned': burned,
-        'meals_completed': completedMeals.length,
-        'meals_total': meals.length,
-        'exercises_completed': completedExercises.length,
-        'exercises_total': exercises.length,
-      });
+      final day = todayStart.subtract(Duration(days: i));
+      final key = day.toIso8601String().split('T')[0];
+      byDay[key] = {
+        'date': key,
+        'calories_consumed': 0,
+        'protein': 0,
+        'carbs': 0,
+        'fats': 0,
+        'calories_burned': 0,
+        'meals_completed': 0,
+        'meals_total': 0,
+        'exercises_completed': 0,
+        'exercises_total': 0,
+      };
     }
 
-    return result;
+    for (final doc in mealsSnap.docs) {
+      final meal = MealCompletion.fromFirestore(doc);
+      final key = meal.scheduledDate.toIso8601String().split('T')[0];
+      final day = byDay[key];
+      if (day == null) continue;
+
+      day['meals_total'] = (day['meals_total'] as int) + 1;
+      if (meal.status == CompletionStatus.completed) {
+        day['meals_completed'] = (day['meals_completed'] as int) + 1;
+        day['calories_consumed'] =
+            (day['calories_consumed'] as int) + meal.calories;
+        day['protein'] = (day['protein'] as int) +
+            ((meal.macros['protein'] as num?)?.toInt() ?? 0);
+        day['carbs'] = (day['carbs'] as int) +
+            ((meal.macros['carbs'] as num?)?.toInt() ?? 0);
+        day['fats'] = (day['fats'] as int) +
+            ((meal.macros['fats'] as num?)?.toInt() ?? 0);
+      }
+    }
+
+    for (final doc in exercisesSnap.docs) {
+      final exercise = ExerciseCompletion.fromFirestore(doc);
+      final key = exercise.scheduledDate.toIso8601String().split('T')[0];
+      final day = byDay[key];
+      if (day == null) continue;
+
+      day['exercises_total'] = (day['exercises_total'] as int) + 1;
+      if (exercise.status == CompletionStatus.completed) {
+        day['exercises_completed'] = (day['exercises_completed'] as int) + 1;
+        day['calories_burned'] = (day['calories_burned'] as int) +
+            _estimateCaloriesBurned(
+                exercise.durationMinutes, exercise.difficulty);
+      }
+    }
+
+    return byDay.values.toList();
   }
 
   // ── Estimate calories burned based on duration and difficulty ──────────────
@@ -103,23 +115,32 @@ class ProgressService {
     int tempStreak = 0;
     bool currentStreakEnded = false;
 
-    // Check last 60 days
+    final now = DateTime.now();
+    final todayStart = DateTime(now.year, now.month, now.day);
+    final rangeStart = todayStart.subtract(const Duration(days: 59));
+    final rangeEnd = todayStart.add(const Duration(days: 1));
+
+    final snap = await _firestore
+        .collection('exercise_completions')
+        .where('userId', isEqualTo: userId)
+        .where('status', isEqualTo: 'completed')
+        .where('scheduledDate',
+            isGreaterThanOrEqualTo: Timestamp.fromDate(rangeStart))
+        .where('scheduledDate', isLessThan: Timestamp.fromDate(rangeEnd))
+        .get();
+
+    final completedDays = <String>{
+      for (final doc in snap.docs)
+        ((doc.data()['scheduledDate'] as Timestamp)
+            .toDate()
+            .toIso8601String()
+            .split('T')[0]),
+    };
+
     for (int i = 0; i < 60; i++) {
-      final date = DateTime.now().subtract(Duration(days: i));
-      final start = DateTime(date.year, date.month, date.day);
-      final end = start.add(const Duration(days: 1));
-
-      final snap = await _firestore
-          .collection('exercise_completions')
-          .where('userId', isEqualTo: userId)
-          .where('status', isEqualTo: 'completed')
-          .where('scheduledDate',
-              isGreaterThanOrEqualTo: Timestamp.fromDate(start))
-          .where('scheduledDate', isLessThan: Timestamp.fromDate(end))
-          .limit(1)
-          .get();
-
-      if (snap.docs.isNotEmpty) {
+      final day = todayStart.subtract(Duration(days: i));
+      final key = day.toIso8601String().split('T')[0];
+      if (completedDays.contains(key)) {
         tempStreak++;
         if (!currentStreakEnded) {
           currentStreak = tempStreak;

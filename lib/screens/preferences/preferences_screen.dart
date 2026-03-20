@@ -155,7 +155,7 @@ class _PreferencesScreenState extends State<PreferencesScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
-                '✅ Preferences saved! Your AI plans will now be personalised.'),
+                'Preferences saved. Your AI plans will now be personalised.'),
             backgroundColor: Colors.green,
             duration: Duration(seconds: 3),
           ),

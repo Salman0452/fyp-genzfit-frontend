@@ -11,7 +11,7 @@ class RecommendationService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   String get _backendUrl =>
-      dotenv.env['BACKEND_URL'] ?? 'http://192.168.10.14:8000';
+      dotenv.env['BACKEND_URL'] ?? 'http://192.168.10.15:8000';
 
   RecommendationService() {
     print(

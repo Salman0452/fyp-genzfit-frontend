@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:genzfit/providers/auth_provider.dart';
 import 'package:genzfit/utils/constants.dart';
@@ -61,6 +62,58 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
     } catch (e) {
       setState(() => _isLoading = false);
     }
+  }
+
+  String _getGreeting() {
+    final hour = DateTime.now().hour;
+    if (hour < 12) return 'Good morning';
+    if (hour < 18) return 'Good afternoon';
+    return 'Good evening';
+  }
+
+  String _getGoalFocus(String? goalValue) {
+    final goal = (goalValue ?? '').toLowerCase();
+    if (goal == 'weightloss' || goal == 'weight loss') {
+      return 'Today\'s focus is consistent nutrition and clean training volume.';
+    }
+    if (goal == 'weightgain' || goal == 'weight gain') {
+      return 'Today\'s focus is progressive overload and quality calorie intake.';
+    }
+    if (goal == 'fitness') {
+      return 'Today\'s focus is balanced strength, mobility, and recovery.';
+    }
+    return 'Today\'s focus is building a repeatable high-performance routine.';
+  }
+
+  String _getReadinessLabel() {
+    if (_latestMeasurement == null) return 'Assessment Pending';
+    final bmi = _latestMeasurement!.bmi;
+    if (bmi < 18.5) return 'Build Phase';
+    if (bmi < 25) return 'Performance Range';
+    return 'Cut Phase';
+  }
+
+  Future<void> _openTodaysPlan() async {
+    await HapticFeedback.selectionClick();
+    if (!mounted) return;
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const DailyPlanScreen()),
+    );
+  }
+
+  Future<void> _openAiCoach() async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    if (authProvider.userModel == null) return;
+
+    await HapticFeedback.selectionClick();
+    if (!mounted) return;
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => AICoachScreen(user: authProvider.userModel!),
+      ),
+    );
   }
 
   @override
@@ -140,7 +193,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Hello, ${user?.name?.split(' ').first ?? 'User'}!',
+                      'Hello, ${user?.name.split(' ').first ?? 'User'}!',
                       style: const TextStyle(
                         fontSize: 28,
                         fontWeight: FontWeight.bold,
@@ -173,6 +226,9 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
               ],
             ),
             const SizedBox(height: 32),
+
+            _buildMotivationHero(user),
+            const SizedBox(height: 20),
 
             // Goal card
             _buildGoalCard(user),
@@ -231,6 +287,121 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
             ],
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildMotivationHero(user) {
+    final userName = user?.name?.toString().split(' ').first ?? 'User';
+
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppColors.accentTeal.withOpacity(0.2),
+            AppColors.accentCyan.withOpacity(0.16),
+            AppColors.accentViolet.withOpacity(0.12),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(AppSizes.borderRadius),
+        border: Border.all(color: AppColors.accentTeal.withOpacity(0.35)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '${_getGreeting()}, $userName',
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      _getGoalFocus(user?.goals?.toString()),
+                      style: const TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 12,
+                        height: 1.4,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: AppColors.background.withOpacity(0.35),
+                  borderRadius: BorderRadius.circular(20),
+                  border:
+                      Border.all(color: AppColors.accentAmber.withOpacity(0.5)),
+                ),
+                child: Text(
+                  _getReadinessLabel(),
+                  style: const TextStyle(
+                    color: AppColors.accentAmber,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 11,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: _openTodaysPlan,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.accentTeal,
+                    foregroundColor: AppColors.background,
+                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius:
+                          BorderRadius.circular(AppConstants.radiusSmall),
+                    ),
+                  ),
+                  child: const Text(
+                    'Open Today\'s Plan',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              OutlinedButton(
+                onPressed: _openAiCoach,
+                style: OutlinedButton.styleFrom(
+                  side:
+                      BorderSide(color: AppColors.accentCyan.withOpacity(0.6)),
+                  foregroundColor: AppColors.accentCyan,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius:
+                        BorderRadius.circular(AppConstants.radiusSmall),
+                  ),
+                ),
+                child: const Text(
+                  'AI Coach',
+                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -350,7 +521,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
               child: _buildActionCard(
                 '3D Avatar',
                 Icons.view_in_ar,
-                Colors.purple,
+                AppColors.accentViolet,
                 () {
                   Navigator.push(
                     context,
@@ -370,7 +541,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
               child: _buildActionCard(
                 'Today\'s Plan',
                 Icons.today,
-                Colors.purple,
+                AppColors.accentAmber,
                 () {
                   Navigator.push(
                     context,
@@ -386,7 +557,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
               child: _buildActionCard(
                 'AI Coach',
                 Icons.smart_toy,
-                Colors.blue,
+                AppColors.accentCyan,
                 () {
                   final authProvider =
                       Provider.of<AuthProvider>(context, listen: false);
@@ -411,7 +582,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
               child: _buildActionCard(
                 'Find Trainer',
                 Icons.search,
-                AppColors.info,
+                AppColors.accentTeal,
                 () {
                   setState(() => _currentIndex = 1);
                 },
@@ -422,7 +593,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
               child: _buildActionCard(
                 'Preferences',
                 Icons.tune,
-                Colors.teal,
+                AppColors.accentCoral,
                 () {
                   Navigator.push(
                     context,

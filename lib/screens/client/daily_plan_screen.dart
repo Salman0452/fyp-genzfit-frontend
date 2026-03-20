@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../models/progress_tracking_model.dart';
 import '../../services/recommendation_service.dart';
@@ -32,6 +33,106 @@ class _DailyPlanScreenState extends State<DailyPlanScreen>
 
   int _completedMeals = 0;
   int _completedExercises = 0;
+
+  int get _totalTasks => _todayMeals.length + _todayExercises.length;
+  int get _completedTasks => _completedMeals + _completedExercises;
+  double get _completionRatio {
+    if (_totalTasks == 0) return 0;
+    return _completedTasks / _totalTasks;
+  }
+
+  String _getGreeting() {
+    final hour = DateTime.now().hour;
+    if (hour < 12) return 'Good morning';
+    if (hour < 18) return 'Good afternoon';
+    return 'Good evening';
+  }
+
+  String _getMotivationLine() {
+    final percent = (_completionRatio * 100).round();
+    if (_isRestDay) {
+      return 'Recovery day. Recharge strong for tomorrow.';
+    }
+    if (percent >= 100) {
+      return 'Elite consistency. You nailed today\'s target!';
+    }
+    if (percent >= 75) {
+      return 'You\'re on fire. Finish strong and close the day.';
+    }
+    if (percent >= 40) {
+      return 'Strong momentum. Keep stacking small wins.';
+    }
+    if (percent > 0) {
+      return 'Great start. One more task builds your rhythm.';
+    }
+    return 'Your strongest version starts with today\'s first step.';
+  }
+
+  String _getMomentumLabel() {
+    final percent = (_completionRatio * 100).round();
+    if (percent >= 100) return 'Champion';
+    if (percent >= 75) return 'High';
+    if (percent >= 40) return 'Building';
+    if (percent > 0) return 'Starting';
+    return 'Warm-up';
+  }
+
+  void _showMotivationSnackBar({
+    required String title,
+    required String message,
+    required Color accent,
+  }) {
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.clearSnackBars();
+    messenger.showSnackBar(
+      SnackBar(
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+        elevation: 0,
+        backgroundColor: AppColors.surface,
+        duration: const Duration(seconds: 2),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppConstants.radiusMedium),
+          side: BorderSide(color: accent.withOpacity(0.45)),
+        ),
+        content: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: accent.withOpacity(0.18),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(Icons.bolt, size: 14, color: accent),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      color: AppColors.textPrimary,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  Text(
+                    message,
+                    style: const TextStyle(
+                      color: AppColors.muted,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
   @override
   void initState() {
@@ -116,11 +217,10 @@ class _DailyPlanScreenState extends State<DailyPlanScreen>
       });
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('✨ Today\'s plan refreshed!'),
-            backgroundColor: Colors.green,
-          ),
+        _showMotivationSnackBar(
+          title: 'Plan refreshed',
+          message: 'A sharper day is ready. Let\'s execute.',
+          accent: AppColors.accentTeal,
         );
       }
     } catch (e) {
@@ -152,11 +252,10 @@ class _DailyPlanScreenState extends State<DailyPlanScreen>
       await _loadTodayPlan();
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('🗓️ New weekly plan generated!'),
-            backgroundColor: Colors.green,
-          ),
+        _showMotivationSnackBar(
+          title: 'New week generated',
+          message: 'Fresh targets unlocked. Stay consistent.',
+          accent: AppColors.accentCyan,
         );
       }
     } catch (e) {
@@ -178,13 +277,12 @@ class _DailyPlanScreenState extends State<DailyPlanScreen>
     try {
       await _recommendationService.completeMeal(meal.id);
       await _loadTodayPlan();
+      await HapticFeedback.mediumImpact();
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('✅ Completed: ${meal.mealName}'),
-          backgroundColor: Colors.green,
-          duration: const Duration(seconds: 2),
-        ),
+      _showMotivationSnackBar(
+        title: 'Meal completed',
+        message: '${meal.mealName} logged. Fuel discipline matters.',
+        accent: AppColors.accentAmber,
       );
     } catch (e) {
       print('Error completing meal: $e');
@@ -195,13 +293,12 @@ class _DailyPlanScreenState extends State<DailyPlanScreen>
     try {
       await _recommendationService.completeExercise(exercise.id);
       await _loadTodayPlan();
+      await HapticFeedback.mediumImpact();
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('✅ Completed: ${exercise.exerciseName}'),
-          backgroundColor: Colors.green,
-          duration: const Duration(seconds: 2),
-        ),
+      _showMotivationSnackBar(
+        title: 'Workout completed',
+        message: '${exercise.exerciseName} done. Keep building momentum.',
+        accent: AppColors.accentCyan,
       );
     } catch (e) {
       print('Error completing exercise: $e');
@@ -211,8 +308,13 @@ class _DailyPlanScreenState extends State<DailyPlanScreen>
   @override
   Widget build(BuildContext context) {
     const dayNames = [
-      'Monday', 'Tuesday', 'Wednesday', 'Thursday',
-      'Friday', 'Saturday', 'Sunday',
+      'Monday',
+      'Tuesday',
+      'Wednesday',
+      'Thursday',
+      'Friday',
+      'Saturday',
+      'Sunday',
     ];
     final displayDay =
         _dayName.isNotEmpty ? _dayName : dayNames[DateTime.now().weekday - 1];
@@ -237,14 +339,13 @@ class _DailyPlanScreenState extends State<DailyPlanScreen>
               children: [
                 Text(
                   displayDay,
-                  style: const TextStyle(
-                      fontSize: 13, color: AppColors.muted),
+                  style: const TextStyle(fontSize: 13, color: AppColors.muted),
                 ),
                 if (_isRestDay) ...[
                   const SizedBox(width: 8),
                   Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 8, vertical: 2),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                     decoration: BoxDecoration(
                       color: AppColors.accentTeal.withOpacity(0.2),
                       borderRadius: BorderRadius.circular(20),
@@ -253,8 +354,8 @@ class _DailyPlanScreenState extends State<DailyPlanScreen>
                     ),
                     child: const Text(
                       'Rest Day',
-                      style: TextStyle(
-                          color: AppColors.accentTeal, fontSize: 11),
+                      style:
+                          TextStyle(color: AppColors.accentTeal, fontSize: 11),
                     ),
                   ),
                 ],
@@ -274,8 +375,7 @@ class _DailyPlanScreenState extends State<DailyPlanScreen>
               PopupMenuItem(
                 value: 'today',
                 child: Row(children: [
-                  const Icon(Icons.refresh,
-                      size: 18, color: AppColors.accent),
+                  const Icon(Icons.refresh, size: 18, color: AppColors.accent),
                   const SizedBox(width: 10),
                   Text('Refresh Today',
                       style: const TextStyle(color: AppColors.textPrimary)),
@@ -315,14 +415,15 @@ class _DailyPlanScreenState extends State<DailyPlanScreen>
                   const SizedBox(height: 16),
                   Text(
                     _loadingStatus,
-                    style: const TextStyle(
-                        color: AppColors.muted, fontSize: 14),
+                    style:
+                        const TextStyle(color: AppColors.muted, fontSize: 14),
                   ),
                 ],
               ),
             )
           : Column(
               children: [
+                _buildMotivationHero(displayDay),
                 _buildStatsCard(),
                 Expanded(
                   child: TabBarView(
@@ -338,11 +439,109 @@ class _DailyPlanScreenState extends State<DailyPlanScreen>
     );
   }
 
+  Widget _buildMotivationHero(String displayDay) {
+    final completionPercent = (_completionRatio * 100).round();
+
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 16, 16, 4),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppColors.accentTeal.withOpacity(0.18),
+            AppColors.accentCyan.withOpacity(0.14),
+            AppColors.accentViolet.withOpacity(0.12),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(AppConstants.radiusLarge),
+        border: Border.all(color: AppColors.accentTeal.withOpacity(0.35)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '${_getGreeting()}, let\'s move',
+                      style: const TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '$displayDay • ${_getMotivationLine()}',
+                      style: const TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 12,
+                        height: 1.4,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: AppColors.background.withOpacity(0.35),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: AppColors.accentAmber.withOpacity(0.45),
+                  ),
+                ),
+                child: Text(
+                  'Momentum: ${_getMomentumLabel()}',
+                  style: const TextStyle(
+                    color: AppColors.accentAmber,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 11,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: TweenAnimationBuilder<double>(
+              tween: Tween<double>(begin: 0, end: _completionRatio),
+              duration: const Duration(milliseconds: 650),
+              curve: Curves.easeOutCubic,
+              builder: (context, value, _) {
+                return LinearProgressIndicator(
+                  value: value,
+                  minHeight: 9,
+                  backgroundColor: AppColors.charcoal,
+                  valueColor:
+                      AlwaysStoppedAnimation<Color>(AppColors.accentTeal),
+                );
+              },
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            '$completionPercent% complete • $_completedTasks of $_totalTasks tasks finished',
+            style: const TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildStatsCard() {
-    final totalTasks = _todayMeals.length + _todayExercises.length;
-    final completedTasks = _completedMeals + _completedExercises;
-    final completionPercent =
-        totalTasks > 0 ? (completedTasks / totalTasks * 100).toInt() : 0;
+    final completionPercent = (_completionRatio * 100).round();
 
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 16, 16, 8),
@@ -373,7 +572,7 @@ class _DailyPlanScreenState extends State<DailyPlanScreen>
             'Workouts',
             '$_completedExercises/${_isRestDay ? '–' : _todayExercises.length}',
             Icons.fitness_center,
-            AppColors.accentTeal,
+            AppColors.accentCyan,
           ),
         ],
       ),
@@ -423,8 +622,7 @@ class _DailyPlanScreenState extends State<DailyPlanScreen>
           margin: const EdgeInsets.only(bottom: 12),
           decoration: BoxDecoration(
             color: AppColors.surface,
-            borderRadius:
-                BorderRadius.circular(AppConstants.radiusMedium),
+            borderRadius: BorderRadius.circular(AppConstants.radiusMedium),
             border: Border.all(
               color: isCompleted
                   ? AppColors.accent.withOpacity(0.4)
@@ -467,34 +665,25 @@ class _DailyPlanScreenState extends State<DailyPlanScreen>
                 Text(
                   meal.mealName,
                   style: TextStyle(
-                    color: isCompleted
-                        ? AppColors.muted
-                        : AppColors.textPrimary,
+                    color:
+                        isCompleted ? AppColors.muted : AppColors.textPrimary,
                     fontSize: 17,
                     fontWeight: FontWeight.w600,
-                    decoration: isCompleted
-                        ? TextDecoration.lineThrough
-                        : null,
+                    decoration: isCompleted ? TextDecoration.lineThrough : null,
                     decorationColor: AppColors.muted,
                   ),
                 ),
                 const SizedBox(height: 10),
                 Row(
                   children: [
-                    _buildMacroChip(
-                        '${meal.calories} kcal',
-                        Icons.local_fire_department,
-                        AppColors.error),
+                    _buildMacroChip('${meal.calories} kcal',
+                        Icons.local_fire_department, AppColors.accentCoral),
                     const SizedBox(width: 8),
-                    _buildMacroChip(
-                        'P ${meal.macros['protein']}g',
-                        Icons.egg_outlined,
-                        AppColors.accentTeal),
+                    _buildMacroChip('P ${meal.macros['protein']}g',
+                        Icons.egg_outlined, AppColors.accentCyan),
                     const SizedBox(width: 8),
-                    _buildMacroChip(
-                        'C ${meal.macros['carbs']}g',
-                        Icons.grain,
-                        AppColors.warning),
+                    _buildMacroChip('C ${meal.macros['carbs']}g', Icons.grain,
+                        AppColors.accentAmber),
                   ],
                 ),
                 if (!isCompleted) ...[
@@ -504,13 +693,12 @@ class _DailyPlanScreenState extends State<DailyPlanScreen>
                     child: ElevatedButton(
                       onPressed: () => _completeMeal(meal),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.accent,
+                        backgroundColor: AppColors.accentAmber,
                         foregroundColor: AppColors.background,
-                        padding:
-                            const EdgeInsets.symmetric(vertical: 12),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(
-                              AppConstants.radiusSmall),
+                          borderRadius:
+                              BorderRadius.circular(AppConstants.radiusSmall),
                         ),
                         elevation: 0,
                       ),
@@ -532,8 +720,13 @@ class _DailyPlanScreenState extends State<DailyPlanScreen>
 
   String _getNextWorkoutDay() {
     const days = [
-      'Monday', 'Tuesday', 'Wednesday', 'Thursday',
-      'Friday', 'Saturday', 'Sunday',
+      'Monday',
+      'Tuesday',
+      'Wednesday',
+      'Thursday',
+      'Friday',
+      'Saturday',
+      'Sunday',
     ];
     final todayIdx = DateTime.now().weekday - 1;
     for (int i = 1; i <= 7; i++) {
@@ -565,7 +758,7 @@ class _DailyPlanScreenState extends State<DailyPlanScreen>
               ),
               const SizedBox(height: 24),
               const Text(
-                'Rest Day 🧘',
+                'Rest Day',
                 style: TextStyle(
                   color: AppColors.textPrimary,
                   fontSize: 24,
@@ -594,14 +787,13 @@ class _DailyPlanScreenState extends State<DailyPlanScreen>
                     color: AppColors.accentTeal, size: 18),
                 label: const Text(
                   'Override – Add Light Workout',
-                  style: TextStyle(
-                      color: AppColors.accentTeal, fontSize: 13),
+                  style: TextStyle(color: AppColors.accentTeal, fontSize: 13),
                 ),
                 style: OutlinedButton.styleFrom(
-                  side: BorderSide(
-                      color: AppColors.accentTeal.withOpacity(0.5)),
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 20, vertical: 12),
+                  side:
+                      BorderSide(color: AppColors.accentTeal.withOpacity(0.5)),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                   shape: RoundedRectangleBorder(
                     borderRadius:
                         BorderRadius.circular(AppConstants.radiusSmall),
@@ -629,17 +821,16 @@ class _DailyPlanScreenState extends State<DailyPlanScreen>
         final isCompleted = exercise.status == CompletionStatus.completed;
 
         final difficultyColor = exercise.difficulty == 'beginner'
-            ? AppColors.accent
+            ? AppColors.accentTeal
             : exercise.difficulty == 'intermediate'
-                ? AppColors.warning
-                : AppColors.error;
+                ? AppColors.accentAmber
+                : AppColors.accentCoral;
 
         return Container(
           margin: const EdgeInsets.only(bottom: 12),
           decoration: BoxDecoration(
             color: AppColors.surface,
-            borderRadius:
-                BorderRadius.circular(AppConstants.radiusMedium),
+            borderRadius: BorderRadius.circular(AppConstants.radiusMedium),
             border: Border.all(
               color: isCompleted
                   ? AppColors.accent.withOpacity(0.4)
@@ -659,8 +850,8 @@ class _DailyPlanScreenState extends State<DailyPlanScreen>
                       decoration: BoxDecoration(
                         color: difficultyColor.withOpacity(0.12),
                         borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                            color: difficultyColor.withOpacity(0.4)),
+                        border:
+                            Border.all(color: difficultyColor.withOpacity(0.4)),
                       ),
                       child: Text(
                         exercise.difficulty.toUpperCase(),
@@ -682,34 +873,25 @@ class _DailyPlanScreenState extends State<DailyPlanScreen>
                 Text(
                   exercise.exerciseName,
                   style: TextStyle(
-                    color: isCompleted
-                        ? AppColors.muted
-                        : AppColors.textPrimary,
+                    color:
+                        isCompleted ? AppColors.muted : AppColors.textPrimary,
                     fontSize: 17,
                     fontWeight: FontWeight.w600,
-                    decoration: isCompleted
-                        ? TextDecoration.lineThrough
-                        : null,
+                    decoration: isCompleted ? TextDecoration.lineThrough : null,
                     decorationColor: AppColors.muted,
                   ),
                 ),
                 const SizedBox(height: 10),
                 Row(
                   children: [
-                    _buildExerciseInfo(
-                        '${exercise.sets} sets',
-                        Icons.repeat,
-                        AppColors.accent),
+                    _buildExerciseInfo('${exercise.sets} sets', Icons.repeat,
+                        AppColors.accentViolet),
                     const SizedBox(width: 16),
-                    _buildExerciseInfo(
-                        '${exercise.reps} reps',
-                        Icons.fitness_center,
-                        AppColors.accentTeal),
+                    _buildExerciseInfo('${exercise.reps} reps',
+                        Icons.fitness_center, AppColors.accentCyan),
                     const SizedBox(width: 16),
-                    _buildExerciseInfo(
-                        '${exercise.durationMinutes} min',
-                        Icons.timer_outlined,
-                        AppColors.warning),
+                    _buildExerciseInfo('${exercise.durationMinutes} min',
+                        Icons.timer_outlined, AppColors.accentAmber),
                   ],
                 ),
                 if (exercise.targetMuscles.isNotEmpty) ...[
@@ -723,14 +905,12 @@ class _DailyPlanScreenState extends State<DailyPlanScreen>
                                   horizontal: 8, vertical: 3),
                               decoration: BoxDecoration(
                                 color: AppColors.charcoal,
-                                borderRadius:
-                                    BorderRadius.circular(20),
+                                borderRadius: BorderRadius.circular(20),
                               ),
                               child: Text(
                                 muscle,
                                 style: const TextStyle(
-                                    color: AppColors.muted,
-                                    fontSize: 11),
+                                    color: AppColors.muted, fontSize: 11),
                               ),
                             ))
                         .toList(),
@@ -743,13 +923,12 @@ class _DailyPlanScreenState extends State<DailyPlanScreen>
                     child: ElevatedButton(
                       onPressed: () => _completeExercise(exercise),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.accent,
+                        backgroundColor: AppColors.accentCyan,
                         foregroundColor: AppColors.background,
-                        padding:
-                            const EdgeInsets.symmetric(vertical: 12),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(
-                              AppConstants.radiusSmall),
+                          borderRadius:
+                              BorderRadius.circular(AppConstants.radiusSmall),
                         ),
                         elevation: 0,
                       ),
@@ -769,8 +948,7 @@ class _DailyPlanScreenState extends State<DailyPlanScreen>
     );
   }
 
-  Widget _buildEmptyState(
-      {required IconData icon, required String message}) {
+  Widget _buildEmptyState({required IconData icon, required String message}) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -796,11 +974,9 @@ class _DailyPlanScreenState extends State<DailyPlanScreen>
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.accent,
               foregroundColor: AppColors.background,
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               shape: RoundedRectangleBorder(
-                borderRadius:
-                    BorderRadius.circular(AppConstants.radiusSmall),
+                borderRadius: BorderRadius.circular(AppConstants.radiusSmall),
               ),
               elevation: 0,
             ),
@@ -826,9 +1002,7 @@ class _DailyPlanScreenState extends State<DailyPlanScreen>
           Text(
             text,
             style: TextStyle(
-                color: color,
-                fontSize: 11,
-                fontWeight: FontWeight.w600),
+                color: color, fontSize: 11, fontWeight: FontWeight.w600),
           ),
         ],
       ),
@@ -844,9 +1018,7 @@ class _DailyPlanScreenState extends State<DailyPlanScreen>
         Text(
           text,
           style: TextStyle(
-              color: color,
-              fontSize: 13,
-              fontWeight: FontWeight.w500),
+              color: color, fontSize: 13, fontWeight: FontWeight.w500),
         ),
       ],
     );

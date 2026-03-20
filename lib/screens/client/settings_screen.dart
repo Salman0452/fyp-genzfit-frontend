@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:genzfit/providers/auth_provider.dart';
 import 'package:genzfit/providers/language_provider.dart';
+import 'package:genzfit/providers/theme_provider.dart';
 import 'package:genzfit/utils/constants.dart';
 import 'package:genzfit/screens/client/edit_profile_screen.dart';
 import 'package:genzfit/screens/auth/forgot_password_screen.dart';
@@ -63,8 +64,8 @@ class SettingsScreen extends StatelessWidget {
         title: const Text('Settings'),
         backgroundColor: AppColors.surface,
       ),
-      body: Consumer<LanguageProvider>(
-        builder: (context, languageProvider, child) {
+      body: Consumer2<LanguageProvider, ThemeProvider>(
+        builder: (context, languageProvider, themeProvider, child) {
           return ListView(
             padding: const EdgeInsets.all(20),
             children: [
@@ -162,21 +163,7 @@ class SettingsScreen extends StatelessWidget {
                   );
                 },
               ),
-              _buildSettingItem(
-                context,
-                icon: Icons.dark_mode,
-                title: 'Theme',
-                subtitle: 'Dark mode (default)',
-                onTap: () {
-                  // TODO: Navigate to theme settings
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Coming soon!'),
-                      backgroundColor: AppColors.accent,
-                    ),
-                  );
-                },
-              ),
+              _buildThemeSettingsCard(context, themeProvider),
 
               const SizedBox(height: 24),
 
@@ -309,6 +296,76 @@ class SettingsScreen extends StatelessWidget {
             ],
           );
         },
+      ),
+    );
+  }
+
+  Widget _buildThemeSettingsCard(
+      BuildContext context, ThemeProvider themeProvider) {
+    final modeLabel = switch (themeProvider.themeMode) {
+      ThemeMode.system => 'System (Auto)',
+      ThemeMode.light => 'Light',
+      ThemeMode.dark => 'Dark',
+    };
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppSizes.borderRadius),
+      ),
+      child: Column(
+        children: [
+          ListTile(
+            leading: const Icon(Icons.palette, color: AppColors.accent),
+            title: const Text(
+              'Theme',
+              style: TextStyle(
+                color: AppColors.textPrimary,
+                fontWeight: FontWeight.w600,
+                fontSize: 16,
+              ),
+            ),
+            subtitle: Text(
+              modeLabel,
+              style: const TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: 14,
+              ),
+            ),
+          ),
+          const Divider(height: 1, color: AppColors.charcoal),
+          SwitchListTile.adaptive(
+            title: const Text(
+              'Use system theme',
+              style: TextStyle(color: AppColors.textPrimary),
+            ),
+            subtitle: const Text(
+              'Automatically match your phone theme',
+              style: TextStyle(color: AppColors.textSecondary),
+            ),
+            value: themeProvider.useSystemTheme,
+            activeColor: AppColors.accent,
+            onChanged: (value) => themeProvider.setUseSystemTheme(value),
+          ),
+          SwitchListTile.adaptive(
+            title: const Text(
+              'Dark mode',
+              style: TextStyle(color: AppColors.textPrimary),
+            ),
+            subtitle: Text(
+              themeProvider.useSystemTheme
+                  ? 'Disabled while system theme is enabled'
+                  : 'Turn off for light mode',
+              style: const TextStyle(color: AppColors.textSecondary),
+            ),
+            value: themeProvider.isDarkMode,
+            activeColor: AppColors.accent,
+            onChanged: themeProvider.useSystemTheme
+                ? null
+                : (value) => themeProvider.setDarkModeEnabled(value),
+          ),
+        ],
       ),
     );
   }

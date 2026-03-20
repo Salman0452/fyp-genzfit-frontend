@@ -5,6 +5,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
 import 'providers/auth_provider.dart';
 import 'providers/language_provider.dart';
+import 'providers/theme_provider.dart';
 import 'utils/app_localizations.dart';
 import 'screens/splash_screen.dart';
 import 'screens/auth/role_selection_screen.dart';
@@ -40,15 +41,126 @@ void main() async {
 class GenZFitApp extends StatelessWidget {
   const GenZFitApp({super.key});
 
+  ThemeData _buildLightTheme() {
+    return ThemeData(
+      useMaterial3: true,
+      brightness: Brightness.light,
+      scaffoldBackgroundColor: const Color(0xFFF7F9FB),
+      primaryColor: AppConstants.accentGold,
+      colorScheme: const ColorScheme.light(
+        primary: AppConstants.accentGold,
+        secondary: AppConstants.primaryGold,
+        surface: Colors.white,
+        error: AppConstants.errorRed,
+      ),
+      appBarTheme: const AppBarTheme(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        centerTitle: true,
+        titleTextStyle: TextStyle(
+          color: Color(0xFF171917),
+          fontSize: AppConstants.fontXLarge,
+          fontWeight: FontWeight.bold,
+        ),
+        iconTheme: IconThemeData(color: Color(0xFF171917)),
+      ),
+      textTheme: const TextTheme(
+        displayLarge: TextStyle(
+          color: Color(0xFF171917),
+          fontSize: 32,
+          fontWeight: FontWeight.bold,
+        ),
+        displayMedium: TextStyle(
+          color: Color(0xFF171917),
+          fontSize: 28,
+          fontWeight: FontWeight.bold,
+        ),
+        bodyLarge: TextStyle(
+          color: Color(0xFF171917),
+          fontSize: AppConstants.fontLarge,
+        ),
+        bodyMedium: TextStyle(
+          color: Color(0xFF5E625F),
+          fontSize: AppConstants.fontMedium,
+        ),
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppConstants.accentGold,
+          foregroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppConstants.radiusMedium),
+          ),
+        ),
+      ),
+    );
+  }
+
+  ThemeData _buildDarkTheme() {
+    return ThemeData(
+      useMaterial3: true,
+      brightness: Brightness.dark,
+      scaffoldBackgroundColor: AppConstants.primaryBlack,
+      primaryColor: AppConstants.primaryGold,
+      colorScheme: const ColorScheme.dark(
+        primary: AppConstants.primaryGold,
+        secondary: AppConstants.accentGold,
+        surface: AppConstants.charcoalGray,
+        error: AppConstants.errorRed,
+      ),
+      appBarTheme: const AppBarTheme(
+        backgroundColor: AppConstants.primaryBlack,
+        elevation: 0,
+        centerTitle: true,
+        titleTextStyle: TextStyle(
+          color: AppConstants.textWhite,
+          fontSize: AppConstants.fontXLarge,
+          fontWeight: FontWeight.bold,
+        ),
+        iconTheme: IconThemeData(color: AppConstants.textWhite),
+      ),
+      textTheme: const TextTheme(
+        displayLarge: TextStyle(
+          color: AppConstants.textWhite,
+          fontSize: 32,
+          fontWeight: FontWeight.bold,
+        ),
+        displayMedium: TextStyle(
+          color: AppConstants.textWhite,
+          fontSize: 28,
+          fontWeight: FontWeight.bold,
+        ),
+        bodyLarge: TextStyle(
+          color: AppConstants.textWhite,
+          fontSize: AppConstants.fontLarge,
+        ),
+        bodyMedium: TextStyle(
+          color: AppConstants.textGray,
+          fontSize: AppConstants.fontMedium,
+        ),
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppConstants.primaryGold,
+          foregroundColor: AppConstants.primaryBlack,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppConstants.radiusMedium),
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => LanguageProvider()),
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
       ],
-      child: Consumer<LanguageProvider>(
-        builder: (context, languageProvider, child) {
+      child: Consumer2<LanguageProvider, ThemeProvider>(
+        builder: (context, languageProvider, themeProvider, child) {
           return MaterialApp(
             debugShowCheckedModeBanner: false,
             title: 'GenZFit',
@@ -63,59 +175,9 @@ class GenZFitApp extends StatelessWidget {
               GlobalWidgetsLocalizations.delegate,
               GlobalCupertinoLocalizations.delegate,
             ],
-            theme: ThemeData(
-              useMaterial3: true,
-              brightness: Brightness.dark,
-              scaffoldBackgroundColor: AppConstants.primaryBlack,
-              primaryColor: AppConstants.primaryGold,
-              colorScheme: const ColorScheme.dark(
-                primary: AppConstants.primaryGold,
-                secondary: AppConstants.accentGold,
-                surface: AppConstants.charcoalGray,
-                error: AppConstants.errorRed,
-              ),
-              appBarTheme: const AppBarTheme(
-                backgroundColor: AppConstants.primaryBlack,
-                elevation: 0,
-                centerTitle: true,
-                titleTextStyle: TextStyle(
-                  color: AppConstants.textWhite,
-                  fontSize: AppConstants.fontXLarge,
-                  fontWeight: FontWeight.bold,
-                ),
-                iconTheme: IconThemeData(color: AppConstants.textWhite),
-              ),
-              textTheme: const TextTheme(
-                displayLarge: TextStyle(
-                  color: AppConstants.textWhite,
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                ),
-                displayMedium: TextStyle(
-                  color: AppConstants.textWhite,
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                ),
-                bodyLarge: TextStyle(
-                  color: AppConstants.textWhite,
-                  fontSize: AppConstants.fontLarge,
-                ),
-                bodyMedium: TextStyle(
-                  color: AppConstants.textGray,
-                  fontSize: AppConstants.fontMedium,
-                ),
-              ),
-              elevatedButtonTheme: ElevatedButtonThemeData(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppConstants.primaryGold,
-                  foregroundColor: AppConstants.primaryBlack,
-                  shape: RoundedRectangleBorder(
-                    borderRadius:
-                        BorderRadius.circular(AppConstants.radiusMedium),
-                  ),
-                ),
-              ),
-            ),
+            theme: _buildLightTheme(),
+            darkTheme: _buildDarkTheme(),
+            themeMode: themeProvider.themeMode,
             initialRoute: '/',
             routes: {
               '/': (context) => const SplashScreen(),
@@ -199,3 +261,22 @@ class PlaceholderScreen extends StatelessWidget {
     );
   }
 }
+
+
+
+
+// ok i am giving you refrence pics and also linis and also fonts, colors, icons, etc.
+// The link is : 
+// https://www.figma.com/design/R28Rvcjfsd3kPpqKw9kkfe/Fitstreak---Fitness-App--Community-?node-id=0-1&m=dev&t=E9ruTL0qoiS6V2Sl-1
+
+// THE IMAGES ARE:
+// https://file+.vscode-resource.vscode-cdn.net/Users/salmanahmad/FYP/fyp-genzfit-frontend/assets/images/Fitstreak%20App.png?version%3D1773921834076
+
+// https://file+.vscode-resource.vscode-cdn.net/Users/salmanahmad/FYP/fyp-genzfit-frontend/assets/images/Fitstreak%20App%20%281%29.png?version%3D1773921929562
+
+// the other info is:
+// Fonts: Plus Jakarta Sans - Medium, Plus Jakarta Sans - Regular
+// Colors: Primary(#D6DFE2, #010101, #D5FF5F, #FFFFFF), Secondary(#9F9F9F, #9AC0D6, #595959, #4E6075)
+
+// use these as refrences, customize my all app with these colors and fonts and also see pictures for refrence of how containers are beautifuuly built and use that containers with interesting graphs.
+// You are absolute best Frontend developer and it's your role now to complete this task, not use irrelevant emojis, if you want any pics to download from the web, feel free to download it
