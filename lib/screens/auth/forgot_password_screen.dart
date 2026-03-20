@@ -231,7 +231,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           decoration: BoxDecoration(
             color: AppConstants.charcoalGray,
             borderRadius: BorderRadius.circular(AppConstants.radiusMedium),
-            border: Border.all(color: AppConstants.accentGray, width: 1),
+            border: Border.all(color: AppColors.accentGray, width: 1),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
