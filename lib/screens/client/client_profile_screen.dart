@@ -243,18 +243,28 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             decoration: BoxDecoration(
-              color: AppColors.accent.withOpacity(0.2),
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? AppColors.accent.withOpacity(0.2)
+                  : AppColors.brandGreenDeep.withOpacity(0.2),
               borderRadius: BorderRadius.circular(20),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.flag, color: AppColors.accent, size: 16),
+                Icon(
+                  Icons.flag,
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? AppColors.accent
+                      : AppColors.brandGreenDeep,
+                  size: 16,
+                ),
                 const SizedBox(width: 8),
                 Text(
                   user?.goals ?? 'No goal set',
-                  style: const TextStyle(
-                    color: AppColors.accent,
+                  style: TextStyle(
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? AppColors.accent
+                        : AppColors.brandGreenDeep,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
