@@ -99,7 +99,9 @@ class _LoginScreenState extends State<LoginScreen> {
                 Text(
                   'GenZFit',
                   style: GoogleFonts.plusJakartaSans(
-                    color: AppColors.brandGreen,
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? AppColors.brandGreen
+                        : AppColors.brandGreenDeep,
                     fontSize: 36,
                     fontWeight: FontWeight.w700,
                     letterSpacing: 1.2,
@@ -158,7 +160,9 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: Text(
                       'Forgot Password?',
                       style: GoogleFonts.plusJakartaSans(
-                        color: AppColors.brandGreen,
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? AppColors.brandGreen
+                            : AppColors.brandGreenDeep,
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
                       ),
@@ -195,7 +199,9 @@ class _LoginScreenState extends State<LoginScreen> {
                       child: Text(
                         'Sign Up',
                         style: GoogleFonts.plusJakartaSans(
-                          color: AppColors.brandGreen,
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? AppColors.brandGreen
+                              : AppColors.brandGreenDeep,
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
                         ),

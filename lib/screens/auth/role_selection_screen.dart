@@ -148,13 +148,11 @@ class _RoleCard extends StatelessWidget {
               ? const Color(0xFF1A1A1A)
               : AppColors.surface,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: const Color(0xFF000000),
-            width: 1.5,
-          ),
           boxShadow: [
             BoxShadow(
-              color: AppColors.brandGreen.withOpacity(0.08),
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? AppColors.brandGreen.withOpacity(0.08)
+                  : AppColors.brandGreenDeep.withOpacity(0.08),
               blurRadius: 12,
               offset: const Offset(0, 4),
             ),
@@ -166,10 +164,22 @@ class _RoleCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: AppColors.brandGreen.withOpacity(0.1),
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? AppColors.brandGreen.withOpacity(0.1)
+                    : AppColors.brandGreenDeep.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: const Color(0xFF000000),
+                  width: 1.5,
+                ),
               ),
-              child: Icon(icon, size: 40, color: AppColors.brandGreen),
+              child: Icon(
+                icon,
+                size: 40,
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? AppColors.brandGreen
+                    : AppColors.brandGreenDeep,
+              ),
             ),
             const SizedBox(width: 16),
             // Content
@@ -207,7 +217,9 @@ class _RoleCard extends StatelessWidget {
             // Arrow Icon
             Icon(
               Icons.arrow_forward_ios,
-              color: AppColors.brandGreen,
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? AppColors.brandGreen
+                  : AppColors.brandGreenDeep,
               size: 18,
             ),
           ],

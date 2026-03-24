@@ -28,36 +28,42 @@ class CustomButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     return SizedBox(
       width: width ?? double.infinity,
       height: height ?? 56,
-      child:
-          isOutlined
-              ? OutlinedButton(
-                onPressed: isLoading ? null : onPressed,
-                style: OutlinedButton.styleFrom(
-                  side: BorderSide(
-                    color: backgroundColor ?? AppColors.brandGreenDeep,
-                    width: 2,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
+      child: isOutlined
+          ? OutlinedButton(
+              onPressed: isLoading ? null : onPressed,
+              style: OutlinedButton.styleFrom(
+                side: BorderSide(
+                  color: backgroundColor ??
+                      (isDarkMode
+                          ? AppColors.brandGreen
+                          : AppColors.brandGreenDeep),
+                  width: 2,
                 ),
-                child: _buildChild(),
-              )
-              : ElevatedButton(
-                onPressed: isLoading ? null : onPressed,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: backgroundColor ?? AppColors.brandGreen,
-                  foregroundColor: textColor ?? AppColors.textPrimary,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                child: _buildChild(),
               ),
+              child: _buildChild(),
+            )
+          : ElevatedButton(
+              onPressed: isLoading ? null : onPressed,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: backgroundColor ??
+                    (isDarkMode
+                        ? AppColors.brandGreen
+                        : AppColors.brandGreenDeep),
+                foregroundColor: textColor ?? AppColors.textPrimary,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                elevation: 0,
+              ),
+              child: _buildChild(),
+            ),
     );
   }
 
@@ -84,10 +90,9 @@ class CustomButton extends StatelessWidget {
             style: GoogleFonts.plusJakartaSans(
               fontSize: 16,
               fontWeight: FontWeight.w600,
-              color:
-                  isOutlined
-                      ? (textColor ?? AppColors.brandGreenDeep)
-                      : (textColor ?? AppColors.textPrimary),
+              color: isOutlined
+                  ? (textColor ?? AppColors.brandGreenDeep)
+                  : (textColor ?? AppColors.textPrimary),
             ),
           ),
         ],
@@ -99,10 +104,9 @@ class CustomButton extends StatelessWidget {
       style: GoogleFonts.plusJakartaSans(
         fontSize: 16,
         fontWeight: FontWeight.w600,
-        color:
-            isOutlined
-                ? (textColor ?? AppColors.brandGreenDeep)
-                : (textColor ?? AppColors.textPrimary),
+        color: isOutlined
+            ? (textColor ?? AppColors.brandGreenDeep)
+            : (textColor ?? AppColors.textPrimary),
       ),
     );
   }
