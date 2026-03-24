@@ -170,7 +170,9 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
           currentIndex: _currentIndex,
           onTap: (index) => setState(() => _currentIndex = index),
           backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-          selectedItemColor: AppColors.brandGreen,
+          selectedItemColor: Theme.of(context).brightness == Brightness.dark
+              ? AppColors.brandGreen
+              : AppColors.brandGreenDeep,
           unselectedItemColor: AppColors.textSecondary,
           type: BottomNavigationBarType.fixed,
           elevation: 0,
@@ -238,7 +240,9 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                 ),
                 Container(
                   decoration: BoxDecoration(
-                    color: AppColors.brandGreen,
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? AppColors.brandGreen
+                        : AppColors.brandGreenDeep,
                     shape: BoxShape.circle,
                   ),
                   child: IconButton(
@@ -299,7 +303,9 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                     child: Text(
                       'View All',
                       style: GoogleFonts.plusJakartaSans(
-                        color: AppColors.brandGreen,
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? AppColors.brandGreen
+                            : AppColors.brandGreenDeep,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -977,7 +983,9 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                 height: 8,
                 decoration: BoxDecoration(
                   color: _carouselIndex == index
-                      ? AppColors.brandGreen
+                      ? (Theme.of(context).brightness == Brightness.dark
+                          ? AppColors.brandGreen
+                          : AppColors.brandGreenDeep)
                       : AppColors.textSecondary.withOpacity(0.3),
                   borderRadius: BorderRadius.circular(4),
                 ),
