@@ -23,7 +23,9 @@ class RoleSelectionScreen extends StatelessWidget {
               Text(
                 'GenZFit',
                 style: GoogleFonts.plusJakartaSans(
-                  color: AppColors.brandGreen,
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? AppColors.brandGreen
+                      : AppColors.brandGreenDeep,
                   fontSize: 36,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 1.2,

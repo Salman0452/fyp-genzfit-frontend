@@ -227,6 +227,8 @@ class _SignupScreenState extends State<SignupScreen> {
                     spacing: 8,
                     children: _goals.map((goal) {
                       final isSelected = _selectedGoal == goal;
+                      final isDarkMode =
+                          Theme.of(context).brightness == Brightness.dark;
                       return ChoiceChip(
                         label: Text(_formatGoalName(goal)),
                         selected: isSelected,
@@ -235,15 +237,16 @@ class _SignupScreenState extends State<SignupScreen> {
                             _selectedGoal = selected ? goal : null;
                           });
                         },
-                        backgroundColor:
-                            Theme.of(context).brightness == Brightness.dark
-                                ? const Color(0xFF1A1A1A)
-                                : AppConstants.charcoalGray,
-                        selectedColor: AppConstants.primaryGold,
+                        backgroundColor: isDarkMode
+                            ? const Color(0xFF1A1A1A)
+                            : AppConstants.charcoalGray,
+                        selectedColor: isDarkMode
+                            ? AppColors.brandGreen
+                            : AppColors.brandGreenDeep,
                         labelStyle: TextStyle(
                           color: isSelected
                               ? AppConstants.primaryBlack
-                              : Theme.of(context).brightness == Brightness.dark
+                              : isDarkMode
                                   ? const Color(0xFFFFFFFF)
                                   : AppConstants.textWhite,
                           fontWeight: FontWeight.w600,
@@ -288,7 +291,9 @@ class _SignupScreenState extends State<SignupScreen> {
                         backgroundColor: isDarkMode
                             ? const Color(0xFF1A1A1A)
                             : AppConstants.charcoalGray,
-                        selectedColor: AppConstants.primaryGold,
+                        selectedColor: isDarkMode
+                            ? AppColors.brandGreen
+                            : AppColors.brandGreenDeep,
                         labelStyle: TextStyle(
                           color: isSelected
                               ? AppConstants.primaryBlack

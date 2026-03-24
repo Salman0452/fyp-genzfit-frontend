@@ -59,12 +59,17 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     final authProvider = context.watch<AuthProvider>();
 
     return Scaffold(
-      backgroundColor: AppConstants.primaryBlack,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppConstants.textWhite),
+          icon: Icon(
+            Icons.arrow_back,
+            color: Theme.of(context).brightness == Brightness.dark
+                ? const Color(0xFFFFFFFF)
+                : AppColors.textPrimary,
+          ),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -92,32 +97,40 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               width: 100,
               height: 100,
               decoration: BoxDecoration(
-                color: AppConstants.primaryGold.withOpacity(0.1),
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? AppConstants.primaryGold.withOpacity(0.1)
+                    : AppColors.brandGreenDeep.withOpacity(0.1),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.lock_reset,
                 size: 50,
-                color: AppConstants.primaryGold,
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? AppConstants.primaryGold
+                    : AppColors.brandGreenDeep,
               ),
             ),
           ),
 
           const SizedBox(height: AppConstants.paddingXLarge),
 
-          const Text(
+          Text(
             'Forgot Password?',
             style: TextStyle(
-              color: AppConstants.textWhite,
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? const Color(0xFFFFFFFF)
+                  : AppColors.textPrimary,
               fontSize: 28,
               fontWeight: FontWeight.bold,
             ),
           ),
           const SizedBox(height: AppConstants.paddingSmall),
-          const Text(
+          Text(
             "Don't worry! Enter your email address and we'll send you a link to reset your password.",
             style: TextStyle(
-              color: AppConstants.textGray,
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? const Color(0xFFB0B0B0)
+                  : AppColors.textSecondary,
               fontSize: AppConstants.fontLarge,
               height: 1.5,
             ),
@@ -148,10 +161,12 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           Center(
             child: TextButton(
               onPressed: _returnToLogin,
-              child: const Text(
+              child: Text(
                 'Back to Login',
                 style: TextStyle(
-                  color: AppConstants.primaryGold,
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? AppConstants.primaryGold
+                      : AppColors.brandGreenDeep,
                   fontSize: AppConstants.fontLarge,
                   fontWeight: FontWeight.w600,
                 ),
@@ -190,10 +205,12 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
         const SizedBox(height: AppConstants.paddingXLarge),
 
-        const Text(
+        Text(
           'Check Your Email!',
           style: TextStyle(
-            color: AppConstants.textWhite,
+            color: Theme.of(context).brightness == Brightness.dark
+                ? const Color(0xFFFFFFFF)
+                : AppColors.textPrimary,
             fontSize: 28,
             fontWeight: FontWeight.bold,
           ),
@@ -204,8 +221,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
         Text(
           'We\'ve sent a password reset link to:',
-          style: const TextStyle(
-            color: AppConstants.textGray,
+          style: TextStyle(
+            color: Theme.of(context).brightness == Brightness.dark
+                ? const Color(0xFFB0B0B0)
+                : AppColors.textSecondary,
             fontSize: AppConstants.fontLarge,
           ),
           textAlign: TextAlign.center,
@@ -215,8 +234,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
         Text(
           _emailController.text.trim(),
-          style: const TextStyle(
-            color: AppConstants.primaryGold,
+          style: TextStyle(
+            color: Theme.of(context).brightness == Brightness.dark
+                ? AppConstants.primaryGold
+                : AppColors.brandGreenDeep,
             fontSize: AppConstants.fontLarge,
             fontWeight: FontWeight.w600,
           ),
@@ -236,10 +257,12 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
+              Text(
                 'Next Steps:',
                 style: TextStyle(
-                  color: AppConstants.textWhite,
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? const Color(0xFFFFFFFF)
+                      : AppColors.textPrimary,
                   fontSize: AppConstants.fontLarge,
                   fontWeight: FontWeight.bold,
                 ),
@@ -259,18 +282,22 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         const SizedBox(height: AppConstants.paddingXLarge),
 
         // Didn't receive email?
-        const Text(
+        Text(
           "Didn't receive the email?",
           style: TextStyle(
-            color: AppConstants.textGray,
+            color: Theme.of(context).brightness == Brightness.dark
+                ? const Color(0xFFB0B0B0)
+                : AppColors.textSecondary,
             fontSize: AppConstants.fontMedium,
           ),
         ),
         const SizedBox(height: AppConstants.paddingSmall),
         Text(
           '• Check your spam/junk folder\n• Make sure the email address is correct\n• Wait a few minutes and check again',
-          style: const TextStyle(
-            color: AppConstants.textDarkGray,
+          style: TextStyle(
+            color: Theme.of(context).brightness == Brightness.dark
+                ? const Color(0xFF808080)
+                : AppColors.textTertiary,
             fontSize: AppConstants.fontMedium,
             height: 1.5,
           ),
@@ -296,7 +323,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         CustomButton(
           text: 'Back to Login',
           onPressed: _returnToLogin,
-          backgroundColor: AppConstants.primaryGold,
+          backgroundColor: Theme.of(context).brightness == Brightness.dark
+              ? AppConstants.primaryGold
+              : AppColors.brandGreenDeep,
         ),
       ],
     );
@@ -309,7 +338,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           width: 24,
           height: 24,
           decoration: BoxDecoration(
-            color: AppConstants.primaryGold,
+            color: Theme.of(context).brightness == Brightness.dark
+                ? AppConstants.primaryGold
+                : AppColors.brandGreenDeep,
             shape: BoxShape.circle,
           ),
           child: Center(
@@ -326,8 +357,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         const SizedBox(width: AppConstants.paddingSmall),
         Text(
           text,
-          style: const TextStyle(
-            color: AppConstants.textGray,
+          style: TextStyle(
+            color: Theme.of(context).brightness == Brightness.dark
+                ? const Color(0xFFB0B0B0)
+                : AppColors.textSecondary,
             fontSize: AppConstants.fontMedium,
           ),
         ),
