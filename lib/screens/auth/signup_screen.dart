@@ -255,10 +255,12 @@ class _SignupScreenState extends State<SignupScreen> {
 
                 // Trainer-specific fields
                 if (widget.role == UserRole.trainer) ...[
-                  const Text(
+                  Text(
                     'Expertise',
                     style: TextStyle(
-                      color: AppConstants.textWhite,
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? const Color(0xFFFFFFFF)
+                          : AppConstants.textWhite,
                       fontSize: AppConstants.fontMedium,
                       fontWeight: FontWeight.w500,
                     ),
@@ -269,6 +271,8 @@ class _SignupScreenState extends State<SignupScreen> {
                     runSpacing: 8,
                     children: _expertiseOptions.map((expertise) {
                       final isSelected = _selectedExpertise.contains(expertise);
+                      final isDarkMode =
+                          Theme.of(context).brightness == Brightness.dark;
                       return FilterChip(
                         label: Text(expertise),
                         selected: isSelected,
@@ -281,12 +285,16 @@ class _SignupScreenState extends State<SignupScreen> {
                             }
                           });
                         },
-                        backgroundColor: AppConstants.charcoalGray,
+                        backgroundColor: isDarkMode
+                            ? const Color(0xFF1A1A1A)
+                            : AppConstants.charcoalGray,
                         selectedColor: AppConstants.primaryGold,
                         labelStyle: TextStyle(
                           color: isSelected
                               ? AppConstants.primaryBlack
-                              : AppConstants.textWhite,
+                              : isDarkMode
+                                  ? const Color(0xFFFFFFFF)
+                                  : AppConstants.textWhite,
                           fontWeight: FontWeight.w600,
                         ),
                       );
@@ -313,10 +321,12 @@ class _SignupScreenState extends State<SignupScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text(
+                    Text(
                       'Already have an account? ',
                       style: TextStyle(
-                        color: AppConstants.textGray,
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? const Color(0xFFB0B0B0)
+                            : AppConstants.textGray,
                         fontSize: AppConstants.fontMedium,
                       ),
                     ),
