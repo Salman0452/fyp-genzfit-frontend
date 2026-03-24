@@ -192,9 +192,15 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: Theme.of(context).brightness == Brightness.dark
+            ? const Color(0xFF1A1A1A)
+            : AppColors.surface,
         borderRadius: BorderRadius.circular(AppSizes.borderRadius),
-        border: Border.all(color: AppColors.accent.withOpacity(0.2)),
+        border: Border.all(
+          color: Theme.of(context).brightness == Brightness.dark
+              ? AppColors.accent.withOpacity(0.2)
+              : AppColors.brandGreenDeep.withOpacity(0.2),
+        ),
       ),
       child: Column(
         children: [
@@ -320,19 +326,23 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
+              Text(
                 'Latest Scan',
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
-                  color: AppColors.textPrimary,
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? const Color(0xFFFFFFFF)
+                      : AppColors.textPrimary,
                 ),
               ),
               Text(
                 DateFormat('MMM dd, yyyy').format(measurement.date),
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 12,
-                  color: AppColors.textSecondary,
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? const Color(0xFFB0B0B0)
+                      : AppColors.textSecondary,
                 ),
               ),
             ],
@@ -389,12 +399,14 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
                   : AppColors.brandGreenDeep,
             ),
             const SizedBox(height: 12),
-            const Text(
+            Text(
               'Body Measurements',
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
-                color: AppColors.textPrimary,
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? const Color(0xFFFFFFFF)
+                    : AppColors.textPrimary,
               ),
             ),
             const SizedBox(height: 12),
@@ -406,12 +418,18 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
                   children: [
                     Text(
                       _formatMeasurementName(entry.key),
-                      style: const TextStyle(color: AppColors.textSecondary),
+                      style: TextStyle(
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? const Color(0xFFB0B0B0)
+                            : AppColors.textSecondary,
+                      ),
                     ),
                     Text(
                       '${entry.value.toStringAsFixed(1)} cm',
-                      style: const TextStyle(
-                        color: AppColors.textPrimary,
+                      style: TextStyle(
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? const Color(0xFFFFFFFF)
+                            : AppColors.textPrimary,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
