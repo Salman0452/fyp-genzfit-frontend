@@ -151,6 +151,126 @@ class SettingsScreen extends StatelessWidget {
     }
   }
 
+  Future<void> _showAboutDialog(BuildContext context) async {
+    await showDialog<void>(
+      context: context,
+      barrierColor: Colors.black.withOpacity(0.5),
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: Container(
+          decoration: BoxDecoration(
+            color: Theme.of(context).brightness == Brightness.dark
+                ? const Color(0xFF1A1A1A)
+                : AppColors.surface,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? AppColors.accent.withOpacity(0.3)
+                  : AppColors.brandGreenDeep.withOpacity(0.2),
+              width: 1,
+            ),
+          ),
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header with icon
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? AppColors.accent.withOpacity(0.2)
+                          : AppColors.brandGreenDeep.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(
+                      Icons.fitness_center,
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? AppColors.accent
+                          : AppColors.brandGreenDeep,
+                      size: 28,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'GenZFit',
+                          style: TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                            color:
+                                Theme.of(context).brightness == Brightness.dark
+                                    ? const Color(0xFFFFFFFF)
+                                    : AppColors.textPrimary,
+                          ),
+                        ),
+                        Text(
+                          'v1.0.0',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color:
+                                Theme.of(context).brightness == Brightness.dark
+                                    ? const Color(0xFFB0B0B0)
+                                    : AppColors.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              // Description
+              Text(
+                'GenZFit is your AI-powered fitness companion. Track your progress, get personalized recommendations, and achieve your fitness goals with expert guidance.',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? const Color(0xFFB0B0B0)
+                      : AppColors.textSecondary,
+                  height: 1.6,
+                ),
+              ),
+              const SizedBox(height: 24),
+              // Close button
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor:
+                        Theme.of(context).brightness == Brightness.dark
+                            ? AppColors.accent
+                            : AppColors.brandGreenDeep,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    elevation: 0,
+                  ),
+                  child: const Text(
+                    'Close',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -215,20 +335,6 @@ class SettingsScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 12),
-              _buildSettingItem(
-                context,
-                icon: Icons.tune,
-                title: 'Edit Preferences',
-                subtitle: 'Update your goals, workout & diet settings',
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const EditPreferencesScreen(),
-                    ),
-                  );
-                },
-              ),
               _buildSettingItem(
                 context,
                 icon: Icons.notifications,
@@ -319,24 +425,7 @@ class SettingsScreen extends StatelessWidget {
                 title: 'About GenZFit',
                 subtitle: 'Version 1.0.0',
                 onTap: () {
-                  showAboutDialog(
-                    context: context,
-                    applicationName: 'GenZFit',
-                    applicationVersion: '1.0.0',
-                    applicationIcon: Icon(
-                      Icons.fitness_center,
-                      color: Theme.of(context).brightness == Brightness.dark
-                          ? AppColors.accent
-                          : AppColors.brandGreenDeep,
-                      size: 48,
-                    ),
-                    children: [
-                      const Text(
-                        'GenZFit is your AI-powered fitness companion. Track your progress, get personalized recommendations, and achieve your fitness goals.',
-                        style: TextStyle(color: AppColors.textSecondary),
-                      ),
-                    ],
-                  );
+                  _showAboutDialog(context);
                 },
               ),
               _buildSettingItem(
