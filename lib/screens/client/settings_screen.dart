@@ -238,9 +238,11 @@ class SettingsScreen extends StatelessWidget {
                     context: context,
                     applicationName: 'GenZFit',
                     applicationVersion: '1.0.0',
-                    applicationIcon: const Icon(
+                    applicationIcon: Icon(
                       Icons.fitness_center,
-                      color: AppColors.accent,
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? AppColors.accent
+                          : AppColors.brandGreenDeep,
                       size: 48,
                     ),
                     children: [
@@ -328,7 +330,12 @@ class SettingsScreen extends StatelessWidget {
       child: Column(
         children: [
           ListTile(
-            leading: const Icon(Icons.palette, color: AppColors.accent),
+            leading: Icon(
+              Icons.palette,
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? AppColors.accent
+                  : AppColors.brandGreenDeep,
+            ),
             title: Text(
               'Theme',
               style: TextStyle(
@@ -373,7 +380,9 @@ class SettingsScreen extends StatelessWidget {
               ),
             ),
             value: themeProvider.useSystemTheme,
-            activeColor: AppColors.accent,
+            activeColor: Theme.of(context).brightness == Brightness.dark
+                ? AppColors.accent
+                : AppColors.brandGreenDeep,
             onChanged: (value) => themeProvider.setUseSystemTheme(value),
           ),
           SwitchListTile.adaptive(
@@ -396,7 +405,9 @@ class SettingsScreen extends StatelessWidget {
               ),
             ),
             value: themeProvider.isDarkMode,
-            activeColor: AppColors.accent,
+            activeColor: Theme.of(context).brightness == Brightness.dark
+                ? AppColors.accent
+                : AppColors.brandGreenDeep,
             onChanged: themeProvider.useSystemTheme
                 ? null
                 : (value) => themeProvider.setDarkModeEnabled(value),
@@ -422,7 +433,12 @@ class SettingsScreen extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppSizes.borderRadius),
       ),
       child: ListTile(
-        leading: Icon(icon, color: AppColors.accent),
+        leading: Icon(
+          icon,
+          color: Theme.of(context).brightness == Brightness.dark
+              ? AppColors.accent
+              : AppColors.brandGreenDeep,
+        ),
         title: Text(
           title,
           style: TextStyle(
