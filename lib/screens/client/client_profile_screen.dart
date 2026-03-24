@@ -95,7 +95,7 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: const Text('My Profile'),
-        backgroundColor: AppColors.surface,
+        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
         actions: [
           IconButton(
             icon: const Icon(Icons.settings),
@@ -290,14 +290,22 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            AppColors.accent.withOpacity(0.1),
-            AppColors.accent.withOpacity(0.05),
+            Theme.of(context).brightness == Brightness.dark
+                ? AppColors.accent.withOpacity(0.1)
+                : AppColors.brandGreenDeep.withOpacity(0.1),
+            Theme.of(context).brightness == Brightness.dark
+                ? AppColors.accent.withOpacity(0.05)
+                : AppColors.brandGreenDeep.withOpacity(0.05),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(AppSizes.borderRadius),
-        border: Border.all(color: AppColors.accent.withOpacity(0.3)),
+        border: Border.all(
+          color: Theme.of(context).brightness == Brightness.dark
+              ? AppColors.accent.withOpacity(0.3)
+              : AppColors.brandGreenDeep.withOpacity(0.3),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -407,35 +415,43 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
   }
 
   Widget _buildStatItem(String label, String value, IconData icon) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: AppColors.charcoal,
-        borderRadius: BorderRadius.circular(AppSizes.borderRadius),
-      ),
-      child: Column(
-        children: [
-          Icon(icon, color: AppColors.accent, size: 24),
-          const SizedBox(height: 8),
-          Text(
-            value,
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: AppColors.textPrimary,
+    return Builder(builder: (context) {
+      return Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Theme.of(context).brightness == Brightness.dark
+              ? const Color(0xFF1A1A1A)
+              : const Color(0xFFF5F5F5),
+          borderRadius: BorderRadius.circular(AppSizes.borderRadius),
+        ),
+        child: Column(
+          children: [
+            Icon(icon, color: AppColors.accent, size: 24),
+            const SizedBox(height: 8),
+            Text(
+              value,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? const Color(0xFFFFFFFF)
+                    : AppColors.textPrimary,
+              ),
             ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 12,
-              color: AppColors.textSecondary,
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? const Color(0xFFB0B0B0)
+                    : AppColors.textSecondary,
+              ),
             ),
-          ),
-        ],
-      ),
-    );
+          ],
+        ),
+      );
+    });
   }
 
   Widget _buildMeasurementHistory() {
@@ -456,7 +472,9 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
           Container(
             padding: const EdgeInsets.all(40),
             decoration: BoxDecoration(
-              color: AppColors.surface,
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? const Color(0xFF1A1A1A)
+                  : AppColors.surface,
               borderRadius: BorderRadius.circular(AppSizes.borderRadius),
             ),
             child: const Center(
@@ -505,62 +523,71 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
   Widget _buildMeasurementHistoryItem(MeasurementModel measurement) {
     return GestureDetector(
       onTap: () => _navigateToMeasurementDetail(measurement),
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(AppSizes.borderRadius),
-        ),
-        child: Row(
-          children: [
-            // Photo thumbnail or icon
-            if (measurement.photoUrls.isNotEmpty)
-              ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: CachedNetworkImage(
-                  imageUrl: measurement.photoUrls.first,
-                  width: 60,
-                  height: 60,
-                  fit: BoxFit.cover,
-                  placeholder:
-                      (context, url) => Container(
-                        width: 60,
-                        height: 60,
-                        color: AppColors.charcoal,
-                        child: const Center(
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: AppColors.accent,
+      child: Builder(builder: (context) {
+        return Container(
+          margin: const EdgeInsets.only(bottom: 12),
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Theme.of(context).brightness == Brightness.dark
+                ? const Color(0xFF1A1A1A)
+                : AppColors.surface,
+            borderRadius: BorderRadius.circular(AppSizes.borderRadius),
+          ),
+          child: Row(
+            children: [
+              // Photo thumbnail or icon
+              if (measurement.photoUrls.isNotEmpty)
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: CachedNetworkImage(
+                    imageUrl: measurement.photoUrls.first,
+                    width: 60,
+                    height: 60,
+                    fit: BoxFit.cover,
+                    placeholder:
+                        (context, url) => Container(
+                          width: 60,
+                          height: 60,
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? const Color(0xFF1A1A1A)
+                              : AppColors.charcoal,
+                          child: const Center(
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: AppColors.accent,
+                            ),
                           ),
                         ),
-                      ),
-                  errorWidget:
-                      (context, url, error) => Container(
-                        width: 60,
-                        height: 60,
-                        color: AppColors.charcoal,
-                        child: const Icon(
-                          Icons.image_not_supported,
-                          color: AppColors.textSecondary,
+                    errorWidget:
+                        (context, url, error) => Container(
+                          width: 60,
+                          height: 60,
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? const Color(0xFF1A1A1A)
+                              : AppColors.charcoal,
+                          child: const Icon(
+                            Icons.image_not_supported,
+                            color: AppColors.textSecondary,
+                          ),
                         ),
-                      ),
+                  ),
+                )
+              else
+                Container(
+                  width: 60,
+                  height: 60,
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? const Color(0xFF1A1A1A)
+                        : AppColors.charcoal,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(
+                    Icons.photo_camera,
+                    color: AppColors.textSecondary,
+                    size: 30,
+                  ),
                 ),
-              )
-            else
-              Container(
-                width: 60,
-                height: 60,
-                decoration: BoxDecoration(
-                  color: AppColors.charcoal,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Icon(
-                  Icons.photo_camera,
-                  color: AppColors.textSecondary,
-                  size: 30,
-                ),
-              ),
             const SizedBox(width: 16),
 
             // Info
@@ -570,18 +597,22 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
                 children: [
                   Text(
                     DateFormat('MMMM dd, yyyy').format(measurement.date),
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
-                      color: AppColors.textPrimary,
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? const Color(0xFFFFFFFF)
+                          : AppColors.textPrimary,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     'BMI: ${measurement.bmi.toStringAsFixed(1)} • ${measurement.bmiCategory}',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 14,
-                      color: AppColors.textSecondary,
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? const Color(0xFFB0B0B0)
+                          : AppColors.textSecondary,
                     ),
                   ),
                   if (measurement.photoUrls.length > 1)
