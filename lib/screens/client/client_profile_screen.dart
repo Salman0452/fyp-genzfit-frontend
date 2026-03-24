@@ -383,7 +383,11 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
           // Measurements
           if (measurement.estimatedMeasurements.isNotEmpty) ...[
             const SizedBox(height: 20),
-            const Divider(color: AppColors.accent),
+            Divider(
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? AppColors.accent
+                  : AppColors.brandGreenDeep,
+            ),
             const SizedBox(height: 12),
             const Text(
               'Body Measurements',
@@ -433,7 +437,13 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
         ),
         child: Column(
           children: [
-            Icon(icon, color: AppColors.accent, size: 24),
+            Icon(
+              icon,
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? AppColors.accent
+                  : AppColors.brandGreenDeep,
+              size: 24,
+            ),
             const SizedBox(height: 8),
             Text(
               value,
@@ -624,9 +634,12 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
                           padding: const EdgeInsets.only(top: 4),
                           child: Text(
                             '${measurement.photoUrls.length} photos',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 12,
-                              color: AppColors.accent,
+                              color: Theme.of(context).brightness ==
+                                      Brightness.dark
+                                  ? AppColors.accent
+                                  : AppColors.brandGreenDeep,
                             ),
                           ),
                         ),
@@ -635,7 +648,12 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
                 ),
 
                 // Arrow
-                const Icon(Icons.chevron_right, color: AppColors.accent),
+                Icon(
+                  Icons.chevron_right,
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? AppColors.accent
+                      : AppColors.brandGreenDeep,
+                ),
               ],
             ));
       }),
