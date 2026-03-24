@@ -47,7 +47,7 @@ class CustomButton extends StatelessWidget {
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
-              child: _buildChild(),
+              child: _buildChild(isDarkMode),
             )
           : ElevatedButton(
               onPressed: isLoading ? null : onPressed,
@@ -62,12 +62,12 @@ class CustomButton extends StatelessWidget {
                 ),
                 elevation: 0,
               ),
-              child: _buildChild(),
+              child: _buildChild(isDarkMode),
             ),
     );
   }
 
-  Widget _buildChild() {
+  Widget _buildChild(bool isDarkMode) {
     if (isLoading) {
       return const SizedBox(
         height: 24,
@@ -91,7 +91,10 @@ class CustomButton extends StatelessWidget {
               fontSize: 16,
               fontWeight: FontWeight.w600,
               color: isOutlined
-                  ? (textColor ?? AppColors.brandGreenDeep)
+                  ? (textColor ??
+                      (isDarkMode
+                          ? AppColors.brandGreen
+                          : AppColors.brandGreenDeep))
                   : (textColor ?? AppColors.textPrimary),
             ),
           ),
@@ -105,7 +108,8 @@ class CustomButton extends StatelessWidget {
         fontSize: 16,
         fontWeight: FontWeight.w600,
         color: isOutlined
-            ? (textColor ?? AppColors.brandGreenDeep)
+            ? (textColor ??
+                (isDarkMode ? AppColors.brandGreen : AppColors.brandGreenDeep))
             : (textColor ?? AppColors.textPrimary),
       ),
     );

@@ -227,10 +227,12 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
           // Name
           Text(
             user?.name ?? 'User',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
-              color: AppColors.textPrimary,
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? const Color(0xFFFFFFFF)
+                  : AppColors.textPrimary,
             ),
           ),
           const SizedBox(height: 8),
@@ -238,9 +240,11 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
           // Email
           Text(
             user?.email ?? '',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 14,
-              color: AppColors.textSecondary,
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? const Color(0xFFB0B0B0)
+                  : AppColors.textSecondary,
             ),
           ),
           const SizedBox(height: 16),

@@ -18,34 +18,43 @@ class SettingsScreen extends StatelessWidget {
   Future<void> _showLogoutDialog(BuildContext context) async {
     final confirmed = await showDialog<bool>(
       context: context,
-      builder:
-          (context) => AlertDialog(
-            backgroundColor: AppColors.surface,
-            title: const Text(
-              'Logout',
-              style: TextStyle(color: AppColors.textPrimary),
-            ),
-            content: const Text(
-              'Are you sure you want to logout?',
+      builder: (context) => AlertDialog(
+        backgroundColor: Theme.of(context).brightness == Brightness.dark
+            ? const Color(0xFF1A1A1A)
+            : AppColors.surface,
+        title: Text(
+          'Logout',
+          style: TextStyle(
+            color: Theme.of(context).brightness == Brightness.dark
+                ? const Color(0xFFFFFFFF)
+                : AppColors.textPrimary,
+          ),
+        ),
+        content: Text(
+          'Are you sure you want to logout?',
+          style: TextStyle(
+            color: Theme.of(context).brightness == Brightness.dark
+                ? const Color(0xFFB0B0B0)
+                : AppColors.textSecondary,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text(
+              'Cancel',
               style: TextStyle(color: AppColors.textSecondary),
             ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context, false),
-                child: const Text(
-                  'Cancel',
-                  style: TextStyle(color: AppColors.textSecondary),
-                ),
-              ),
-              TextButton(
-                onPressed: () => Navigator.pop(context, true),
-                child: const Text(
-                  'Logout',
-                  style: TextStyle(color: AppColors.error),
-                ),
-              ),
-            ],
           ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text(
+              'Logout',
+              style: TextStyle(color: AppColors.error),
+            ),
+          ),
+        ],
+      ),
     );
 
     if (confirmed == true && context.mounted) {
@@ -63,7 +72,7 @@ class SettingsScreen extends StatelessWidget {
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: const Text('Settings'),
-        backgroundColor: AppColors.surface,
+        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
       ),
       body: Consumer2<LanguageProvider, ThemeProvider>(
         builder: (context, languageProvider, themeProvider, child) {
@@ -311,60 +320,86 @@ class SettingsScreen extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: Theme.of(context).brightness == Brightness.dark
+            ? const Color(0xFF1A1A1A)
+            : AppColors.surface,
         borderRadius: BorderRadius.circular(AppSizes.borderRadius),
       ),
       child: Column(
         children: [
           ListTile(
             leading: const Icon(Icons.palette, color: AppColors.accent),
-            title: const Text(
+            title: Text(
               'Theme',
               style: TextStyle(
-                color: AppColors.textPrimary,
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? const Color(0xFFFFFFFF)
+                    : AppColors.textPrimary,
                 fontWeight: FontWeight.w600,
                 fontSize: 16,
               ),
             ),
             subtitle: Text(
               modeLabel,
-              style: const TextStyle(
-                color: AppColors.textSecondary,
+              style: TextStyle(
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? const Color(0xFFB0B0B0)
+                    : AppColors.textSecondary,
                 fontSize: 14,
               ),
             ),
           ),
-          const Divider(height: 1, color: AppColors.charcoal),
+          Divider(
+            height: 1,
+            color: Theme.of(context).brightness == Brightness.dark
+                ? const Color(0xFF404040)
+                : AppColors.charcoal,
+          ),
           SwitchListTile.adaptive(
-            title: const Text(
+            title: Text(
               'Use system theme',
-              style: TextStyle(color: AppColors.textPrimary),
+              style: TextStyle(
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? const Color(0xFFFFFFFF)
+                    : AppColors.textPrimary,
+              ),
             ),
-            subtitle: const Text(
+            subtitle: Text(
               'Automatically match your phone theme',
-              style: TextStyle(color: AppColors.textSecondary),
+              style: TextStyle(
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? const Color(0xFFB0B0B0)
+                    : AppColors.textSecondary,
+              ),
             ),
             value: themeProvider.useSystemTheme,
             activeColor: AppColors.accent,
             onChanged: (value) => themeProvider.setUseSystemTheme(value),
           ),
           SwitchListTile.adaptive(
-            title: const Text(
+            title: Text(
               'Dark mode',
-              style: TextStyle(color: AppColors.textPrimary),
+              style: TextStyle(
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? const Color(0xFFFFFFFF)
+                    : AppColors.textPrimary,
+              ),
             ),
             subtitle: Text(
               themeProvider.useSystemTheme
                   ? 'Disabled while system theme is enabled'
                   : 'Turn off for light mode',
-              style: const TextStyle(color: AppColors.textSecondary),
+              style: TextStyle(
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? const Color(0xFFB0B0B0)
+                    : AppColors.textSecondary,
+              ),
             ),
             value: themeProvider.isDarkMode,
             activeColor: AppColors.accent,
-            onChanged:
-                themeProvider.useSystemTheme
-                    ? null
-                    : (value) => themeProvider.setDarkModeEnabled(value),
+            onChanged: themeProvider.useSystemTheme
+                ? null
+                : (value) => themeProvider.setDarkModeEnabled(value),
           ),
         ],
       ),
@@ -381,26 +416,37 @@ class SettingsScreen extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: Theme.of(context).brightness == Brightness.dark
+            ? const Color(0xFF1A1A1A)
+            : AppColors.surface,
         borderRadius: BorderRadius.circular(AppSizes.borderRadius),
       ),
       child: ListTile(
         leading: Icon(icon, color: AppColors.accent),
         title: Text(
           title,
-          style: const TextStyle(
-            color: AppColors.textPrimary,
+          style: TextStyle(
+            color: Theme.of(context).brightness == Brightness.dark
+                ? const Color(0xFFFFFFFF)
+                : AppColors.textPrimary,
             fontWeight: FontWeight.w600,
             fontSize: 16,
           ),
         ),
         subtitle: Text(
           subtitle,
-          style: const TextStyle(color: AppColors.textSecondary, fontSize: 14),
+          style: TextStyle(
+            color: Theme.of(context).brightness == Brightness.dark
+                ? const Color(0xFFB0B0B0)
+                : AppColors.textSecondary,
+            fontSize: 14,
+          ),
         ),
-        trailing: const Icon(
+        trailing: Icon(
           Icons.chevron_right,
-          color: AppColors.textSecondary,
+          color: Theme.of(context).brightness == Brightness.dark
+              ? const Color(0xFFB0B0B0)
+              : AppColors.textSecondary,
         ),
         onTap: onTap,
       ),
