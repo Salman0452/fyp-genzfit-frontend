@@ -34,7 +34,9 @@ class RoleSelectionScreen extends StatelessWidget {
               Text(
                 'Choose Your Path',
                 style: GoogleFonts.plusJakartaSans(
-                  color: AppColors.textPrimary,
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? const Color(0xFFFFFFFF)
+                      : AppColors.textPrimary,
                   fontSize: 32,
                   fontWeight: FontWeight.w600,
                 ),
@@ -44,7 +46,9 @@ class RoleSelectionScreen extends StatelessWidget {
               Text(
                 'Select your role to get started',
                 style: GoogleFonts.plusJakartaSans(
-                  color: AppColors.textSecondary,
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? const Color(0xFFB0B0B0)
+                      : AppColors.textSecondary,
                   fontSize: 16,
                   fontWeight: FontWeight.w400,
                 ),
@@ -138,7 +142,9 @@ class _RoleCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: Theme.of(context).brightness == Brightness.dark
+              ? const Color(0xFF1A1A1A)
+              : AppColors.surface,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: AppColors.surfaceVariant.withOpacity(0.3),
@@ -172,7 +178,9 @@ class _RoleCard extends StatelessWidget {
                   Text(
                     title,
                     style: GoogleFonts.plusJakartaSans(
-                      color: AppColors.textPrimary,
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? const Color(0xFFFFFFFF)
+                          : AppColors.textPrimary,
                       fontSize: 18,
                       fontWeight: FontWeight.w600,
                     ),
@@ -181,7 +189,9 @@ class _RoleCard extends StatelessWidget {
                   Text(
                     description,
                     style: GoogleFonts.plusJakartaSans(
-                      color: AppColors.textSecondary,
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? const Color(0xFFB0B0B0)
+                          : AppColors.textSecondary,
                       fontSize: 12,
                       fontWeight: FontWeight.w400,
                       height: 1.4,
