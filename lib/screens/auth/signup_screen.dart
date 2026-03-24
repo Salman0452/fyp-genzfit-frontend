@@ -128,12 +128,17 @@ class _SignupScreenState extends State<SignupScreen> {
     final authProvider = context.watch<AuthProvider>();
 
     return Scaffold(
-      backgroundColor: AppConstants.primaryBlack,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppConstants.textWhite),
+          icon: Icon(
+            Icons.arrow_back,
+            color: Theme.of(context).brightness == Brightness.dark
+                ? const Color(0xFFFFFFFF)
+                : Colors.black,
+          ),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -147,17 +152,21 @@ class _SignupScreenState extends State<SignupScreen> {
               children: [
                 Text(
                   'Create ${widget.role == UserRole.client ? 'Client' : 'Trainer'} Account',
-                  style: const TextStyle(
-                    color: AppConstants.textWhite,
+                  style: TextStyle(
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? const Color(0xFFFFFFFF)
+                        : Colors.black,
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
                 const SizedBox(height: AppConstants.paddingSmall),
-                const Text(
+                Text(
                   'Join GenZFit and start your fitness journey',
                   style: TextStyle(
-                    color: AppConstants.textGray,
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? const Color(0xFFB0B0B0)
+                        : Colors.grey[600],
                     fontSize: AppConstants.fontLarge,
                   ),
                 ),
@@ -203,10 +212,12 @@ class _SignupScreenState extends State<SignupScreen> {
 
                 // Client-specific fields
                 if (widget.role == UserRole.client) ...[
-                  const Text(
+                  Text(
                     'Fitness Goal',
                     style: TextStyle(
-                      color: AppConstants.textWhite,
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? const Color(0xFFFFFFFF)
+                          : Colors.black,
                       fontSize: AppConstants.fontMedium,
                       fontWeight: FontWeight.w500,
                     ),
@@ -224,12 +235,17 @@ class _SignupScreenState extends State<SignupScreen> {
                             _selectedGoal = selected ? goal : null;
                           });
                         },
-                        backgroundColor: AppConstants.charcoalGray,
+                        backgroundColor:
+                            Theme.of(context).brightness == Brightness.dark
+                                ? const Color(0xFF1A1A1A)
+                                : AppConstants.charcoalGray,
                         selectedColor: AppConstants.primaryGold,
                         labelStyle: TextStyle(
                           color: isSelected
                               ? AppConstants.primaryBlack
-                              : AppConstants.textWhite,
+                              : Theme.of(context).brightness == Brightness.dark
+                                  ? const Color(0xFFFFFFFF)
+                                  : AppConstants.textWhite,
                           fontWeight: FontWeight.w600,
                         ),
                       );

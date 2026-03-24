@@ -110,7 +110,9 @@ class _LoginScreenState extends State<LoginScreen> {
                 Text(
                   'Welcome Back',
                   style: GoogleFonts.plusJakartaSans(
-                    color: AppColors.textPrimary,
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? const Color(0xFFFFFFFF)
+                        : AppColors.textPrimary,
                     fontSize: 28,
                     fontWeight: FontWeight.w600,
                   ),
@@ -120,7 +122,9 @@ class _LoginScreenState extends State<LoginScreen> {
                 Text(
                   'Sign in to continue your fitness journey',
                   style: GoogleFonts.plusJakartaSans(
-                    color: AppColors.textSecondary,
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? const Color(0xFFB0B0B0)
+                        : AppColors.textSecondary,
                     fontSize: 16,
                     fontWeight: FontWeight.w400,
                   ),
@@ -176,17 +180,18 @@ class _LoginScreenState extends State<LoginScreen> {
                     Text(
                       "Don't have an account? ",
                       style: GoogleFonts.plusJakartaSans(
-                        color: AppColors.textSecondary,
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? const Color(0xFFB0B0B0)
+                            : AppColors.textSecondary,
                         fontSize: 14,
                         fontWeight: FontWeight.w400,
                       ),
                     ),
                     GestureDetector(
-                      onTap:
-                          () => Navigator.pushReplacementNamed(
-                            context,
-                            '/role-selection',
-                          ),
+                      onTap: () => Navigator.pushReplacementNamed(
+                        context,
+                        '/role-selection',
+                      ),
                       child: Text(
                         'Sign Up',
                         style: GoogleFonts.plusJakartaSans(

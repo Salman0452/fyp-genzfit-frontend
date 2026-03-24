@@ -49,13 +49,15 @@ class _CustomTextFieldState extends State<CustomTextField> {
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           widget.label,
           style: GoogleFonts.plusJakartaSans(
-            color: AppColors.textPrimary,
+            color: isDarkMode ? const Color(0xFFFFFFFF) : AppColors.textPrimary,
             fontSize: 14,
             fontWeight: FontWeight.w500,
           ),
@@ -71,63 +73,77 @@ class _CustomTextFieldState extends State<CustomTextField> {
           onTap: widget.onTap,
           readOnly: widget.readOnly,
           style: GoogleFonts.plusJakartaSans(
-            color: AppColors.textPrimary,
+            color: isDarkMode ? const Color(0xFFFFFFFF) : AppColors.textPrimary,
             fontSize: 16,
             fontWeight: FontWeight.w400,
           ),
           decoration: InputDecoration(
             hintText: widget.hint,
             hintStyle: GoogleFonts.plusJakartaSans(
-              color: AppColors.textTertiary,
+              color:
+                  isDarkMode ? const Color(0xFF808080) : AppColors.textTertiary,
               fontSize: 16,
               fontWeight: FontWeight.w400,
             ),
-            prefixIcon:
-                widget.prefixIcon != null
-                    ? Icon(widget.prefixIcon, color: AppColors.textSecondary)
-                    : null,
-            suffixIcon:
-                widget.obscureText
+            prefixIcon: widget.prefixIcon != null
+                ? Icon(
+                    widget.prefixIcon,
+                    color: isDarkMode
+                        ? const Color(0xFFB0B0B0)
+                        : AppColors.textSecondary,
+                  )
+                : null,
+            suffixIcon: widget.obscureText
+                ? IconButton(
+                    icon: Icon(
+                      _obscureText ? Icons.visibility_off : Icons.visibility,
+                      color: isDarkMode
+                          ? const Color(0xFFB0B0B0)
+                          : AppColors.textSecondary,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _obscureText = !_obscureText;
+                      });
+                    },
+                  )
+                : widget.suffixIcon != null
                     ? IconButton(
-                      icon: Icon(
-                        _obscureText ? Icons.visibility_off : Icons.visibility,
-                        color: AppColors.textSecondary,
-                      ),
-                      onPressed: () {
-                        setState(() {
-                          _obscureText = !_obscureText;
-                        });
-                      },
-                    )
-                    : widget.suffixIcon != null
-                    ? IconButton(
-                      icon: Icon(
-                        widget.suffixIcon,
-                        color: AppColors.textSecondary,
-                      ),
-                      onPressed: widget.onSuffixIconTap,
-                    )
+                        icon: Icon(
+                          widget.suffixIcon,
+                          color: isDarkMode
+                              ? const Color(0xFFB0B0B0)
+                              : AppColors.textSecondary,
+                        ),
+                        onPressed: widget.onSuffixIconTap,
+                      )
                     : null,
             filled: true,
-            fillColor: AppColors.surfaceVariant.withOpacity(0.3),
+            fillColor: isDarkMode
+                ? const Color(0xFF1A1A1A)
+                : AppColors.surfaceVariant.withOpacity(0.3),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(
-                color: AppColors.textTertiary,
+              borderSide: BorderSide(
+                color: isDarkMode
+                    ? const Color(0xFF404040)
+                    : AppColors.textTertiary,
                 width: 1,
               ),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(
-                color: AppColors.textTertiary,
+              borderSide: BorderSide(
+                color: isDarkMode
+                    ? const Color(0xFF404040)
+                    : AppColors.textTertiary,
                 width: 1,
               ),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(
-                color: AppColors.brandGreenDeep,
+              borderSide: BorderSide(
+                color: AppColors.brandGreen,
                 width: 2,
               ),
             ),
