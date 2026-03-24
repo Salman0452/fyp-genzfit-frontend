@@ -99,7 +99,9 @@ class RoleSelectionScreen extends StatelessWidget {
                     child: Text(
                       'Sign In',
                       style: GoogleFonts.plusJakartaSans(
-                        color: const Color(0xFF000000),
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? AppColors.brandGreen
+                            : const Color(0xFF000000),
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
                       ),
