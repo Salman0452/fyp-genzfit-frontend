@@ -104,88 +104,87 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
           ),
         ],
       ),
-      body:
-          _isLoading
-              ? const LoadingWidget(message: 'Loading profile...')
-              : RefreshIndicator(
-                onRefresh: _loadMeasurements,
-                color: AppColors.accent,
-                backgroundColor: AppColors.surface,
-                child: SingleChildScrollView(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // User info card
-                      _buildUserInfoCard(user),
-                      const SizedBox(height: 24),
+      body: _isLoading
+          ? const LoadingWidget(message: 'Loading profile...')
+          : RefreshIndicator(
+              onRefresh: _loadMeasurements,
+              color: AppColors.accent,
+              backgroundColor: AppColors.surface,
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // User info card
+                    _buildUserInfoCard(user),
+                    const SizedBox(height: 24),
 
-                      // Latest measurement card
-                      if (_measurements.isNotEmpty) ...[
-                        _buildLatestMeasurementCard(_measurements.first),
-                        const SizedBox(height: 16),
-                        // Update measurement button
-                        CustomButton(
-                          text: 'Update Measurements',
-                          onPressed: _navigateToBodyScan,
-                          icon: Icons.camera_alt,
-                        ),
-                      ] else ...[
-                        Container(
-                          padding: const EdgeInsets.all(32),
-                          decoration: BoxDecoration(
-                            color: AppColors.surface,
-                            borderRadius: BorderRadius.circular(
-                              AppSizes.borderRadius,
-                            ),
-                            border: Border.all(
-                              color: AppColors.accent.withOpacity(0.2),
-                            ),
+                    // Latest measurement card
+                    if (_measurements.isNotEmpty) ...[
+                      _buildLatestMeasurementCard(_measurements.first),
+                      const SizedBox(height: 16),
+                      // Update measurement button
+                      CustomButton(
+                        text: 'Update Measurements',
+                        onPressed: _navigateToBodyScan,
+                        icon: Icons.camera_alt,
+                      ),
+                    ] else ...[
+                      Container(
+                        padding: const EdgeInsets.all(32),
+                        decoration: BoxDecoration(
+                          color: AppColors.surface,
+                          borderRadius: BorderRadius.circular(
+                            AppSizes.borderRadius,
                           ),
-                          child: Column(
-                            children: [
-                              const Icon(
-                                Icons.photo_camera,
-                                size: 64,
+                          border: Border.all(
+                            color: AppColors.accent.withOpacity(0.2),
+                          ),
+                        ),
+                        child: Column(
+                          children: [
+                            const Icon(
+                              Icons.photo_camera,
+                              size: 64,
+                              color: AppColors.textSecondary,
+                            ),
+                            const SizedBox(height: 16),
+                            const Text(
+                              'No measurements yet',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            const Text(
+                              'Take your first body scan to start tracking',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 14,
                                 color: AppColors.textSecondary,
                               ),
-                              const SizedBox(height: 16),
-                              const Text(
-                                'No measurements yet',
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: AppColors.textPrimary,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              const Text(
-                                'Take your first body scan to start tracking',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: AppColors.textSecondary,
-                                ),
-                              ),
-                              const SizedBox(height: 20),
-                              CustomButton(
-                                text: 'Take Body Scan',
-                                onPressed: _navigateToBodyScan,
-                                icon: Icons.camera_alt,
-                              ),
-                            ],
-                          ),
+                            ),
+                            const SizedBox(height: 20),
+                            CustomButton(
+                              text: 'Take Body Scan',
+                              onPressed: _navigateToBodyScan,
+                              icon: Icons.camera_alt,
+                            ),
+                          ],
                         ),
-                      ],
-                      const SizedBox(height: 24),
-
-                      // Measurement history
-                      _buildMeasurementHistory(),
+                      ),
                     ],
-                  ),
+                    const SizedBox(height: 24),
+
+                    // Measurement history
+                    _buildMeasurementHistory(),
+                  ],
                 ),
               ),
+            ),
     );
   }
 
@@ -203,21 +202,19 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
           CircleAvatar(
             radius: 50,
             backgroundColor: AppColors.accent,
-            backgroundImage:
-                user?.avatarUrl != null
-                    ? CachedNetworkImageProvider(user!.avatarUrl!)
-                    : null,
-            child:
-                user?.avatarUrl == null
-                    ? Text(
-                      user?.name?.substring(0, 1).toUpperCase() ?? 'U',
-                      style: const TextStyle(
-                        fontSize: 36,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.background,
-                      ),
-                    )
-                    : null,
+            backgroundImage: user?.avatarUrl != null
+                ? CachedNetworkImageProvider(user!.avatarUrl!)
+                : null,
+            child: user?.avatarUrl == null
+                ? Text(
+                    user?.name?.substring(0, 1).toUpperCase() ?? 'U',
+                    style: const TextStyle(
+                      fontSize: 36,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.background,
+                    ),
+                  )
+                : null,
           ),
           const SizedBox(height: 16),
 
@@ -467,7 +464,6 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
           ),
         ),
         const SizedBox(height: 16),
-
         if (_measurements.isEmpty)
           Container(
             padding: const EdgeInsets.all(40),
@@ -525,116 +521,114 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
       onTap: () => _navigateToMeasurementDetail(measurement),
       child: Builder(builder: (context) {
         return Container(
-          margin: const EdgeInsets.only(bottom: 12),
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Theme.of(context).brightness == Brightness.dark
-                ? const Color(0xFF1A1A1A)
-                : AppColors.surface,
-            borderRadius: BorderRadius.circular(AppSizes.borderRadius),
-          ),
-          child: Row(
-            children: [
-              // Photo thumbnail or icon
-              if (measurement.photoUrls.isNotEmpty)
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: CachedNetworkImage(
-                    imageUrl: measurement.photoUrls.first,
+            margin: const EdgeInsets.only(bottom: 12),
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? const Color(0xFF1A1A1A)
+                  : AppColors.surface,
+              borderRadius: BorderRadius.circular(AppSizes.borderRadius),
+            ),
+            child: Row(
+              children: [
+                // Photo thumbnail or icon
+                if (measurement.photoUrls.isNotEmpty)
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: CachedNetworkImage(
+                      imageUrl: measurement.photoUrls.first,
+                      width: 60,
+                      height: 60,
+                      fit: BoxFit.cover,
+                      placeholder: (context, url) => Container(
+                        width: 60,
+                        height: 60,
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? const Color(0xFF1A1A1A)
+                            : AppColors.charcoal,
+                        child: const Center(
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: AppColors.accent,
+                          ),
+                        ),
+                      ),
+                      errorWidget: (context, url, error) => Container(
+                        width: 60,
+                        height: 60,
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? const Color(0xFF1A1A1A)
+                            : AppColors.charcoal,
+                        child: const Icon(
+                          Icons.image_not_supported,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ),
+                  )
+                else
+                  Container(
                     width: 60,
                     height: 60,
-                    fit: BoxFit.cover,
-                    placeholder:
-                        (context, url) => Container(
-                          width: 60,
-                          height: 60,
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? const Color(0xFF1A1A1A)
+                          : AppColors.charcoal,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Icon(
+                      Icons.photo_camera,
+                      color: AppColors.textSecondary,
+                      size: 30,
+                    ),
+                  ),
+                const SizedBox(width: 16),
+
+                // Info
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        DateFormat('MMMM dd, yyyy').format(measurement.date),
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
                           color: Theme.of(context).brightness == Brightness.dark
-                              ? const Color(0xFF1A1A1A)
-                              : AppColors.charcoal,
-                          child: const Center(
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
+                              ? const Color(0xFFFFFFFF)
+                              : AppColors.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'BMI: ${measurement.bmi.toStringAsFixed(1)} • ${measurement.bmiCategory}',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? const Color(0xFFB0B0B0)
+                              : AppColors.textSecondary,
+                        ),
+                      ),
+                      if (measurement.photoUrls.length > 1)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 4),
+                          child: Text(
+                            '${measurement.photoUrls.length} photos',
+                            style: const TextStyle(
+                              fontSize: 12,
                               color: AppColors.accent,
                             ),
                           ),
                         ),
-                    errorWidget:
-                        (context, url, error) => Container(
-                          width: 60,
-                          height: 60,
-                          color: Theme.of(context).brightness == Brightness.dark
-                              ? const Color(0xFF1A1A1A)
-                              : AppColors.charcoal,
-                          child: const Icon(
-                            Icons.image_not_supported,
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
-                  ),
-                )
-              else
-                Container(
-                  width: 60,
-                  height: 60,
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).brightness == Brightness.dark
-                        ? const Color(0xFF1A1A1A)
-                        : AppColors.charcoal,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Icon(
-                    Icons.photo_camera,
-                    color: AppColors.textSecondary,
-                    size: 30,
+                    ],
                   ),
                 ),
-            const SizedBox(width: 16),
 
-            // Info
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    DateFormat('MMMM dd, yyyy').format(measurement.date),
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Theme.of(context).brightness == Brightness.dark
-                          ? const Color(0xFFFFFFFF)
-                          : AppColors.textPrimary,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'BMI: ${measurement.bmi.toStringAsFixed(1)} • ${measurement.bmiCategory}',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Theme.of(context).brightness == Brightness.dark
-                          ? const Color(0xFFB0B0B0)
-                          : AppColors.textSecondary,
-                    ),
-                  ),
-                  if (measurement.photoUrls.length > 1)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 4),
-                      child: Text(
-                        '${measurement.photoUrls.length} photos',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: AppColors.accent,
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-            ),
-
-            // Arrow
-            const Icon(Icons.chevron_right, color: AppColors.accent),
-          ],
-        ),
-      ),
+                // Arrow
+                const Icon(Icons.chevron_right, color: AppColors.accent),
+              ],
+            ));
+      }),
     );
   }
 
