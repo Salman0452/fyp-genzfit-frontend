@@ -162,7 +162,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: const Text('Edit Profile'),
-        backgroundColor: AppColors.surface,
+        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
@@ -177,24 +177,21 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   CircleAvatar(
                     radius: 60,
                     backgroundColor: AppColors.accent,
-                    backgroundImage:
-                        _selectedImage != null
-                            ? FileImage(_selectedImage!)
-                            : (user?.avatarUrl != null
-                                ? NetworkImage(user!.avatarUrl!)
-                                    as ImageProvider
-                                : null),
-                    child:
-                        _selectedImage == null && user?.avatarUrl == null
-                            ? Text(
-                              (user?.name ?? 'U').substring(0, 1).toUpperCase(),
-                              style: const TextStyle(
-                                fontSize: 48,
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.background,
-                              ),
-                            )
-                            : null,
+                    backgroundImage: _selectedImage != null
+                        ? FileImage(_selectedImage!)
+                        : (user?.avatarUrl != null
+                            ? NetworkImage(user!.avatarUrl!) as ImageProvider
+                            : null),
+                    child: _selectedImage == null && user?.avatarUrl == null
+                        ? Text(
+                            (user?.name ?? 'U').substring(0, 1).toUpperCase(),
+                            style: const TextStyle(
+                              fontSize: 48,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.background,
+                            ),
+                          )
+                        : null,
                   ),
                   if (_isUploadingImage)
                     const Positioned.fill(
@@ -214,7 +211,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       child: Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: AppColors.accent,
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? AppColors.accent
+                              : AppColors.brandGreenDeep,
                           shape: BoxShape.circle,
                           border: Border.all(
                             color: AppColors.background,
@@ -236,17 +235,57 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               // Name field
               TextFormField(
                 controller: _nameController,
-                style: const TextStyle(color: AppColors.textPrimary),
+                style: TextStyle(
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? const Color(0xFFFFFFFF)
+                      : AppColors.textPrimary,
+                ),
                 decoration: InputDecoration(
                   labelText: 'Full Name',
-                  labelStyle: const TextStyle(color: AppColors.textSecondary),
-                  prefixIcon: const Icon(Icons.person, color: AppColors.accent),
-                  filled: true,
-                  fillColor: AppColors.surface,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(AppSizes.borderRadius),
-                    borderSide: BorderSide.none,
+                  labelStyle: TextStyle(
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? const Color(0xFFB0B0B0)
+                        : AppColors.textSecondary,
                   ),
+                  prefixIcon: Icon(
+                    Icons.person,
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? AppColors.accent
+                        : AppColors.brandGreenDeep,
+                  ),
+                  filled: true,
+                  fillColor: Theme.of(context).brightness == Brightness.dark
+                      ? const Color(0xFF2A2A2A)
+                      : const Color(0xFFF5F5F5),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? const Color(0xFF404040)
+                          : const Color(0xFFE0E0E0),
+                      width: 1,
+                    ),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? const Color(0xFF404040)
+                          : const Color(0xFFE0E0E0),
+                      width: 1,
+                    ),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? AppColors.accent
+                          : AppColors.brandGreenDeep,
+                      width: 2,
+                    ),
+                  ),
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                 ),
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
@@ -261,25 +300,55 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               TextFormField(
                 controller: _emailController,
                 enabled: false,
-                style: const TextStyle(color: AppColors.textSecondary),
+                style: TextStyle(
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? const Color(0xFF808080)
+                      : AppColors.textSecondary,
+                ),
                 decoration: InputDecoration(
                   labelText: 'Email',
-                  labelStyle: const TextStyle(color: AppColors.textSecondary),
-                  prefixIcon: const Icon(
+                  labelStyle: TextStyle(
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? const Color(0xFF808080)
+                        : AppColors.textSecondary,
+                  ),
+                  prefixIcon: Icon(
                     Icons.email,
-                    color: AppColors.textSecondary,
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? const Color(0xFF808080)
+                        : AppColors.textSecondary,
                   ),
                   filled: true,
-                  fillColor: AppColors.charcoal,
+                  fillColor: Theme.of(context).brightness == Brightness.dark
+                      ? const Color(0xFF1A1A1A)
+                      : const Color(0xFFF0F0F0),
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(AppSizes.borderRadius),
-                    borderSide: BorderSide.none,
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? const Color(0xFF404040)
+                          : const Color(0xFFE0E0E0),
+                      width: 1,
+                    ),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? const Color(0xFF404040)
+                          : const Color(0xFFE0E0E0),
+                      width: 1,
+                    ),
                   ),
                   helperText: 'Email cannot be changed',
-                  helperStyle: const TextStyle(
-                    color: AppColors.textSecondary,
+                  helperStyle: TextStyle(
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? const Color(0xFF808080)
+                        : AppColors.textSecondary,
                     fontSize: 12,
                   ),
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                 ),
               ),
               const SizedBox(height: 16),
@@ -287,23 +356,67 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               // Goal dropdown
               DropdownButtonFormField<String>(
                 value: _selectedGoal,
-                dropdownColor: AppColors.surface,
-                style: const TextStyle(color: AppColors.textPrimary),
+                dropdownColor: Theme.of(context).brightness == Brightness.dark
+                    ? const Color(0xFF2A2A2A)
+                    : const Color(0xFFF5F5F5),
+                style: TextStyle(
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? const Color(0xFFFFFFFF)
+                      : AppColors.textPrimary,
+                ),
                 decoration: InputDecoration(
                   labelText: 'Fitness Goal',
-                  labelStyle: const TextStyle(color: AppColors.textSecondary),
-                  prefixIcon: const Icon(Icons.flag, color: AppColors.accent),
-                  filled: true,
-                  fillColor: AppColors.surface,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(AppSizes.borderRadius),
-                    borderSide: BorderSide.none,
+                  labelStyle: TextStyle(
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? const Color(0xFFB0B0B0)
+                        : AppColors.textSecondary,
                   ),
+                  prefixIcon: Icon(
+                    Icons.flag,
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? AppColors.accent
+                        : AppColors.brandGreenDeep,
+                  ),
+                  filled: true,
+                  fillColor: Theme.of(context).brightness == Brightness.dark
+                      ? const Color(0xFF2A2A2A)
+                      : const Color(0xFFF5F5F5),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? const Color(0xFF404040)
+                          : const Color(0xFFE0E0E0),
+                      width: 1,
+                    ),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? const Color(0xFF404040)
+                          : const Color(0xFFE0E0E0),
+                      width: 1,
+                    ),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? AppColors.accent
+                          : AppColors.brandGreenDeep,
+                      width: 2,
+                    ),
+                  ),
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                 ),
-                items:
-                    _goals.map((goal) {
-                      return DropdownMenuItem(value: goal, child: Text(goal));
-                    }).toList(),
+                items: _goals.map((goal) {
+                  return DropdownMenuItem(
+                    value: goal,
+                    child: Text(goal),
+                  );
+                }).toList(),
                 onChanged: (value) {
                   setState(() => _selectedGoal = value);
                 },
@@ -320,12 +433,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Padding(
-                    padding: EdgeInsets.only(left: 4, bottom: 10),
+                  Padding(
+                    padding: const EdgeInsets.only(left: 4, bottom: 10),
                     child: Text(
                       'Avatar Skin Tone',
                       style: TextStyle(
-                        color: AppColors.textSecondary,
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? const Color(0xFFB0B0B0)
+                            : AppColors.textSecondary,
                         fontSize: 13,
                       ),
                     ),
@@ -337,8 +452,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         color: const Color(0xFFFFDCB9),
                         value: 'light',
                         selected: _selectedSkinTone == 'light',
-                        onTap:
-                            () => setState(() => _selectedSkinTone = 'light'),
+                        onTap: () =>
+                            setState(() => _selectedSkinTone = 'light'),
                       ),
                       const SizedBox(width: 10),
                       _SkinToneChip(
@@ -346,8 +461,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         color: const Color(0xFFD2A882),
                         value: 'medium',
                         selected: _selectedSkinTone == 'medium',
-                        onTap:
-                            () => setState(() => _selectedSkinTone = 'medium'),
+                        onTap: () =>
+                            setState(() => _selectedSkinTone = 'medium'),
                       ),
                       const SizedBox(width: 10),
                       _SkinToneChip(
@@ -355,8 +470,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         color: const Color(0xFFB47850),
                         value: 'brown',
                         selected: _selectedSkinTone == 'brown',
-                        onTap:
-                            () => setState(() => _selectedSkinTone = 'brown'),
+                        onTap: () =>
+                            setState(() => _selectedSkinTone = 'brown'),
                       ),
                       const SizedBox(width: 10),
                       _SkinToneChip(
@@ -418,32 +533,35 @@ class _SkinToneChip extends StatelessWidget {
       child: GestureDetector(
         onTap: onTap,
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 150),
-          padding: const EdgeInsets.symmetric(vertical: 10),
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(vertical: 12),
           decoration: BoxDecoration(
             color: color,
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: selected ? Colors.white : Colors.transparent,
-              width: 2.5,
+              color: selected ? Colors.white : color.withOpacity(0.3),
+              width: 3,
             ),
-            boxShadow:
-                selected
-                    ? [BoxShadow(color: color.withOpacity(0.5), blurRadius: 8)]
-                    : [],
+            boxShadow: [
+              BoxShadow(
+                color: color.withOpacity(selected ? 0.6 : 0.2),
+                blurRadius: selected ? 12 : 4,
+                spreadRadius: selected ? 1 : 0,
+              ),
+            ],
           ),
           child: Column(
             children: [
               if (selected)
-                const Icon(Icons.check, color: Colors.white, size: 16),
+                const Icon(Icons.check, color: Colors.white, size: 18),
               Text(
                 label,
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: Colors.white,
-                  fontSize: 11,
-                  fontWeight: selected ? FontWeight.bold : FontWeight.normal,
-                  shadows: const [Shadow(color: Colors.black54, blurRadius: 4)],
+                  fontSize: 12,
+                  fontWeight: selected ? FontWeight.bold : FontWeight.w600,
+                  shadows: const [Shadow(color: Colors.black38, blurRadius: 3)],
                 ),
               ),
             ],
