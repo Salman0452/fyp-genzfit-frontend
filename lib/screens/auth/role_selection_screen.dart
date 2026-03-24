@@ -99,7 +99,7 @@ class RoleSelectionScreen extends StatelessWidget {
                     child: Text(
                       'Sign In',
                       style: GoogleFonts.plusJakartaSans(
-                        color: AppColors.brandGreen,
+                        color: const Color(0xFF000000),
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
                       ),
@@ -149,7 +149,7 @@ class _RoleCard extends StatelessWidget {
               : AppColors.surface,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: AppColors.surfaceVariant.withOpacity(0.3),
+            color: const Color(0xFF000000),
             width: 1.5,
           ),
           boxShadow: [
