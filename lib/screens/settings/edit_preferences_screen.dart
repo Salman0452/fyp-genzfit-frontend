@@ -188,15 +188,15 @@ class _EditPreferencesScreenState extends State<EditPreferencesScreen> {
         fillColor: _surface,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: _border),
+          borderSide: BorderSide(color: _border),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: _border),
+          borderSide: BorderSide(color: _border),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: _purple, width: 2),
+          borderSide: BorderSide(color: _purple, width: 2),
         ),
       );
 
@@ -282,7 +282,7 @@ class _EditPreferencesScreenState extends State<EditPreferencesScreen> {
           ),
         ),
         body: _isLoading
-            ? const Center(
+            ? Center(
                 child: CircularProgressIndicator(
                     valueColor: AlwaysStoppedAnimation(_purple)))
             : Stack(
@@ -496,7 +496,7 @@ class _EditPreferencesScreenState extends State<EditPreferencesScreen> {
           _sectionHeader('Workout Setup'),
 
           // Location chips
-          const Text('Location', style: TextStyle(color: _muted, fontSize: 13)),
+          Text('Location', style: TextStyle(color: _muted, fontSize: 13)),
           const SizedBox(height: 8),
           Wrap(
             spacing: 10,
@@ -529,7 +529,7 @@ class _EditPreferencesScreenState extends State<EditPreferencesScreen> {
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: _blue.withOpacity(0.3)),
                 ),
-                child: const Row(
+                child: Row(
                   children: [
                     Icon(Icons.park_outlined, color: _blue, size: 20),
                     SizedBox(width: 10),
@@ -603,8 +603,7 @@ class _EditPreferencesScreenState extends State<EditPreferencesScreen> {
           const SizedBox(height: 12),
 
           // Days per week
-          Text('Days per week',
-              style: TextStyle(color: _muted, fontSize: 13)),
+          Text('Days per week', style: TextStyle(color: _muted, fontSize: 13)),
           const SizedBox(height: 10),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -663,13 +662,12 @@ class _EditPreferencesScreenState extends State<EditPreferencesScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Age',
-                        style: TextStyle(color: _muted, fontSize: 13)),
+                    Text('Age', style: TextStyle(color: _muted, fontSize: 13)),
                     const SizedBox(height: 6),
                     TextField(
                       controller: _ageCtrl,
                       keyboardType: TextInputType.number,
-                      style: const TextStyle(color: _white),
+                      style: TextStyle(color: _white),
                       decoration: _fieldDecoration('25'),
                       onChanged: (_) => setState(() {
                         _data.age = int.tryParse(_ageCtrl.text) ?? _data.age;
@@ -683,7 +681,7 @@ class _EditPreferencesScreenState extends State<EditPreferencesScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Gender',
+                    Text('Gender',
                         style: TextStyle(color: _muted, fontSize: 13)),
                     const SizedBox(height: 6),
                     Container(
@@ -764,13 +762,13 @@ class _EditPreferencesScreenState extends State<EditPreferencesScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Height',
+                    Text('Height',
                         style: TextStyle(color: _muted, fontSize: 13)),
                     const SizedBox(height: 6),
                     TextField(
                       controller: _heightCtrl,
                       keyboardType: TextInputType.number,
-                      style: const TextStyle(color: _white),
+                      style: TextStyle(color: _white),
                       decoration: _fieldDecoration('170', suffix: 'cm'),
                       onChanged: (_) => setState(() {
                         _data.heightCm =
@@ -785,13 +783,13 @@ class _EditPreferencesScreenState extends State<EditPreferencesScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Weight',
+                    Text('Weight',
                         style: TextStyle(color: _muted, fontSize: 13)),
                     const SizedBox(height: 6),
                     TextField(
                       controller: _weightCtrl,
                       keyboardType: TextInputType.number,
-                      style: const TextStyle(color: _white),
+                      style: TextStyle(color: _white),
                       decoration: _fieldDecoration('70', suffix: 'kg'),
                       onChanged: (_) => setState(() {
                         _data.weightKg =
