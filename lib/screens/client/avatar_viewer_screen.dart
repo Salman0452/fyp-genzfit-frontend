@@ -243,8 +243,11 @@ class _AvatarViewerScreenState extends State<AvatarViewerScreen>
               height: 10,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color:
-                    _backendAvailable ? Colors.greenAccent : Colors.redAccent,
+                color: _backendAvailable
+                    ? (Theme.of(context).brightness == Brightness.dark
+                        ? AppColors.accent
+                        : AppColors.brandGreenDeep)
+                    : AppColors.error,
               ),
             ),
           ),
@@ -314,8 +317,8 @@ class _AvatarViewerScreenState extends State<AvatarViewerScreen>
                           decoration: BoxDecoration(
                             color:
                                 Theme.of(context).brightness == Brightness.dark
-                                    ? Colors.grey[400]
-                                    : Colors.grey[400],
+                                    ? AppColors.accentGray
+                                    : AppColors.accentGray,
                             borderRadius: BorderRadius.circular(2),
                           ),
                         ),
@@ -536,14 +539,16 @@ class _AvatarViewerScreenState extends State<AvatarViewerScreen>
                     : 'Obese';
 
     final bmiColor = bmi == null
-        ? Colors.grey
+        ? AppColors.accentGray
         : bmi < 18.5
-            ? Colors.blue
+            ? AppColors.accentTeal
             : bmi < 25
-                ? Colors.green
+                ? (Theme.of(context).brightness == Brightness.dark
+                    ? AppColors.accent
+                    : AppColors.brandGreenDeep)
                 : bmi < 30
-                    ? Colors.orange
-                    : Colors.red;
+                    ? AppColors.accentDarkGray
+                    : AppColors.error;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
@@ -676,11 +681,13 @@ class _AvatarViewerScreenState extends State<AvatarViewerScreen>
   Widget _deltaCard(String label, double delta, String unit) {
     final color = delta == 0
         ? (Theme.of(context).brightness == Brightness.dark
-            ? Colors.grey[500]
-            : Colors.grey[600])
+            ? AppColors.accentGray
+            : AppColors.accentGray)
         : delta <= 0
-            ? Colors.green[400]!
-            : Colors.red[400]!;
+            ? (Theme.of(context).brightness == Brightness.dark
+                ? AppColors.accent
+                : AppColors.brandGreenDeep)
+            : AppColors.error;
     final prefix = delta > 0 ? '+' : '';
     return Container(
       padding: const EdgeInsets.all(10),
@@ -938,7 +945,11 @@ class _AvatarViewerScreenState extends State<AvatarViewerScreen>
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       content: Text(msg),
-      backgroundColor: success ? Colors.greenAccent[700] : AppColors.error,
+      backgroundColor: success
+          ? (Theme.of(context).brightness == Brightness.dark
+              ? AppColors.accent
+              : AppColors.brandGreenDeep)
+          : AppColors.error,
       behavior: SnackBarBehavior.floating,
     ));
   }
