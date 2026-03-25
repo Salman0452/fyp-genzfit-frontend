@@ -194,12 +194,17 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         : null,
                   ),
                   if (_isUploadingImage)
-                    const Positioned.fill(
+                    Positioned.fill(
                       child: CircleAvatar(
                         radius: 60,
-                        backgroundColor: Colors.black54,
+                        backgroundColor:
+                            Theme.of(context).brightness == Brightness.dark
+                                ? const Color(0xFF000000).withOpacity(0.7)
+                                : const Color(0xFF000000).withOpacity(0.54),
                         child: CircularProgressIndicator(
-                          color: AppColors.accent,
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? AppColors.brandGreen
+                              : AppColors.brandGreenDeep,
                         ),
                       ),
                     ),

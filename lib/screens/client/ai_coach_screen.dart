@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:genzfit/models/user_model.dart';
 import 'package:genzfit/services/ai_chatbot_service.dart';
+import 'package:genzfit/utils/constants.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
@@ -132,14 +133,22 @@ class _AICoachScreenState extends State<AICoachScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF171917),
+        backgroundColor: Theme.of(context).brightness == Brightness.dark
+            ? const Color(0xFF1A1A1A)
+            : AppColors.surface,
         title: Text(
           'Clear Conversation',
-          style: GoogleFonts.poppins(color: Colors.white),
+          style: GoogleFonts.poppins(
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? const Color(0xFFFFFFFF)
+                  : AppColors.textPrimary),
         ),
         content: Text(
           'Are you sure you want to clear all messages?',
-          style: GoogleFonts.inter(color: Colors.white70),
+          style: GoogleFonts.inter(
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? const Color(0xFFB0B0B0)
+                  : AppColors.textSecondary),
         ),
         actions: [
           TextButton(
@@ -169,7 +178,10 @@ class _AICoachScreenState extends State<AICoachScreen> {
         backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
+          icon: Icon(Icons.arrow_back_ios,
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? const Color(0xFFFFFFFF)
+                  : AppColors.textPrimary),
           onPressed: () => Navigator.pop(context),
         ),
         title: Row(
@@ -210,7 +222,10 @@ class _AICoachScreenState extends State<AICoachScreen> {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.delete_outline, color: Colors.white),
+            icon: Icon(Icons.delete_outline,
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? const Color(0xFFFFFFFF)
+                    : AppColors.textPrimary),
             onPressed: _clearHistory,
           ),
         ],
@@ -219,9 +234,11 @@ class _AICoachScreenState extends State<AICoachScreen> {
         children: [
           Expanded(
             child: _isLoadingHistory
-                ? const Center(
+                ? Center(
                     child: CircularProgressIndicator(
-                      color: Color(0xFF83BCB5),
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? AppColors.brandGreen
+                          : AppColors.brandGreenDeep,
                     ),
                   )
                 : _messages.isEmpty

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:genzfit/utils/constants.dart';
 import '../../models/trainer_model.dart';
 import '../../models/user_model.dart';
 import '../shared/loading_widget.dart';
@@ -41,17 +42,22 @@ class _TrainerMarketplaceScreenState extends State<TrainerMarketplaceScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.grey[900],
-        title: const Text(
+        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
+        title: Text(
           'Find Trainers',
           style: TextStyle(
-            color: Colors.white,
+            color: Theme.of(context).brightness == Brightness.dark
+                ? const Color(0xFFFFFFFF)
+                : AppColors.textPrimary,
             fontWeight: FontWeight.bold,
           ),
         ),
-        iconTheme: const IconThemeData(color: Colors.white),
+        iconTheme: IconThemeData(
+            color: Theme.of(context).brightness == Brightness.dark
+                ? const Color(0xFFFFFFFF)
+                : AppColors.textPrimary),
       ),
       body: Column(
         children: [
@@ -64,20 +70,31 @@ class _TrainerMarketplaceScreenState extends State<TrainerMarketplaceScreen> {
 
   Widget _buildSearchAndFilters() {
     return Container(
-      color: Colors.grey[900],
+      color: Theme.of(context).appBarTheme.backgroundColor,
       padding: const EdgeInsets.all(16),
       child: Column(
         children: [
           // Search bar
           TextField(
             controller: _searchController,
-            style: const TextStyle(color: Colors.white),
+            style: TextStyle(
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? const Color(0xFFFFFFFF)
+                    : AppColors.textPrimary),
             decoration: InputDecoration(
               hintText: 'Search trainers...',
-              hintStyle: TextStyle(color: Colors.grey[500]),
-              prefixIcon: Icon(Icons.search, color: Colors.grey[500]),
+              hintStyle: TextStyle(
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? const Color(0xFFB0B0B0)
+                      : AppColors.textSecondary),
+              prefixIcon: Icon(Icons.search,
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? const Color(0xFFB0B0B0)
+                      : AppColors.textSecondary),
               filled: true,
-              fillColor: Colors.grey[850],
+              fillColor: Theme.of(context).brightness == Brightness.dark
+                  ? const Color(0xFF1A1A1A)
+                  : AppColors.charcoal,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide.none,
@@ -241,8 +258,7 @@ class _TrainerMarketplaceScreenState extends State<TrainerMarketplaceScreen> {
     if (_searchQuery.isNotEmpty) {
       trainerList = trainerList.where((trainer) {
         final bio = (trainer['bio'] ?? '').toString().toLowerCase();
-        final expertise =
-            (trainer['expertise'] ?? []).toString().toLowerCase();
+        final expertise = (trainer['expertise'] ?? []).toString().toLowerCase();
         return bio.contains(_searchQuery) || expertise.contains(_searchQuery);
       }).toList();
     }
@@ -277,7 +293,9 @@ class _TrainerMarketplaceScreenState extends State<TrainerMarketplaceScreen> {
     final expertise = List<String>.from(trainerData['expertise'] ?? []);
 
     return Card(
-      color: Colors.grey[900],
+      color: Theme.of(context).brightness == Brightness.dark
+          ? const Color(0xFF1A1A1A)
+          : AppColors.surface,
       margin: const EdgeInsets.only(bottom: 16),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: InkWell(

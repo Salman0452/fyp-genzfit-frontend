@@ -52,10 +52,14 @@ class _TrainerHomeScreenState extends State<TrainerHomeScreen> {
       body: screens[_currentIndex],
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: Theme.of(context).brightness == Brightness.dark
+              ? const Color(0xFF1A1A1A)
+              : AppColors.surface,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.3),
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? const Color(0xFF000000).withOpacity(0.3)
+                  : const Color(0xFF000000).withOpacity(0.1),
               blurRadius: 10,
               offset: const Offset(0, -2),
             ),
@@ -64,9 +68,15 @@ class _TrainerHomeScreenState extends State<TrainerHomeScreen> {
         child: BottomNavigationBar(
           currentIndex: _currentIndex,
           onTap: (index) => setState(() => _currentIndex = index),
-          backgroundColor: AppColors.surface,
-          selectedItemColor: AppColors.accent,
-          unselectedItemColor: AppColors.textSecondary,
+          backgroundColor: Theme.of(context).brightness == Brightness.dark
+              ? const Color(0xFF1A1A1A)
+              : AppColors.surface,
+          selectedItemColor: Theme.of(context).brightness == Brightness.dark
+              ? AppColors.brandGreen
+              : AppColors.brandGreenDeep,
+          unselectedItemColor: Theme.of(context).brightness == Brightness.dark
+              ? const Color(0xFFB0B0B0)
+              : AppColors.textSecondary,
           type: BottomNavigationBarType.fixed,
           elevation: 0,
           items: const [
@@ -105,10 +115,12 @@ class _TrainerHomeScreenState extends State<TrainerHomeScreen> {
                   children: [
                     Text(
                       'Welcome back, ${user?.name?.split(' ').first ?? 'Trainer'}!',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 28,
                         fontWeight: FontWeight.bold,
-                        color: AppColors.textPrimary,
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? const Color(0xFFFFFFFF)
+                            : AppColors.textPrimary,
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -116,19 +128,25 @@ class _TrainerHomeScreenState extends State<TrainerHomeScreen> {
                       'Help your clients achieve their goals',
                       style: TextStyle(
                         fontSize: 14,
-                        color: AppColors.textSecondary.withOpacity(0.8),
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? const Color(0xFFB0B0B0)
+                            : AppColors.textSecondary,
                       ),
                     ),
                   ],
                 ),
                 Container(
                   decoration: BoxDecoration(
-                    color: AppColors.accent,
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? AppColors.brandGreen
+                        : AppColors.brandGreenDeep,
                     shape: BoxShape.circle,
                   ),
                   child: IconButton(
                     icon: const Icon(Icons.notifications_outlined),
-                    color: AppColors.background,
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? const Color(0xFF000000)
+                        : const Color(0xFFFFFFFF),
                     onPressed: () {
                       // TODO: Navigate to notifications
                     },
@@ -193,12 +211,14 @@ class _TrainerHomeScreenState extends State<TrainerHomeScreen> {
             const SizedBox(height: 24),
 
             // Quick actions
-            const Text(
+            Text(
               'Quick Actions',
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
-                color: AppColors.textPrimary,
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? const Color(0xFFFFFFFF)
+                    : AppColors.textPrimary,
               ),
             ),
             const SizedBox(height: 16),
@@ -206,12 +226,14 @@ class _TrainerHomeScreenState extends State<TrainerHomeScreen> {
             const SizedBox(height: 24),
 
             // Recent activity placeholder
-            const Text(
+            Text(
               'Recent Activity',
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
-                color: AppColors.textPrimary,
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? const Color(0xFFFFFFFF)
+                    : AppColors.textPrimary,
               ),
             ),
             const SizedBox(height: 16),
@@ -223,19 +245,22 @@ class _TrainerHomeScreenState extends State<TrainerHomeScreen> {
   }
 
   Widget _buildStatsOverview(user) {
+    final accentColor = Theme.of(context).brightness == Brightness.dark
+        ? AppColors.brandGreen
+        : AppColors.brandGreenDeep;
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            AppColors.accent.withOpacity(0.2),
-            AppColors.accent.withOpacity(0.05),
+            accentColor.withOpacity(0.2),
+            accentColor.withOpacity(0.05),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(AppSizes.borderRadius),
-        border: Border.all(color: AppColors.accent.withOpacity(0.3)),
+        border: Border.all(color: accentColor.withOpacity(0.3)),
       ),
       child: Column(
         children: [
@@ -251,18 +276,18 @@ class _TrainerHomeScreenState extends State<TrainerHomeScreen> {
               Container(
                 width: 1,
                 height: 50,
-                color: AppColors.accent.withOpacity(0.3),
+                color: accentColor.withOpacity(0.3),
               ),
               _buildStatItem(
                 'Rating',
                 (user?.rating ?? 0.0).toStringAsFixed(1),
                 Icons.star,
-                AppColors.accent,
+                accentColor,
               ),
               Container(
                 width: 1,
                 height: 50,
-                color: AppColors.accent.withOpacity(0.3),
+                color: accentColor.withOpacity(0.3),
               ),
               _buildStatItem(
                 'Earnings',
@@ -289,16 +314,23 @@ class _TrainerHomeScreenState extends State<TrainerHomeScreen> {
         const SizedBox(height: 8),
         Text(
           value,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.bold,
-            color: AppColors.textPrimary,
+            color: Theme.of(context).brightness == Brightness.dark
+                ? const Color(0xFFFFFFFF)
+                : AppColors.textPrimary,
           ),
         ),
         const SizedBox(height: 4),
         Text(
           label,
-          style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+          style: TextStyle(
+            fontSize: 12,
+            color: Theme.of(context).brightness == Brightness.dark
+                ? const Color(0xFFB0B0B0)
+                : AppColors.textSecondary,
+          ),
         ),
       ],
     );
@@ -339,7 +371,9 @@ class _TrainerHomeScreenState extends State<TrainerHomeScreen> {
               child: _buildActionCard(
                 'Messages',
                 Icons.chat_bubble_outline,
-                AppColors.accent,
+                Theme.of(context).brightness == Brightness.dark
+                    ? AppColors.brandGreen
+                    : AppColors.brandGreenDeep,
                 () {
                   Navigator.push(
                     context,
@@ -378,7 +412,9 @@ class _TrainerHomeScreenState extends State<TrainerHomeScreen> {
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: Theme.of(context).brightness == Brightness.dark
+              ? const Color(0xFF1A1A1A)
+              : AppColors.surface,
           borderRadius: BorderRadius.circular(AppSizes.borderRadius),
           border: Border.all(color: color.withOpacity(0.3)),
         ),
@@ -395,10 +431,12 @@ class _TrainerHomeScreenState extends State<TrainerHomeScreen> {
             const SizedBox(height: 12),
             Text(
               title,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
-                color: AppColors.textPrimary,
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? const Color(0xFFFFFFFF)
+                    : AppColors.textPrimary,
               ),
             ),
           ],
@@ -411,26 +449,41 @@ class _TrainerHomeScreenState extends State<TrainerHomeScreen> {
     return Container(
       padding: const EdgeInsets.all(40),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: Theme.of(context).brightness == Brightness.dark
+            ? const Color(0xFF1A1A1A)
+            : AppColors.surface,
         borderRadius: BorderRadius.circular(AppSizes.borderRadius),
       ),
-      child: const Column(
+      child: Column(
         children: [
-          Icon(Icons.timeline, size: 64, color: AppColors.textSecondary),
-          SizedBox(height: 16),
+          Icon(
+            Icons.timeline,
+            size: 64,
+            color: Theme.of(context).brightness == Brightness.dark
+                ? const Color(0xFFB0B0B0)
+                : AppColors.textSecondary,
+          ),
+          const SizedBox(height: 16),
           Text(
             'No recent activity',
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
-              color: AppColors.textPrimary,
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? const Color(0xFFFFFFFF)
+                  : AppColors.textPrimary,
             ),
           ),
-          SizedBox(height: 8),
+          const SizedBox(height: 8),
           Text(
             'Your client activities will appear here',
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
+            style: TextStyle(
+              fontSize: 14,
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? const Color(0xFFB0B0B0)
+                  : AppColors.textSecondary,
+            ),
           ),
         ],
       ),

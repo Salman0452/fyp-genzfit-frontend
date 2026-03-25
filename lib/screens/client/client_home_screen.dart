@@ -556,7 +556,9 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
               child: _buildActionCard(
                 'Body Scan',
                 Icons.camera_alt,
-                AppColors.accent,
+                Theme.of(context).brightness == Brightness.dark
+                    ? AppColors.brandGreen
+                    : AppColors.brandGreenDeep,
                 () {
                   Navigator.push(
                     context,
@@ -782,7 +784,11 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
   Widget _buildProgressStat(String label, String value, IconData icon) {
     return Column(
       children: [
-        Icon(icon, color: AppColors.accent, size: 24),
+        Icon(icon,
+            color: Theme.of(context).brightness == Brightness.dark
+                ? AppColors.brandGreen
+                : AppColors.brandGreenDeep,
+            size: 24),
         const SizedBox(height: 8),
         Text(
           value,
@@ -855,7 +861,9 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
               ).then((_) => _loadLatestMeasurement());
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.accent,
+              backgroundColor: Theme.of(context).brightness == Brightness.dark
+                  ? AppColors.brandGreen
+                  : AppColors.brandGreenDeep,
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(AppSizes.borderRadius),

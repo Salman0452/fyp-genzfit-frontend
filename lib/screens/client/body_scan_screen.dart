@@ -174,18 +174,22 @@ class _BodyScanScreenState extends State<BodyScanScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
+                    Text(
                       'Complete Your Scan',
                       style: TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
-                        color: AppColors.textPrimary,
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? const Color(0xFFFFFFFF)
+                            : AppColors.textPrimary,
                       ),
                     ),
                     IconButton(
-                      icon: const Icon(
+                      icon: Icon(
                         Icons.close,
-                        color: AppColors.textSecondary,
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? const Color(0xFFB0B0B0)
+                            : AppColors.textSecondary,
                       ),
                       onPressed: () {
                         setState(() {
@@ -204,23 +208,32 @@ class _BodyScanScreenState extends State<BodyScanScreen> {
                 TextField(
                   controller: _heightController,
                   keyboardType: TextInputType.number,
-                  style: const TextStyle(color: AppColors.textPrimary),
+                  style: TextStyle(
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? const Color(0xFFFFFFFF)
+                          : AppColors.textPrimary),
                   decoration: InputDecoration(
                     labelText: 'Height (cm) *',
-                    labelStyle: const TextStyle(
-                      color: AppColors.textSecondary,
+                    labelStyle: TextStyle(
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? const Color(0xFFB0B0B0)
+                          : AppColors.textSecondary,
                     ),
                     filled: true,
-                    fillColor: AppColors.charcoal,
+                    fillColor: Theme.of(context).brightness == Brightness.dark
+                        ? const Color(0xFF1A1A1A)
+                        : AppColors.charcoal,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(
                         AppSizes.borderRadius,
                       ),
                       borderSide: BorderSide.none,
                     ),
-                    prefixIcon: const Icon(
+                    prefixIcon: Icon(
                       Icons.height,
-                      color: AppColors.accent,
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? AppColors.brandGreen
+                          : AppColors.brandGreenDeep,
                     ),
                   ),
                   onChanged: (value) => _updatePredictions(setModalState),
@@ -670,7 +683,9 @@ class _BodyScanScreenState extends State<BodyScanScreen> {
           IconButton(
             icon: Icon(
               _showGuidelines ? Icons.grid_on : Icons.grid_off,
-              color: AppColors.accent,
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? AppColors.brandGreen
+                  : AppColors.brandGreenDeep,
             ),
             onPressed: () {
               setState(() => _showGuidelines = !_showGuidelines);
@@ -689,7 +704,10 @@ class _BodyScanScreenState extends State<BodyScanScreen> {
                   Positioned.fill(
                     child: PoseOverlay(
                       showGuidelines: _showGuidelines,
-                      guidelineColor: AppColors.accent,
+                      guidelineColor:
+                          Theme.of(context).brightness == Brightness.dark
+                              ? AppColors.brandGreen
+                              : AppColors.brandGreenDeep,
                     ),
                   ),
 
@@ -733,8 +751,12 @@ class _BodyScanScreenState extends State<BodyScanScreen> {
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           color: _isProcessing
-                              ? AppColors.textSecondary
-                              : AppColors.accent,
+                              ? (Theme.of(context).brightness == Brightness.dark
+                                  ? const Color(0xFFB0B0B0)
+                                  : AppColors.textSecondary)
+                              : (Theme.of(context).brightness == Brightness.dark
+                                  ? AppColors.brandGreen
+                                  : AppColors.brandGreenDeep),
                           border: Border.all(
                             color: AppColors.textPrimary,
                             width: 4,
@@ -773,13 +795,18 @@ class _BodyScanScreenState extends State<BodyScanScreen> {
                           vertical: 8,
                         ),
                         decoration: BoxDecoration(
-                          color: AppColors.accent,
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? AppColors.brandGreen
+                              : AppColors.brandGreenDeep,
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Text(
                           '${_capturedPhotos.length} photo${_capturedPhotos.length > 1 ? 's' : ''} captured',
-                          style: const TextStyle(
-                            color: AppColors.background,
+                          style: TextStyle(
+                            color:
+                                Theme.of(context).brightness == Brightness.dark
+                                    ? const Color(0xFF010101)
+                                    : AppColors.background,
                             fontWeight: FontWeight.bold,
                           ),
                         ),

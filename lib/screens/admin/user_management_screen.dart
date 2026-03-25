@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:genzfit/models/user_model.dart';
 import 'package:genzfit/models/measurement_model.dart';
 import 'package:intl/intl.dart';
+import 'package:genzfit/utils/constants.dart';
 
 class UserManagementScreen extends StatefulWidget {
   const UserManagementScreen({super.key});
@@ -27,12 +28,17 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF171917),
+        backgroundColor: Theme.of(context).brightness == Brightness.dark
+            ? const Color(0xFF171917)
+            : AppColors.backgroundLight,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
+          icon: Icon(Icons.arrow_back_ios,
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? const Color(0xFFFFFFFF)
+                  : AppColors.textPrimary),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
@@ -40,7 +46,9 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
           style: GoogleFonts.poppins(
             fontSize: 20,
             fontWeight: FontWeight.bold,
-            color: Colors.white,
+            color: Theme.of(context).brightness == Brightness.dark
+                ? const Color(0xFFFFFFFF)
+                : AppColors.textPrimary,
           ),
         ),
       ),
@@ -58,20 +66,35 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
   Widget _buildSearchAndFilters() {
     return Container(
       padding: const EdgeInsets.all(16),
-      color: Colors.black,
+      color: Theme.of(context).scaffoldBackgroundColor,
       child: Column(
         children: [
           // Search Bar
           TextField(
             controller: _searchController,
-            style: const TextStyle(color: Colors.white),
+            style: TextStyle(
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? const Color(0xFFFFFFFF)
+                    : AppColors.textPrimary),
             decoration: InputDecoration(
               hintText: 'Search by name or email...',
-              hintStyle: const TextStyle(color: Colors.white38),
-              prefixIcon: const Icon(Icons.search, color: Color(0xFF83BCB5)),
+              hintStyle: TextStyle(
+                  color: (Theme.of(context).brightness == Brightness.dark
+                          ? const Color(0xFFFFFFFF)
+                          : AppColors.textPrimary)
+                      .withOpacity(0.38)),
+              prefixIcon: Icon(Icons.search,
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? AppColors.brandGreen
+                      : AppColors.brandGreenDeep),
               suffixIcon: _searchQuery.isNotEmpty
                   ? IconButton(
-                      icon: const Icon(Icons.clear, color: Colors.white38),
+                      icon: Icon(Icons.clear,
+                          color:
+                              (Theme.of(context).brightness == Brightness.dark
+                                      ? const Color(0xFFFFFFFF)
+                                      : AppColors.textPrimary)
+                                  .withOpacity(0.38)),
                       onPressed: () {
                         _searchController.clear();
                         setState(() => _searchQuery = '');
@@ -79,7 +102,9 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                     )
                   : null,
               filled: true,
-              fillColor: const Color(0xFF171917),
+              fillColor: Theme.of(context).brightness == Brightness.dark
+                  ? const Color(0xFF171917)
+                  : AppColors.backgroundLight,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide.none,
@@ -112,7 +137,13 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
       label: Text(
         label,
         style: GoogleFonts.inter(
-          color: isSelected ? Colors.black : Colors.white,
+          color: isSelected
+              ? (Theme.of(context).brightness == Brightness.dark
+                  ? const Color(0xFF1A1A1A)
+                  : AppColors.textPrimary)
+              : (Theme.of(context).brightness == Brightness.dark
+                  ? const Color(0xFFFFFFFF)
+                  : AppColors.textPrimary),
           fontWeight: FontWeight.w600,
         ),
       ),
@@ -120,11 +151,24 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
       onSelected: (selected) {
         setState(() => _roleFilter = value);
       },
-      backgroundColor: const Color(0xFF171917),
-      selectedColor: const Color(0xFF83BCB5),
-      checkmarkColor: Colors.black,
+      backgroundColor: Theme.of(context).brightness == Brightness.dark
+          ? const Color(0xFF171917)
+          : AppColors.backgroundLight,
+      selectedColor: Theme.of(context).brightness == Brightness.dark
+          ? AppColors.brandGreen
+          : AppColors.brandGreenDeep,
+      checkmarkColor: Theme.of(context).brightness == Brightness.dark
+          ? const Color(0xFF1A1A1A)
+          : AppColors.textPrimary,
       side: BorderSide(
-        color: isSelected ? const Color(0xFF83BCB5) : Colors.white24,
+        color: isSelected
+            ? (Theme.of(context).brightness == Brightness.dark
+                ? AppColors.brandGreen
+                : AppColors.brandGreenDeep)
+            : (Theme.of(context).brightness == Brightness.dark
+                    ? const Color(0xFFB0B0B0)
+                    : AppColors.textSecondary)
+                .withOpacity(0.24),
       ),
     );
   }
@@ -140,8 +184,11 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
       stream: query.snapshots(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(
-            child: CircularProgressIndicator(color: Color(0xFF83BCB5)),
+          return Center(
+            child: CircularProgressIndicator(
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? AppColors.brandGreen
+                    : AppColors.brandGreenDeep),
           );
         }
 
@@ -153,14 +200,20 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                 Icon(
                   Icons.people_outline,
                   size: 80,
-                  color: Colors.white.withOpacity(0.3),
+                  color: (Theme.of(context).brightness == Brightness.dark
+                          ? const Color(0xFFFFFFFF)
+                          : AppColors.textPrimary)
+                      .withOpacity(0.3),
                 ),
                 const SizedBox(height: 16),
                 Text(
                   'No users found',
                   style: GoogleFonts.poppins(
                     fontSize: 18,
-                    color: Colors.white60,
+                    color: (Theme.of(context).brightness == Brightness.dark
+                            ? const Color(0xFFFFFFFF)
+                            : AppColors.textPrimary)
+                        .withOpacity(0.6),
                   ),
                 ),
               ],
@@ -183,7 +236,11 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
           return Center(
             child: Text(
               'No users match your search',
-              style: GoogleFonts.inter(color: Colors.white60),
+              style: GoogleFonts.inter(
+                  color: (Theme.of(context).brightness == Brightness.dark
+                          ? const Color(0xFFFFFFFF)
+                          : AppColors.textPrimary)
+                      .withOpacity(0.6)),
             ),
           );
         }
@@ -202,14 +259,19 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
 
   Widget _buildUserCard(UserModel user) {
     return Card(
-      color: const Color(0xFF171917),
+      color: Theme.of(context).brightness == Brightness.dark
+          ? const Color(0xFF171917)
+          : AppColors.backgroundLight,
       margin: const EdgeInsets.only(bottom: 12),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
         side: BorderSide(
           color: user.status == 'suspended'
               ? Colors.red.withOpacity(0.3)
-              : Colors.white12,
+              : (Theme.of(context).brightness == Brightness.dark
+                      ? const Color(0xFFFFFFFF)
+                      : AppColors.textPrimary)
+                  .withOpacity(0.12),
         ),
       ),
       child: ExpansionTile(
@@ -219,15 +281,18 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
           children: [
             CircleAvatar(
               radius: 24,
-              backgroundImage: user.avatarUrl != null
-                  ? NetworkImage(user.avatarUrl!)
-                  : null,
-              backgroundColor: const Color(0xFF1F2120),
+              backgroundImage:
+                  user.avatarUrl != null ? NetworkImage(user.avatarUrl!) : null,
+              backgroundColor: Theme.of(context).brightness == Brightness.dark
+                  ? const Color(0xFF1F2120)
+                  : AppColors.backgroundLight,
               child: user.avatarUrl == null
                   ? Text(
                       user.name[0].toUpperCase(),
                       style: GoogleFonts.poppins(
-                        color: Colors.white,
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? const Color(0xFFFFFFFF)
+                            : AppColors.textPrimary,
                         fontWeight: FontWeight.bold,
                       ),
                     )
@@ -243,10 +308,12 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                     color: Colors.red,
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.block,
                     size: 12,
-                    color: Colors.white,
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? const Color(0xFFFFFFFF)
+                        : AppColors.textPrimary,
                   ),
                 ),
               ),
@@ -293,7 +360,10 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
               user.email,
               style: GoogleFonts.inter(
                 fontSize: 13,
-                color: Colors.white60,
+                color: (Theme.of(context).brightness == Brightness.dark
+                        ? const Color(0xFFFFFFFF)
+                        : AppColors.textPrimary)
+                    .withOpacity(0.6),
               ),
             ),
             const SizedBox(height: 2),
@@ -301,7 +371,10 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
               'Joined: ${DateFormat('MMM d, yyyy').format(user.createdAt)}',
               style: GoogleFonts.inter(
                 fontSize: 12,
-                color: Colors.white38,
+                color: (Theme.of(context).brightness == Brightness.dark
+                        ? const Color(0xFFFFFFFF)
+                        : AppColors.textPrimary)
+                    .withOpacity(0.38),
               ),
             ),
             if (user.status == 'suspended') ...[
@@ -336,7 +409,11 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Divider(color: Colors.white12),
+        Divider(
+            color: (Theme.of(context).brightness == Brightness.dark
+                    ? const Color(0xFFFFFFFF)
+                    : AppColors.textPrimary)
+                .withOpacity(0.12)),
         const SizedBox(height: 16),
 
         // User-specific details
@@ -347,19 +424,27 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
         ] else if (user.role == UserRole.trainer) ...[
           Row(
             children: [
-              Expanded(child: _buildDetailRow('Clients', '${user.clients ?? 0}')),
-              Expanded(child: _buildDetailRow('Rating', '${user.rating?.toStringAsFixed(1) ?? '0.0'}')),
+              Expanded(
+                  child: _buildDetailRow('Clients', '${user.clients ?? 0}')),
+              Expanded(
+                  child: _buildDetailRow(
+                      'Rating', '${user.rating?.toStringAsFixed(1) ?? '0.0'}')),
             ],
           ),
           const SizedBox(height: 12),
           Row(
             children: [
-              Expanded(child: _buildDetailRow('Hourly Rate', '\$${user.hourlyRate?.toStringAsFixed(0) ?? '0'}')),
-              Expanded(child: _buildDetailRow('Verified', user.verified == true ? 'Yes' : 'No')),
+              Expanded(
+                  child: _buildDetailRow('Hourly Rate',
+                      '\$${user.hourlyRate?.toStringAsFixed(0) ?? '0'}')),
+              Expanded(
+                  child: _buildDetailRow(
+                      'Verified', user.verified == true ? 'Yes' : 'No')),
             ],
           ),
           const SizedBox(height: 12),
-          _buildDetailRow('Total Earnings', '\$${user.totalEarnings?.toStringAsFixed(2) ?? '0.00'}'),
+          _buildDetailRow('Total Earnings',
+              '\$${user.totalEarnings?.toStringAsFixed(2) ?? '0.00'}'),
         ],
 
         const SizedBox(height: 20),
@@ -396,8 +481,14 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                     style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
                   ),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF7FFA88),
-                    foregroundColor: Colors.white,
+                    backgroundColor:
+                        Theme.of(context).brightness == Brightness.dark
+                            ? AppColors.brandGreen
+                            : AppColors.brandGreenDeep,
+                    foregroundColor:
+                        Theme.of(context).brightness == Brightness.dark
+                            ? const Color(0xFFFFFFFF)
+                            : AppColors.textPrimary,
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
@@ -438,7 +529,10 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
           label,
           style: GoogleFonts.inter(
             fontSize: 13,
-            color: Colors.white60,
+            color: (Theme.of(context).brightness == Brightness.dark
+                    ? const Color(0xFFFFFFFF)
+                    : AppColors.textPrimary)
+                .withOpacity(0.6),
           ),
         ),
         Text(
@@ -446,7 +540,9 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
           style: GoogleFonts.poppins(
             fontSize: 14,
             fontWeight: FontWeight.w600,
-            color: Colors.white,
+            color: Theme.of(context).brightness == Brightness.dark
+                ? const Color(0xFFFFFFFF)
+                : AppColors.textPrimary,
           ),
         ),
       ],
@@ -466,7 +562,8 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
           return _buildDetailRow('Latest Measurement', 'No data');
         }
 
-        final measurement = MeasurementModel.fromFirestore(snapshot.data!.docs.first);
+        final measurement =
+            MeasurementModel.fromFirestore(snapshot.data!.docs.first);
         return Column(
           children: [
             _buildDetailRow('Weight', '${measurement.weight} kg'),
@@ -484,16 +581,30 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF171917),
-        title: Text('Suspend User?', style: GoogleFonts.poppins(color: Colors.white)),
+        backgroundColor: Theme.of(context).brightness == Brightness.dark
+            ? const Color(0xFF171917)
+            : AppColors.backgroundLight,
+        title: Text('Suspend User?',
+            style: GoogleFonts.poppins(
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? const Color(0xFFFFFFFF)
+                    : AppColors.textPrimary)),
         content: Text(
           'This will suspend ${user.name}\'s account. They won\'t be able to access the app.',
-          style: GoogleFonts.inter(color: Colors.white70),
+          style: GoogleFonts.inter(
+              color: (Theme.of(context).brightness == Brightness.dark
+                      ? const Color(0xFFFFFFFF)
+                      : AppColors.textPrimary)
+                  .withOpacity(0.7)),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: Text('Cancel', style: GoogleFonts.inter(color: Colors.white)),
+            child: Text('Cancel',
+                style: GoogleFonts.inter(
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? const Color(0xFFFFFFFF)
+                        : AppColors.textPrimary)),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
@@ -542,7 +653,9 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('${user.name} has been activated'),
-            backgroundColor: const Color(0xFF7FFA88),
+            backgroundColor: Theme.of(context).brightness == Brightness.dark
+                ? AppColors.brandGreen
+                : AppColors.brandGreenDeep,
           ),
         );
       }
@@ -562,20 +675,35 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF171917),
-        title: Text('Delete User?', style: GoogleFonts.poppins(color: Colors.white)),
+        backgroundColor: Theme.of(context).brightness == Brightness.dark
+            ? const Color(0xFF171917)
+            : AppColors.backgroundLight,
+        title: Text('Delete User?',
+            style: GoogleFonts.poppins(
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? const Color(0xFFFFFFFF)
+                    : AppColors.textPrimary)),
         content: Text(
           'This will permanently delete ${user.name}\'s account and all associated data. This action cannot be undone.',
-          style: GoogleFonts.inter(color: Colors.white70),
+          style: GoogleFonts.inter(
+              color: (Theme.of(context).brightness == Brightness.dark
+                      ? const Color(0xFFFFFFFF)
+                      : AppColors.textPrimary)
+                  .withOpacity(0.7)),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: Text('Cancel', style: GoogleFonts.inter(color: Colors.white)),
+            child: Text('Cancel',
+                style: GoogleFonts.inter(
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? const Color(0xFFFFFFFF)
+                        : AppColors.textPrimary)),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: Text('Delete', style: GoogleFonts.inter(color: Colors.red.shade900)),
+            child: Text('Delete',
+                style: GoogleFonts.inter(color: Colors.red.shade900)),
           ),
         ],
       ),

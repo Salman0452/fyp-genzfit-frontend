@@ -108,8 +108,12 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
           ? const LoadingWidget(message: 'Loading profile...')
           : RefreshIndicator(
               onRefresh: _loadMeasurements,
-              color: AppColors.accent,
-              backgroundColor: AppColors.surface,
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? AppColors.brandGreen
+                  : AppColors.brandGreenDeep,
+              backgroundColor: Theme.of(context).brightness == Brightness.dark
+                  ? const Color(0xFF1A1A1A)
+                  : AppColors.surface,
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 padding: const EdgeInsets.all(20),
@@ -134,37 +138,52 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
                       Container(
                         padding: const EdgeInsets.all(32),
                         decoration: BoxDecoration(
-                          color: AppColors.surface,
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? const Color(0xFF1A1A1A)
+                              : AppColors.surface,
                           borderRadius: BorderRadius.circular(
                             AppSizes.borderRadius,
                           ),
                           border: Border.all(
-                            color: AppColors.accent.withOpacity(0.2),
+                            color:
+                                (Theme.of(context).brightness == Brightness.dark
+                                        ? AppColors.brandGreen
+                                        : AppColors.brandGreenDeep)
+                                    .withOpacity(0.2),
                           ),
                         ),
                         child: Column(
                           children: [
-                            const Icon(
+                            Icon(
                               Icons.photo_camera,
                               size: 64,
-                              color: AppColors.textSecondary,
+                              color: Theme.of(context).brightness ==
+                                      Brightness.dark
+                                  ? const Color(0xFFB0B0B0)
+                                  : AppColors.textSecondary,
                             ),
                             const SizedBox(height: 16),
-                            const Text(
+                            Text(
                               'No measurements yet',
                               style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
-                                color: AppColors.textPrimary,
+                                color: Theme.of(context).brightness ==
+                                        Brightness.dark
+                                    ? const Color(0xFFFFFFFF)
+                                    : AppColors.textPrimary,
                               ),
                             ),
                             const SizedBox(height: 8),
-                            const Text(
+                            Text(
                               'Take your first body scan to start tracking',
                               textAlign: TextAlign.center,
                               style: TextStyle(
                                 fontSize: 14,
-                                color: AppColors.textSecondary,
+                                color: Theme.of(context).brightness ==
+                                        Brightness.dark
+                                    ? const Color(0xFFB0B0B0)
+                                    : AppColors.textSecondary,
                               ),
                             ),
                             const SizedBox(height: 20),
@@ -197,9 +216,10 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
             : AppColors.surface,
         borderRadius: BorderRadius.circular(AppSizes.borderRadius),
         border: Border.all(
-          color: Theme.of(context).brightness == Brightness.dark
-              ? AppColors.accent.withOpacity(0.2)
-              : AppColors.brandGreenDeep.withOpacity(0.2),
+          color: (Theme.of(context).brightness == Brightness.dark
+                  ? AppColors.brandGreen
+                  : AppColors.brandGreenDeep)
+              .withOpacity(0.2),
         ),
       ),
       child: Column(
@@ -207,7 +227,9 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
           // Avatar
           CircleAvatar(
             radius: 50,
-            backgroundColor: AppColors.accent,
+            backgroundColor: Theme.of(context).brightness == Brightness.dark
+                ? AppColors.brandGreen
+                : AppColors.brandGreenDeep,
             backgroundImage: user?.avatarUrl != null
                 ? CachedNetworkImageProvider(user!.avatarUrl!)
                 : null,
@@ -264,7 +286,7 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
                 Icon(
                   Icons.flag,
                   color: Theme.of(context).brightness == Brightness.dark
-                      ? AppColors.accent
+                      ? AppColors.brandGreen
                       : AppColors.brandGreenDeep,
                   size: 16,
                 ),
@@ -273,7 +295,7 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
                   user?.goals ?? 'No goal set',
                   style: TextStyle(
                     color: Theme.of(context).brightness == Brightness.dark
-                        ? AppColors.accent
+                        ? AppColors.brandGreen
                         : AppColors.brandGreenDeep,
                     fontWeight: FontWeight.bold,
                   ),
@@ -319,9 +341,10 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
         ),
         borderRadius: BorderRadius.circular(AppSizes.borderRadius),
         border: Border.all(
-          color: Theme.of(context).brightness == Brightness.dark
-              ? AppColors.accent.withOpacity(0.3)
-              : AppColors.brandGreenDeep.withOpacity(0.3),
+          color: (Theme.of(context).brightness == Brightness.dark
+                  ? AppColors.brandGreen
+                  : AppColors.brandGreenDeep)
+              .withOpacity(0.3),
         ),
       ),
       child: Column(
@@ -497,12 +520,14 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'Measurement History',
           style: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.bold,
-            color: AppColors.textPrimary,
+            color: Theme.of(context).brightness == Brightness.dark
+                ? const Color(0xFFFFFFFF)
+                : AppColors.textPrimary,
           ),
         ),
         const SizedBox(height: 16),
@@ -601,9 +626,11 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
                         color: Theme.of(context).brightness == Brightness.dark
                             ? const Color(0xFF1A1A1A)
                             : AppColors.charcoal,
-                        child: const Icon(
+                        child: Icon(
                           Icons.image_not_supported,
-                          color: AppColors.textSecondary,
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? const Color(0xFFB0B0B0)
+                              : AppColors.textSecondary,
                         ),
                       ),
                     ),
@@ -673,7 +700,7 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
                 Icon(
                   Icons.chevron_right,
                   color: Theme.of(context).brightness == Brightness.dark
-                      ? AppColors.accent
+                      ? AppColors.brandGreen
                       : AppColors.brandGreenDeep,
                 ),
               ],

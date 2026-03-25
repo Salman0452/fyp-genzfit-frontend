@@ -112,22 +112,18 @@ class _PreferencesScreenState extends State<PreferencesScreen> {
 
     final equipmentKeys =
         _equipment.map((e) => e.toLowerCase().replaceAll(' ', '_')).toList();
-    final injuryKeys =
-        _injuryLimitations
-            .map((e) => e.toLowerCase().replaceAll(' ', '_'))
-            .toList();
-    final dietKeys =
-        _dietaryRestrictions
-            .map((e) => e.toLowerCase().replaceAll(' ', '_'))
-            .toList();
-    final allergyKeys =
-        _foodAllergies
-            .map((e) => e.toLowerCase().replaceAll(' ', '_'))
-            .toList();
-    final healthKeys =
-        _healthConditions
-            .map((e) => e.toLowerCase().replaceAll(' ', '_'))
-            .toList();
+    final injuryKeys = _injuryLimitations
+        .map((e) => e.toLowerCase().replaceAll(' ', '_'))
+        .toList();
+    final dietKeys = _dietaryRestrictions
+        .map((e) => e.toLowerCase().replaceAll(' ', '_'))
+        .toList();
+    final allergyKeys = _foodAllergies
+        .map((e) => e.toLowerCase().replaceAll(' ', '_'))
+        .toList();
+    final healthKeys = _healthConditions
+        .map((e) => e.toLowerCase().replaceAll(' ', '_'))
+        .toList();
 
     final prefs = {
       'goal': _goal,
@@ -158,7 +154,7 @@ class _PreferencesScreenState extends State<PreferencesScreen> {
             content: Text(
               'Preferences saved. Your AI plans will now be personalised.',
             ),
-            backgroundColor: Colors.green,
+            backgroundColor: Color(0xFF10B981),
             duration: Duration(seconds: 3),
           ),
         );
@@ -169,7 +165,7 @@ class _PreferencesScreenState extends State<PreferencesScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error saving preferences: $e'),
-            backgroundColor: Colors.red,
+            backgroundColor: const Color(0xFFE53935),
           ),
         );
       }
@@ -183,42 +179,55 @@ class _PreferencesScreenState extends State<PreferencesScreen> {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: AppColors.surface,
-        title: const Text(
+        backgroundColor: Theme.of(context).brightness == Brightness.dark
+            ? const Color(0xFF1A1A1A)
+            : AppColors.surface,
+        title: Text(
           'Fitness Preferences',
-          style: TextStyle(color: AppColors.textPrimary),
+          style: TextStyle(
+            color: Theme.of(context).brightness == Brightness.dark
+                ? const Color(0xFFFFFFFF)
+                : AppColors.textPrimary,
+          ),
         ),
-        iconTheme: const IconThemeData(color: AppColors.textPrimary),
+        iconTheme: IconThemeData(
+          color: Theme.of(context).brightness == Brightness.dark
+              ? const Color(0xFFFFFFFF)
+              : AppColors.textPrimary,
+        ),
         elevation: 0,
       ),
-      body:
-          _isLoading
-              ? const Center(
-                child: CircularProgressIndicator(color: AppColors.accent),
-              )
-              : Column(
-                children: [
-                  Expanded(
-                    child: SingleChildScrollView(
-                      padding: const EdgeInsets.all(20),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _buildIntroCard(),
-                          const SizedBox(height: 24),
-                          _buildSection1(),
-                          const SizedBox(height: 24),
-                          _buildSection2(),
-                          const SizedBox(height: 24),
-                          _buildSection3(),
-                          const SizedBox(height: 32),
-                        ],
-                      ),
+      body: _isLoading
+          ? Center(
+              child: CircularProgressIndicator(
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? AppColors.brandGreen
+                    : AppColors.brandGreenDeep,
+              ),
+            )
+          : Column(
+              children: [
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildIntroCard(),
+                        const SizedBox(height: 24),
+                        _buildSection1(),
+                        const SizedBox(height: 24),
+                        _buildSection2(),
+                        const SizedBox(height: 24),
+                        _buildSection3(),
+                        const SizedBox(height: 32),
+                      ],
                     ),
                   ),
-                  _buildSaveButton(),
-                ],
-              ),
+                ),
+                _buildSaveButton(),
+              ],
+            ),
     );
   }
 
@@ -227,18 +236,37 @@ class _PreferencesScreenState extends State<PreferencesScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.accent.withOpacity(0.1),
+        color: (Theme.of(context).brightness == Brightness.dark
+                ? AppColors.brandGreen
+                : AppColors.brandGreenDeep)
+            .withOpacity(0.1),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.accent.withOpacity(0.3)),
+        border: Border.all(
+          color: (Theme.of(context).brightness == Brightness.dark
+                  ? AppColors.brandGreen
+                  : AppColors.brandGreenDeep)
+              .withOpacity(0.3),
+        ),
       ),
       child: Row(
         children: [
-          const Icon(Icons.auto_awesome, color: AppColors.accent, size: 28),
+          Icon(
+            Icons.auto_awesome,
+            color: Theme.of(context).brightness == Brightness.dark
+                ? AppColors.brandGreen
+                : AppColors.brandGreenDeep,
+            size: 28,
+          ),
           const SizedBox(width: 12),
-          const Expanded(
+          Expanded(
             child: Text(
               'Tell us about yourself so our AI can create a perfectly personalised plan just for you.',
-              style: TextStyle(color: AppColors.textPrimary, fontSize: 13),
+              style: TextStyle(
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? const Color(0xFFFFFFFF)
+                    : AppColors.textPrimary,
+                fontSize: 13,
+              ),
             ),
           ),
         ],
@@ -253,18 +281,29 @@ class _PreferencesScreenState extends State<PreferencesScreen> {
         Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: AppColors.accent.withOpacity(0.15),
+            color: (Theme.of(context).brightness == Brightness.dark
+                    ? AppColors.brandGreen
+                    : AppColors.brandGreenDeep)
+                .withOpacity(0.15),
             borderRadius: BorderRadius.circular(8),
           ),
-          child: Icon(icon, color: AppColors.accent, size: 20),
+          child: Icon(
+            icon,
+            color: Theme.of(context).brightness == Brightness.dark
+                ? AppColors.brandGreen
+                : AppColors.brandGreenDeep,
+            size: 20,
+          ),
         ),
         const SizedBox(width: 10),
         Text(
           title,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
-            color: AppColors.textPrimary,
+            color: Theme.of(context).brightness == Brightness.dark
+                ? const Color(0xFFFFFFFF)
+                : AppColors.textPrimary,
           ),
         ),
       ],
@@ -292,16 +331,15 @@ class _PreferencesScreenState extends State<PreferencesScreen> {
           crossAxisSpacing: 12,
           mainAxisSpacing: 12,
           childAspectRatio: 2.8,
-          children:
-              goals.map((g) {
-                final selected = _goal == g.$1;
-                return _buildSelectCard(
-                  label: g.$2,
-                  icon: g.$3,
-                  selected: selected,
-                  onTap: () => setState(() => _goal = g.$1),
-                );
-              }).toList(),
+          children: goals.map((g) {
+            final selected = _goal == g.$1;
+            return _buildSelectCard(
+              label: g.$2,
+              icon: g.$3,
+              selected: selected,
+              onTap: () => setState(() => _goal = g.$1),
+            );
+          }).toList(),
         ),
       ],
     );
@@ -362,38 +400,48 @@ class _PreferencesScreenState extends State<PreferencesScreen> {
         Wrap(
           spacing: 8,
           runSpacing: 8,
-          children:
-              (_equipmentOptions[_workoutLocation] ?? []).map((eq) {
-                final key = eq.toLowerCase().replaceAll(' ', '_');
-                final selected =
-                    _equipment.contains(key) || _equipment.contains(eq);
-                return FilterChip(
-                  label: Text(
-                    eq,
-                    style: TextStyle(
-                      color:
-                          selected
-                              ? AppColors.background
-                              : AppColors.textSecondary,
-                      fontSize: 12,
-                    ),
-                  ),
-                  selected: selected,
-                  onSelected:
-                      (_) => setState(
-                        () =>
-                            selected
-                                ? _equipment.remove(key)
-                                : _equipment.add(key),
-                      ),
-                  selectedColor: AppColors.accent,
-                  backgroundColor: AppColors.surface,
-                  checkmarkColor: AppColors.background,
-                  side: BorderSide(
-                    color: selected ? AppColors.accent : AppColors.surface,
-                  ),
-                );
-              }).toList(),
+          children: (_equipmentOptions[_workoutLocation] ?? []).map((eq) {
+            final key = eq.toLowerCase().replaceAll(' ', '_');
+            final selected =
+                _equipment.contains(key) || _equipment.contains(eq);
+            return FilterChip(
+              label: Text(
+                eq,
+                style: TextStyle(
+                  color: selected
+                      ? (Theme.of(context).brightness == Brightness.dark
+                          ? const Color(0xFF010101)
+                          : const Color(0xFFFFFFFF))
+                      : (Theme.of(context).brightness == Brightness.dark
+                          ? const Color(0xFFB0B0B0)
+                          : AppColors.textSecondary),
+                  fontSize: 12,
+                ),
+              ),
+              selected: selected,
+              onSelected: (_) => setState(
+                () => selected ? _equipment.remove(key) : _equipment.add(key),
+              ),
+              selectedColor: Theme.of(context).brightness == Brightness.dark
+                  ? AppColors.brandGreen
+                  : AppColors.brandGreenDeep,
+              backgroundColor: Theme.of(context).brightness == Brightness.dark
+                  ? const Color(0xFF1A1A1A)
+                  : AppColors.surface,
+              checkmarkColor: Theme.of(context).brightness == Brightness.dark
+                  ? const Color(0xFF010101)
+                  : const Color(0xFFFFFFFF),
+              side: BorderSide(
+                color: selected
+                    ? (Theme.of(context).brightness == Brightness.dark
+                        ? AppColors.brandGreen
+                        : AppColors.brandGreenDeep)
+                    : (Theme.of(context).brightness == Brightness.dark
+                        ? const Color(0xFF1A1A1A)
+                        : AppColors.surface),
+              ),
+            );
+          }).toList(),
         ),
         const SizedBox(height: 20),
 
@@ -401,40 +449,53 @@ class _PreferencesScreenState extends State<PreferencesScreen> {
         _buildLabel('Fitness Level'),
         const SizedBox(height: 10),
         Row(
-          children:
-              ['beginner', 'intermediate', 'advanced'].map((level) {
-                final selected = _fitnessLevel == level;
-                return Expanded(
-                  child: GestureDetector(
-                    onTap: () => setState(() => _fitnessLevel = level),
-                    child: Container(
-                      margin: const EdgeInsets.only(right: 8),
-                      padding: const EdgeInsets.symmetric(vertical: 10),
-                      decoration: BoxDecoration(
-                        color: selected ? AppColors.accent : AppColors.surface,
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                          color:
-                              selected ? AppColors.accent : AppColors.surface,
-                        ),
-                      ),
-                      child: Text(
-                        level[0].toUpperCase() + level.substring(1),
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color:
-                              selected
-                                  ? AppColors.background
-                                  : AppColors.textSecondary,
-                          fontWeight:
-                              selected ? FontWeight.bold : FontWeight.normal,
-                          fontSize: 12,
-                        ),
-                      ),
+          children: ['beginner', 'intermediate', 'advanced'].map((level) {
+            final selected = _fitnessLevel == level;
+            return Expanded(
+              child: GestureDetector(
+                onTap: () => setState(() => _fitnessLevel = level),
+                child: Container(
+                  margin: const EdgeInsets.only(right: 8),
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  decoration: BoxDecoration(
+                    color: selected
+                        ? (Theme.of(context).brightness == Brightness.dark
+                            ? AppColors.brandGreen
+                            : AppColors.brandGreenDeep)
+                        : (Theme.of(context).brightness == Brightness.dark
+                            ? const Color(0xFF1A1A1A)
+                            : AppColors.surface),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: selected
+                          ? (Theme.of(context).brightness == Brightness.dark
+                              ? AppColors.brandGreen
+                              : AppColors.brandGreenDeep)
+                          : (Theme.of(context).brightness == Brightness.dark
+                              ? const Color(0xFF1A1A1A)
+                              : AppColors.surface),
                     ),
                   ),
-                );
-              }).toList(),
+                  child: Text(
+                    level[0].toUpperCase() + level.substring(1),
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: selected
+                          ? (Theme.of(context).brightness == Brightness.dark
+                              ? const Color(0xFF010101)
+                              : const Color(0xFFFFFFFF))
+                          : (Theme.of(context).brightness == Brightness.dark
+                              ? const Color(0xFFB0B0B0)
+                              : AppColors.textSecondary),
+                      fontWeight:
+                          selected ? FontWeight.bold : FontWeight.normal,
+                      fontSize: 12,
+                    ),
+                  ),
+                ),
+              ),
+            );
+          }).toList(),
         ),
         const SizedBox(height: 20),
 
@@ -445,8 +506,12 @@ class _PreferencesScreenState extends State<PreferencesScreen> {
           min: 15,
           max: 90,
           divisions: 5,
-          activeColor: AppColors.accent,
-          inactiveColor: AppColors.surface,
+          activeColor: Theme.of(context).brightness == Brightness.dark
+              ? AppColors.brandGreen
+              : AppColors.brandGreenDeep,
+          inactiveColor: Theme.of(context).brightness == Brightness.dark
+              ? const Color(0xFF1A1A1A)
+              : AppColors.surface,
           onChanged: (v) => setState(() => _workoutDuration = v),
         ),
         const SizedBox(height: 12),
@@ -458,8 +523,12 @@ class _PreferencesScreenState extends State<PreferencesScreen> {
           min: 1,
           max: 7,
           divisions: 6,
-          activeColor: AppColors.accent,
-          inactiveColor: AppColors.surface,
+          activeColor: Theme.of(context).brightness == Brightness.dark
+              ? AppColors.brandGreen
+              : AppColors.brandGreenDeep,
+          inactiveColor: Theme.of(context).brightness == Brightness.dark
+              ? const Color(0xFF1A1A1A)
+              : AppColors.surface,
           onChanged: (v) => setState(() => _workoutDays = v),
         ),
         const SizedBox(height: 16),
@@ -480,10 +549,9 @@ class _PreferencesScreenState extends State<PreferencesScreen> {
           onToggle: (v) {
             final key = v.toLowerCase().replaceAll(' ', '_');
             setState(
-              () =>
-                  _injuryLimitations.contains(key)
-                      ? _injuryLimitations.remove(key)
-                      : _injuryLimitations.add(key),
+              () => _injuryLimitations.contains(key)
+                  ? _injuryLimitations.remove(key)
+                  : _injuryLimitations.add(key),
             );
           },
         ),
@@ -538,8 +606,12 @@ class _PreferencesScreenState extends State<PreferencesScreen> {
           min: 3,
           max: 6,
           divisions: 3,
-          activeColor: AppColors.accent,
-          inactiveColor: AppColors.surface,
+          activeColor: Theme.of(context).brightness == Brightness.dark
+              ? AppColors.brandGreen
+              : AppColors.brandGreenDeep,
+          inactiveColor: Theme.of(context).brightness == Brightness.dark
+              ? const Color(0xFF1A1A1A)
+              : AppColors.surface,
           onChanged: (v) => setState(() => _mealsPerDay = v),
         ),
         const SizedBox(height: 16),
@@ -561,10 +633,9 @@ class _PreferencesScreenState extends State<PreferencesScreen> {
           onToggle: (v) {
             final key = v.toLowerCase().replaceAll(' ', '_');
             setState(
-              () =>
-                  _dietaryRestrictions.contains(key)
-                      ? _dietaryRestrictions.remove(key)
-                      : _dietaryRestrictions.add(key),
+              () => _dietaryRestrictions.contains(key)
+                  ? _dietaryRestrictions.remove(key)
+                  : _dietaryRestrictions.add(key),
             );
           },
         ),
@@ -579,10 +650,9 @@ class _PreferencesScreenState extends State<PreferencesScreen> {
           onToggle: (v) {
             final key = v.toLowerCase();
             setState(
-              () =>
-                  _foodAllergies.contains(key)
-                      ? _foodAllergies.remove(key)
-                      : _foodAllergies.add(key),
+              () => _foodAllergies.contains(key)
+                  ? _foodAllergies.remove(key)
+                  : _foodAllergies.add(key),
             );
           },
         ),
@@ -597,10 +667,9 @@ class _PreferencesScreenState extends State<PreferencesScreen> {
           onToggle: (v) {
             final key = v.toLowerCase().replaceAll(' ', '_');
             setState(
-              () =>
-                  _healthConditions.contains(key)
-                      ? _healthConditions.remove(key)
-                      : _healthConditions.add(key),
+              () => _healthConditions.contains(key)
+                  ? _healthConditions.remove(key)
+                  : _healthConditions.add(key),
             );
           },
         ),
@@ -613,10 +682,15 @@ class _PreferencesScreenState extends State<PreferencesScreen> {
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: Theme.of(context).brightness == Brightness.dark
+            ? const Color(0xFF1A1A1A)
+            : AppColors.surface,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.2),
+            color: (Theme.of(context).brightness == Brightness.dark
+                    ? const Color(0xFF000000)
+                    : const Color(0xFF000000))
+                .withOpacity(0.2),
             blurRadius: 8,
             offset: const Offset(0, -2),
           ),
@@ -628,26 +702,36 @@ class _PreferencesScreenState extends State<PreferencesScreen> {
         child: ElevatedButton.icon(
           onPressed: _isSaving ? null : _save,
           style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.accent,
+            backgroundColor: Theme.of(context).brightness == Brightness.dark
+                ? AppColors.brandGreen
+                : AppColors.brandGreenDeep,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
             ),
           ),
-          icon:
-              _isSaving
-                  ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: Colors.black,
-                    ),
-                  )
-                  : const Icon(Icons.save, color: Colors.black),
+          icon: _isSaving
+              ? SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? const Color(0xFF010101)
+                        : const Color(0xFFFFFFFF),
+                  ),
+                )
+              : Icon(
+                  Icons.save,
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? const Color(0xFF010101)
+                      : const Color(0xFFFFFFFF),
+                ),
           label: Text(
             _isSaving ? 'Saving...' : 'Save Preferences',
-            style: const TextStyle(
-              color: Colors.black,
+            style: TextStyle(
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? const Color(0xFF010101)
+                  : const Color(0xFFFFFFFF),
               fontWeight: FontWeight.bold,
               fontSize: 16,
             ),
@@ -661,8 +745,10 @@ class _PreferencesScreenState extends State<PreferencesScreen> {
   Widget _buildLabel(String text) {
     return Text(
       text,
-      style: const TextStyle(
-        color: AppColors.textSecondary,
+      style: TextStyle(
+        color: Theme.of(context).brightness == Brightness.dark
+            ? const Color(0xFFB0B0B0)
+            : AppColors.textSecondary,
         fontSize: 13,
         fontWeight: FontWeight.w600,
       ),
@@ -680,24 +766,46 @@ class _PreferencesScreenState extends State<PreferencesScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
-          color: selected ? AppColors.accent : AppColors.surface,
+          color: selected
+              ? (Theme.of(context).brightness == Brightness.dark
+                  ? AppColors.brandGreen
+                  : AppColors.brandGreenDeep)
+              : (Theme.of(context).brightness == Brightness.dark
+                  ? const Color(0xFF1A1A1A)
+                  : AppColors.surface),
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color: selected ? AppColors.accent : Colors.transparent,
+            color: selected
+                ? (Theme.of(context).brightness == Brightness.dark
+                    ? AppColors.brandGreen
+                    : AppColors.brandGreenDeep)
+                : Colors.transparent,
           ),
         ),
         child: Row(
           children: [
             Icon(
               icon,
-              color: selected ? Colors.black : AppColors.textSecondary,
+              color: selected
+                  ? (Theme.of(context).brightness == Brightness.dark
+                      ? const Color(0xFF010101)
+                      : const Color(0xFFFFFFFF))
+                  : (Theme.of(context).brightness == Brightness.dark
+                      ? const Color(0xFFB0B0B0)
+                      : AppColors.textSecondary),
               size: 18,
             ),
             const SizedBox(width: 8),
             Text(
               label,
               style: TextStyle(
-                color: selected ? Colors.black : AppColors.textSecondary,
+                color: selected
+                    ? (Theme.of(context).brightness == Brightness.dark
+                        ? const Color(0xFF010101)
+                        : const Color(0xFFFFFFFF))
+                    : (Theme.of(context).brightness == Brightness.dark
+                        ? const Color(0xFFB0B0B0)
+                        : AppColors.textSecondary),
                 fontWeight: FontWeight.w600,
                 fontSize: 13,
               ),
@@ -721,7 +829,13 @@ class _PreferencesScreenState extends State<PreferencesScreen> {
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 10),
           decoration: BoxDecoration(
-            color: selected ? AppColors.accent : AppColors.surface,
+            color: selected
+                ? (Theme.of(context).brightness == Brightness.dark
+                    ? AppColors.brandGreen
+                    : AppColors.brandGreenDeep)
+                : (Theme.of(context).brightness == Brightness.dark
+                    ? const Color(0xFF1A1A1A)
+                    : AppColors.surface),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Column(
@@ -729,14 +843,26 @@ class _PreferencesScreenState extends State<PreferencesScreen> {
               Icon(
                 icon,
                 size: 18,
-                color: selected ? Colors.black : AppColors.textSecondary,
+                color: selected
+                    ? (Theme.of(context).brightness == Brightness.dark
+                        ? const Color(0xFF010101)
+                        : const Color(0xFFFFFFFF))
+                    : (Theme.of(context).brightness == Brightness.dark
+                        ? const Color(0xFFB0B0B0)
+                        : AppColors.textSecondary),
               ),
               const SizedBox(height: 4),
               Text(
                 label,
                 style: TextStyle(
                   fontSize: 11,
-                  color: selected ? Colors.black : AppColors.textSecondary,
+                  color: selected
+                      ? (Theme.of(context).brightness == Brightness.dark
+                          ? const Color(0xFF010101)
+                          : const Color(0xFFFFFFFF))
+                      : (Theme.of(context).brightness == Brightness.dark
+                          ? const Color(0xFFB0B0B0)
+                          : AppColors.textSecondary),
                   fontWeight: selected ? FontWeight.bold : FontWeight.normal,
                 ),
               ),
@@ -755,32 +881,46 @@ class _PreferencesScreenState extends State<PreferencesScreen> {
     return Wrap(
       spacing: 8,
       runSpacing: 8,
-      children:
-          options.map((opt) {
-            final key = opt.toLowerCase().replaceAll(' ', '_');
-            final isSelected =
-                selected.contains(key) || selected.contains(opt.toLowerCase());
-            return FilterChip(
-              label: Text(
-                opt,
-                style: TextStyle(
-                  color:
-                      isSelected
-                          ? AppColors.background
-                          : AppColors.textSecondary,
-                  fontSize: 12,
-                ),
-              ),
-              selected: isSelected,
-              onSelected: (_) => onToggle(opt),
-              selectedColor: AppColors.accent,
-              backgroundColor: AppColors.surface,
-              checkmarkColor: AppColors.background,
-              side: BorderSide(
-                color: isSelected ? AppColors.accent : AppColors.surface,
-              ),
-            );
-          }).toList(),
+      children: options.map((opt) {
+        final key = opt.toLowerCase().replaceAll(' ', '_');
+        final isSelected =
+            selected.contains(key) || selected.contains(opt.toLowerCase());
+        return FilterChip(
+          label: Text(
+            opt,
+            style: TextStyle(
+              color: isSelected
+                  ? (Theme.of(context).brightness == Brightness.dark
+                      ? const Color(0xFF010101)
+                      : const Color(0xFFFFFFFF))
+                  : (Theme.of(context).brightness == Brightness.dark
+                      ? const Color(0xFFB0B0B0)
+                      : AppColors.textSecondary),
+              fontSize: 12,
+            ),
+          ),
+          selected: isSelected,
+          onSelected: (_) => onToggle(opt),
+          selectedColor: Theme.of(context).brightness == Brightness.dark
+              ? AppColors.brandGreen
+              : AppColors.brandGreenDeep,
+          backgroundColor: Theme.of(context).brightness == Brightness.dark
+              ? const Color(0xFF1A1A1A)
+              : AppColors.surface,
+          checkmarkColor: Theme.of(context).brightness == Brightness.dark
+              ? const Color(0xFF010101)
+              : const Color(0xFFFFFFFF),
+          side: BorderSide(
+            color: isSelected
+                ? (Theme.of(context).brightness == Brightness.dark
+                    ? AppColors.brandGreen
+                    : AppColors.brandGreenDeep)
+                : (Theme.of(context).brightness == Brightness.dark
+                    ? const Color(0xFF1A1A1A)
+                    : AppColors.surface),
+          ),
+        );
+      }).toList(),
     );
   }
 }

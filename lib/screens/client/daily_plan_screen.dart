@@ -271,10 +271,9 @@ class _DailyPlanScreenState extends State<DailyPlanScreen>
   void _updateCompletionCounts() {
     _completedMeals =
         _todayMeals.where((m) => m.status == CompletionStatus.completed).length;
-    _completedExercises =
-        _todayExercises
-            .where((e) => e.status == CompletionStatus.completed)
-            .length;
+    _completedExercises = _todayExercises
+        .where((e) => e.status == CompletionStatus.completed)
+        .length;
   }
 
   Future<void> _completeMeal(MealCompletion meal) async {
@@ -326,17 +325,21 @@ class _DailyPlanScreenState extends State<DailyPlanScreen>
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: AppColors.surface,
+        backgroundColor: Theme.of(context).brightness == Brightness.dark
+            ? const Color(0xFF1A1A1A)
+            : AppColors.surface,
         elevation: 0,
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Today\'s Plan',
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
-                color: AppColors.textPrimary,
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? const Color(0xFFFFFFFF)
+                    : AppColors.textPrimary,
               ),
             ),
             Row(
@@ -374,90 +377,104 @@ class _DailyPlanScreenState extends State<DailyPlanScreen>
         ),
         actions: [
           PopupMenuButton<String>(
-            icon: const Icon(Icons.more_vert, color: AppColors.textPrimary),
-            color: AppColors.charcoal,
+            icon: Icon(Icons.more_vert,
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? const Color(0xFFFFFFFF)
+                    : AppColors.textPrimary),
+            color: Theme.of(context).brightness == Brightness.dark
+                ? const Color(0xFF1A1A1A)
+                : AppColors.charcoal,
             onSelected: (val) {
               if (val == 'today') _regenerateToday();
               if (val == 'week') _regenerateWeek();
             },
-            itemBuilder:
-                (_) => [
-                  PopupMenuItem(
-                    value: 'today',
-                    child: Row(
-                      children: [
-                        const Icon(
-                          Icons.refresh,
-                          size: 18,
-                          color: AppColors.accent,
-                        ),
-                        const SizedBox(width: 10),
-                        Text(
-                          'Refresh Today',
-                          style: const TextStyle(color: AppColors.textPrimary),
-                        ),
-                      ],
+            itemBuilder: (_) => [
+              PopupMenuItem(
+                value: 'today',
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.refresh,
+                      size: 18,
+                      color: AppColors.accent,
                     ),
-                  ),
-                  PopupMenuItem(
-                    value: 'week',
-                    child: Row(
-                      children: [
-                        const Icon(
-                          Icons.calendar_month,
-                          size: 18,
-                          color: AppColors.accentTeal,
-                        ),
-                        const SizedBox(width: 10),
-                        const Text(
-                          'New Week Plan',
-                          style: TextStyle(color: AppColors.textPrimary),
-                        ),
-                      ],
+                    const SizedBox(width: 10),
+                    Text(
+                      'Refresh Today',
+                      style: const TextStyle(color: AppColors.textPrimary),
                     ),
-                  ),
-                ],
+                  ],
+                ),
+              ),
+              PopupMenuItem(
+                value: 'week',
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.calendar_month,
+                      size: 18,
+                      color: AppColors.accentTeal,
+                    ),
+                    const SizedBox(width: 10),
+                    const Text(
+                      'New Week Plan',
+                      style: TextStyle(color: AppColors.textPrimary),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
         ],
         bottom: TabBar(
           controller: _tabController,
-          indicatorColor: AppColors.accent,
+          indicatorColor: Theme.of(context).brightness == Brightness.dark
+              ? AppColors.brandGreen
+              : AppColors.brandGreenDeep,
           indicatorWeight: 2,
-          labelColor: AppColors.accent,
-          unselectedLabelColor: AppColors.muted,
+          labelColor: Theme.of(context).brightness == Brightness.dark
+              ? AppColors.brandGreen
+              : AppColors.brandGreenDeep,
+          unselectedLabelColor: Theme.of(context).brightness == Brightness.dark
+              ? const Color(0xFFB0B0B0)
+              : AppColors.muted,
           tabs: const [Tab(text: 'Meals'), Tab(text: 'Workouts')],
         ),
       ),
-      body:
-          _isLoading
-              ? Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const CircularProgressIndicator(color: AppColors.accent),
-                    const SizedBox(height: 16),
-                    Text(
-                      _loadingStatus,
-                      style: const TextStyle(
-                        color: AppColors.muted,
-                        fontSize: 14,
-                      ),
-                    ),
-                  ],
-                ),
-              )
-              : Column(
+      body: _isLoading
+          ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  _buildMotivationHero(displayDay),
-                  _buildStatsCard(),
-                  Expanded(
-                    child: TabBarView(
-                      controller: _tabController,
-                      children: [_buildMealsList(), _buildExercisesList()],
+                  CircularProgressIndicator(
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? AppColors.brandGreen
+                          : AppColors.brandGreenDeep),
+                  const SizedBox(height: 16),
+                  Text(
+                    _loadingStatus,
+                    style: TextStyle(
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? const Color(0xFFB0B0B0)
+                          : AppColors.muted,
+                      fontSize: 14,
                     ),
                   ),
                 ],
               ),
+            )
+          : Column(
+              children: [
+                _buildMotivationHero(displayDay),
+                _buildStatsCard(),
+                Expanded(
+                  child: TabBarView(
+                    controller: _tabController,
+                    children: [_buildMealsList(), _buildExercisesList()],
+                  ),
+                ),
+              ],
+            ),
     );
   }
 
@@ -653,10 +670,9 @@ class _DailyPlanScreenState extends State<DailyPlanScreen>
             color: AppColors.surface,
             borderRadius: BorderRadius.circular(AppConstants.radiusMedium),
             border: Border.all(
-              color:
-                  isCompleted
-                      ? AppColors.accent.withOpacity(0.4)
-                      : AppColors.charcoal,
+              color: isCompleted
+                  ? AppColors.accent.withOpacity(0.4)
+                  : AppColors.charcoal,
             ),
           ),
           child: Padding(
@@ -883,10 +899,9 @@ class _DailyPlanScreenState extends State<DailyPlanScreen>
         final exercise = _todayExercises[index];
         final isCompleted = exercise.status == CompletionStatus.completed;
 
-        final difficultyColor =
-            exercise.difficulty == 'beginner'
-                ? AppColors.accentTeal
-                : exercise.difficulty == 'intermediate'
+        final difficultyColor = exercise.difficulty == 'beginner'
+            ? AppColors.accentTeal
+            : exercise.difficulty == 'intermediate'
                 ? AppColors.accentViolet
                 : AppColors.accentDarkGray;
 
@@ -896,10 +911,9 @@ class _DailyPlanScreenState extends State<DailyPlanScreen>
             color: AppColors.surface,
             borderRadius: BorderRadius.circular(AppConstants.radiusMedium),
             border: Border.all(
-              color:
-                  isCompleted
-                      ? AppColors.accent.withOpacity(0.4)
-                      : AppColors.charcoal,
+              color: isCompleted
+                  ? AppColors.accent.withOpacity(0.4)
+                  : AppColors.charcoal,
             ),
           ),
           child: Padding(
@@ -979,28 +993,27 @@ class _DailyPlanScreenState extends State<DailyPlanScreen>
                   Wrap(
                     spacing: 6,
                     runSpacing: 4,
-                    children:
-                        exercise.targetMuscles
-                            .map(
-                              (muscle) => Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 3,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: AppColors.charcoal,
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                                child: Text(
-                                  muscle,
-                                  style: const TextStyle(
-                                    color: AppColors.muted,
-                                    fontSize: 11,
-                                  ),
-                                ),
+                    children: exercise.targetMuscles
+                        .map(
+                          (muscle) => Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 3,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColors.charcoal,
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              muscle,
+                              style: const TextStyle(
+                                color: AppColors.muted,
+                                fontSize: 11,
                               ),
-                            )
-                            .toList(),
+                            ),
+                          ),
+                        )
+                        .toList(),
                   ),
                 ],
                 if (!isCompleted) ...[

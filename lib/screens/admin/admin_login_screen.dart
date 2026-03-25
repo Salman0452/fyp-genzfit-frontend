@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:genzfit/models/user_model.dart';
 import 'package:genzfit/screens/admin/admin_dashboard_screen.dart';
+import 'package:genzfit/utils/constants.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class AdminLoginScreen extends StatefulWidget {
@@ -33,7 +34,8 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
 
     try {
       // Sign in with Firebase Auth
-      final userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(
+      final userCredential =
+          await FirebaseAuth.instance.signInWithEmailAndPassword(
         email: _emailController.text.trim(),
         password: _passwordController.text,
       );
@@ -71,7 +73,9 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(e.toString()),
-            backgroundColor: Colors.red,
+            backgroundColor: Theme.of(context).brightness == Brightness.dark
+                ? Colors.red.shade700
+                : Colors.red.shade900,
           ),
         );
       }
@@ -84,15 +88,23 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final brandGreen = isDark ? AppColors.brandGreen : AppColors.brandGreenDeep;
+    final primaryText =
+        isDark ? const Color(0xFFFFFFFF) : AppColors.textPrimary;
+    final secondaryText =
+        isDark ? const Color(0xFFB0B0B0) : AppColors.textSecondary;
+    final cardBackground = isDark ? const Color(0xFF1A1A1A) : AppColors.surface;
+
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 450),
             child: Card(
-              color: const Color(0xFF171917),
+              color: cardBackground,
               elevation: 8,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(24),
@@ -108,13 +120,13 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                       Container(
                         padding: const EdgeInsets.all(20),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF83BCB5).withOpacity(0.1),
+                          color: brandGreen.withOpacity(0.1),
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(
+                        child: Icon(
                           Icons.admin_panel_settings,
                           size: 64,
-                          color: Color(0xFF83BCB5),
+                          color: brandGreen,
                         ),
                       ),
                       const SizedBox(height: 24),
@@ -125,7 +137,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                         style: GoogleFonts.poppins(
                           fontSize: 32,
                           fontWeight: FontWeight.bold,
-                          color: Colors.white,
+                          color: primaryText,
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -133,7 +145,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                         'Management Portal',
                         style: GoogleFonts.inter(
                           fontSize: 16,
-                          color: Colors.white60,
+                          color: secondaryText,
                         ),
                       ),
                       const SizedBox(height: 32),
@@ -142,13 +154,15 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                       TextFormField(
                         controller: _emailController,
                         keyboardType: TextInputType.emailAddress,
-                        style: const TextStyle(color: Colors.white),
+                        style: TextStyle(color: primaryText),
                         decoration: InputDecoration(
                           labelText: 'Admin Email',
-                          labelStyle: const TextStyle(color: Colors.white60),
-                          prefixIcon: const Icon(Icons.email, color: Color(0xFF83BCB5)),
+                          labelStyle: TextStyle(color: secondaryText),
+                          prefixIcon: Icon(Icons.email, color: brandGreen),
                           filled: true,
-                          fillColor: const Color(0xFF1F2120),
+                          fillColor: isDark
+                              ? const Color(0xFF2A2A2A)
+                              : const Color(0xFFF5F5F5),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                             borderSide: BorderSide.none,
@@ -159,7 +173,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(color: Color(0xFF83BCB5)),
+                            borderSide: BorderSide(color: brandGreen),
                           ),
                         ),
                         validator: (value) {
@@ -178,22 +192,27 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                       TextFormField(
                         controller: _passwordController,
                         obscureText: _obscurePassword,
-                        style: const TextStyle(color: Colors.white),
+                        style: TextStyle(color: primaryText),
                         decoration: InputDecoration(
                           labelText: 'Password',
-                          labelStyle: const TextStyle(color: Colors.white60),
-                          prefixIcon: const Icon(Icons.lock, color: Color(0xFF83BCB5)),
+                          labelStyle: TextStyle(color: secondaryText),
+                          prefixIcon: Icon(Icons.lock, color: brandGreen),
                           suffixIcon: IconButton(
                             icon: Icon(
-                              _obscurePassword ? Icons.visibility : Icons.visibility_off,
-                              color: Colors.white60,
+                              _obscurePassword
+                                  ? Icons.visibility
+                                  : Icons.visibility_off,
+                              color: secondaryText,
                             ),
                             onPressed: () {
-                              setState(() => _obscurePassword = !_obscurePassword);
+                              setState(
+                                  () => _obscurePassword = !_obscurePassword);
                             },
                           ),
                           filled: true,
-                          fillColor: const Color(0xFF1F2120),
+                          fillColor: isDark
+                              ? const Color(0xFF2A2A2A)
+                              : const Color(0xFFF5F5F5),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                             borderSide: BorderSide.none,
@@ -204,7 +223,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(color: Color(0xFF83BCB5)),
+                            borderSide: BorderSide(color: brandGreen),
                           ),
                         ),
                         validator: (value) {
@@ -226,20 +245,24 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                         child: ElevatedButton(
                           onPressed: _isLoading ? null : _login,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF83BCB5),
-                            foregroundColor: Colors.black,
+                            backgroundColor: brandGreen,
+                            foregroundColor: isDark
+                                ? AppColors.textPrimary
+                                : const Color(0xFFFFFFFF),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
                             elevation: 0,
                           ),
                           child: _isLoading
-                              ? const SizedBox(
+                              ? SizedBox(
                                   height: 20,
                                   width: 20,
                                   child: CircularProgressIndicator(
                                     strokeWidth: 2,
-                                    color: Colors.black,
+                                    color: isDark
+                                        ? AppColors.textPrimary
+                                        : const Color(0xFFFFFFFF),
                                   ),
                                 )
                               : Text(
@@ -257,17 +280,25 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: Colors.orange.withOpacity(0.1),
+                          color: (isDark
+                                  ? Colors.orange.shade700
+                                  : Colors.orange.shade200)
+                              .withOpacity(0.2),
                           borderRadius: BorderRadius.circular(8),
                           border: Border.all(
-                            color: Colors.orange.withOpacity(0.3),
+                            color: (isDark
+                                    ? Colors.orange.shade700
+                                    : Colors.orange.shade600)
+                                .withOpacity(0.5),
                           ),
                         ),
                         child: Row(
                           children: [
-                            const Icon(
+                            Icon(
                               Icons.warning_amber_rounded,
-                              color: Colors.orange,
+                              color: isDark
+                                  ? Colors.orange.shade300
+                                  : Colors.orange.shade800,
                               size: 20,
                             ),
                             const SizedBox(width: 8),
@@ -276,7 +307,9 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                                 'This portal is restricted to authorized administrators only',
                                 style: GoogleFonts.inter(
                                   fontSize: 12,
-                                  color: Colors.orange.shade300,
+                                  color: isDark
+                                      ? Colors.orange.shade300
+                                      : Colors.orange.shade900,
                                 ),
                               ),
                             ),

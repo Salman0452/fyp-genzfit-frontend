@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:genzfit/utils/constants.dart';
 
 class SystemSettingsScreen extends StatefulWidget {
   const SystemSettingsScreen({super.key});
@@ -11,11 +12,11 @@ class SystemSettingsScreen extends StatefulWidget {
 
 class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  
+
   // Commission Settings
   double _commissionRate = 0.20; // 20% default
   final TextEditingController _commissionController = TextEditingController();
-  
+
   // Feature Toggles
   bool _aiCoachEnabled = true;
   bool _chatEnabled = true;
@@ -23,12 +24,12 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
   bool _trainerVerificationRequired = true;
   bool _autoApprovalEnabled = false;
   bool _maintenanceMode = false;
-  
+
   // Payment Settings
   String _paymentGateway = 'stripe';
   bool _refundsEnabled = true;
   int _refundWindowDays = 7;
-  
+
   bool _isLoading = true;
   bool _isSaving = false;
 
@@ -49,33 +50,42 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
 
     try {
       // Load commission settings
-      final commissionDoc = await _firestore.collection('platform_settings').doc('commission').get();
+      final commissionDoc = await _firestore
+          .collection('platform_settings')
+          .doc('commission')
+          .get();
       if (commissionDoc.exists) {
         final rate = commissionDoc.data()?['rate'] as num?;
         if (rate != null) {
           setState(() {
             _commissionRate = rate.toDouble();
-            _commissionController.text = (_commissionRate * 100).toStringAsFixed(0);
+            _commissionController.text =
+                (_commissionRate * 100).toStringAsFixed(0);
           });
         }
       }
 
       // Load feature toggles
-      final featuresDoc = await _firestore.collection('platform_settings').doc('features').get();
+      final featuresDoc = await _firestore
+          .collection('platform_settings')
+          .doc('features')
+          .get();
       if (featuresDoc.exists) {
         final data = featuresDoc.data()!;
         setState(() {
           _aiCoachEnabled = data['aiCoachEnabled'] as bool? ?? true;
           _chatEnabled = data['chatEnabled'] as bool? ?? true;
           _videoCallsEnabled = data['videoCallsEnabled'] as bool? ?? true;
-          _trainerVerificationRequired = data['trainerVerificationRequired'] as bool? ?? true;
+          _trainerVerificationRequired =
+              data['trainerVerificationRequired'] as bool? ?? true;
           _autoApprovalEnabled = data['autoApprovalEnabled'] as bool? ?? false;
           _maintenanceMode = data['maintenanceMode'] as bool? ?? false;
         });
       }
 
       // Load payment settings
-      final paymentDoc = await _firestore.collection('platform_settings').doc('payment').get();
+      final paymentDoc =
+          await _firestore.collection('platform_settings').doc('payment').get();
       if (paymentDoc.exists) {
         final data = paymentDoc.data()!;
         setState(() {
@@ -123,9 +133,11 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Settings saved successfully'),
-            backgroundColor: Color(0xFF7FFA88),
+          SnackBar(
+            content: const Text('Settings saved successfully'),
+            backgroundColor: Theme.of(context).brightness == Brightness.dark
+                ? AppColors.brandGreen
+                : AppColors.brandGreenDeep,
           ),
         );
       }
@@ -146,12 +158,17 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF171917),
+        backgroundColor: Theme.of(context).brightness == Brightness.dark
+            ? const Color(0xFF171917)
+            : AppColors.backgroundLight,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
+          icon: Icon(Icons.arrow_back_ios,
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? const Color(0xFFFFFFFF)
+                  : AppColors.textPrimary),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
@@ -159,7 +176,9 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
           style: GoogleFonts.poppins(
             fontSize: 20,
             fontWeight: FontWeight.bold,
-            color: Colors.white,
+            color: Theme.of(context).brightness == Brightness.dark
+                ? const Color(0xFFFFFFFF)
+                : AppColors.textPrimary,
           ),
         ),
         actions: [
@@ -171,7 +190,9 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
                   width: 20,
                   height: 20,
                   child: CircularProgressIndicator(
-                    color: Color(0xFF83BCB5),
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? AppColors.brandGreen
+                        : AppColors.brandGreenDeep,
                     strokeWidth: 2,
                   ),
                 ),
@@ -180,14 +201,20 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
           else
             IconButton(
               onPressed: _saveSettings,
-              icon: const Icon(Icons.save, color: Color(0xFF83BCB5)),
+              icon: Icon(Icons.save,
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? AppColors.brandGreen
+                      : AppColors.brandGreenDeep),
               tooltip: 'Save Settings',
             ),
         ],
       ),
       body: _isLoading
-          ? const Center(
-              child: CircularProgressIndicator(color: Color(0xFF83BCB5)),
+          ? Center(
+              child: CircularProgressIndicator(
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? AppColors.brandGreen
+                      : AppColors.brandGreenDeep),
             )
           : SingleChildScrollView(
               padding: const EdgeInsets.all(24),
@@ -211,7 +238,9 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: const Color(0xFF171917),
+        color: Theme.of(context).brightness == Brightness.dark
+            ? const Color(0xFF171917)
+            : AppColors.backgroundLight,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
@@ -219,14 +248,20 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
         children: [
           Row(
             children: [
-              const Icon(Icons.account_balance, color: Color(0xFF83BCB5), size: 24),
+              Icon(Icons.account_balance,
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? AppColors.brandGreen
+                      : AppColors.brandGreenDeep,
+                  size: 24),
               const SizedBox(width: 12),
               Text(
                 'Commission Settings',
                 style: GoogleFonts.poppins(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: Colors.white,
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? const Color(0xFFFFFFFF)
+                      : AppColors.textPrimary,
                 ),
               ),
             ],
@@ -236,7 +271,10 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
             'Platform Commission Rate',
             style: GoogleFonts.inter(
               fontSize: 14,
-              color: Colors.white70,
+              color: (Theme.of(context).brightness == Brightness.dark
+                      ? const Color(0xFFFFFFFF)
+                      : AppColors.textPrimary)
+                  .withOpacity(0.7),
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -248,28 +286,47 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
                 child: TextField(
                   controller: _commissionController,
                   keyboardType: TextInputType.number,
-                  style: const TextStyle(color: Colors.white),
+                  style: TextStyle(
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? const Color(0xFFFFFFFF)
+                          : AppColors.textPrimary),
                   decoration: InputDecoration(
                     suffixText: '%',
-                    suffixStyle: const TextStyle(color: Color(0xFF83BCB5)),
+                    suffixStyle: TextStyle(
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? AppColors.brandGreen
+                            : AppColors.brandGreenDeep),
                     filled: true,
-                    fillColor: Colors.black,
+                    fillColor: Theme.of(context).scaffoldBackgroundColor,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
-                      borderSide: const BorderSide(color: Color(0xFF83BCB5)),
+                      borderSide: BorderSide(
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? AppColors.brandGreen
+                              : AppColors.brandGreenDeep),
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
-                      borderSide: BorderSide(color: Colors.white.withOpacity(0.2)),
+                      borderSide: BorderSide(
+                          color:
+                              (Theme.of(context).brightness == Brightness.dark
+                                      ? const Color(0xFFFFFFFF)
+                                      : AppColors.textPrimary)
+                                  .withOpacity(0.2)),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
-                      borderSide: const BorderSide(color: Color(0xFF83BCB5)),
+                      borderSide: BorderSide(
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? AppColors.brandGreen
+                              : AppColors.brandGreenDeep),
                     ),
                   ),
                   onChanged: (value) {
                     final percentage = double.tryParse(value);
-                    if (percentage != null && percentage >= 0 && percentage <= 100) {
+                    if (percentage != null &&
+                        percentage >= 0 &&
+                        percentage <= 100) {
                       setState(() => _commissionRate = percentage / 100);
                     }
                   },
@@ -285,7 +342,9 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
                       'Trainer receives: ${((1 - _commissionRate) * 100).toStringAsFixed(0)}%',
                       style: GoogleFonts.inter(
                         fontSize: 13,
-                        color: const Color(0xFF7FFA88),
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? AppColors.brandGreen
+                            : AppColors.brandGreenDeep,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -294,7 +353,9 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
                       'Platform takes: ${(_commissionRate * 100).toStringAsFixed(0)}%',
                       style: GoogleFonts.inter(
                         fontSize: 13,
-                        color: const Color(0xFF83BCB5),
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? AppColors.brandGreen
+                            : AppColors.brandGreenDeep,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -307,20 +368,34 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: const Color(0xFF83BCB5).withOpacity(0.1),
+              color: (Theme.of(context).brightness == Brightness.dark
+                      ? AppColors.brandGreen
+                      : AppColors.brandGreenDeep)
+                  .withOpacity(0.1),
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: const Color(0xFF83BCB5).withOpacity(0.3)),
+              border: Border.all(
+                  color: (Theme.of(context).brightness == Brightness.dark
+                          ? AppColors.brandGreen
+                          : AppColors.brandGreenDeep)
+                      .withOpacity(0.3)),
             ),
             child: Row(
               children: [
-                const Icon(Icons.info_outline, color: Color(0xFF83BCB5), size: 20),
+                Icon(Icons.info_outline,
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? AppColors.brandGreen
+                        : AppColors.brandGreenDeep,
+                    size: 20),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
                     'Changes will apply to all new sessions. Existing sessions will use their original rate.',
                     style: GoogleFonts.inter(
                       fontSize: 12,
-                      color: Colors.white70,
+                      color: (Theme.of(context).brightness == Brightness.dark
+                              ? const Color(0xFFFFFFFF)
+                              : AppColors.textPrimary)
+                          .withOpacity(0.7),
                     ),
                   ),
                 ),
@@ -336,7 +411,9 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: const Color(0xFF171917),
+        color: Theme.of(context).brightness == Brightness.dark
+            ? const Color(0xFF171917)
+            : AppColors.backgroundLight,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
@@ -344,14 +421,20 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
         children: [
           Row(
             children: [
-              const Icon(Icons.toggle_on, color: Color(0xFF83BCB5), size: 24),
+              Icon(Icons.toggle_on,
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? AppColors.brandGreen
+                      : AppColors.brandGreenDeep,
+                  size: 24),
               const SizedBox(width: 12),
               Text(
                 'Feature Toggles',
                 style: GoogleFonts.poppins(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: Colors.white,
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? const Color(0xFFFFFFFF)
+                      : AppColors.textPrimary,
                 ),
               ),
             ],
@@ -380,7 +463,12 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
             (value) => setState(() => _videoCallsEnabled = value),
             Icons.video_call,
           ),
-          const Divider(color: Colors.white12, height: 32),
+          Divider(
+              color: (Theme.of(context).brightness == Brightness.dark
+                      ? const Color(0xFFFFFFFF)
+                      : AppColors.textPrimary)
+                  .withOpacity(0.12),
+              height: 32),
           _buildToggleItem(
             'Trainer Verification',
             'Require trainers to be verified before accepting clients',
@@ -415,12 +503,21 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
         Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: (isWarning ? Colors.orange : const Color(0xFF83BCB5)).withOpacity(0.1),
+            color: (isWarning
+                    ? Colors.orange
+                    : (Theme.of(context).brightness == Brightness.dark
+                        ? AppColors.brandGreen
+                        : AppColors.brandGreenDeep))
+                .withOpacity(0.1),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Icon(
             icon,
-            color: isWarning ? Colors.orange : const Color(0xFF83BCB5),
+            color: isWarning
+                ? Colors.orange
+                : (Theme.of(context).brightness == Brightness.dark
+                    ? AppColors.brandGreen
+                    : AppColors.brandGreenDeep),
             size: 20,
           ),
         ),
@@ -434,7 +531,9 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
                 style: GoogleFonts.inter(
                   fontSize: 15,
                   fontWeight: FontWeight.w600,
-                  color: Colors.white,
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? const Color(0xFFFFFFFF)
+                      : AppColors.textPrimary,
                 ),
               ),
               const SizedBox(height: 4),
@@ -442,7 +541,10 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
                 description,
                 style: GoogleFonts.inter(
                   fontSize: 12,
-                  color: Colors.white38,
+                  color: (Theme.of(context).brightness == Brightness.dark
+                          ? const Color(0xFFFFFFFF)
+                          : AppColors.textPrimary)
+                      .withOpacity(0.38),
                 ),
               ),
             ],
@@ -452,7 +554,11 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
         Switch(
           value: value,
           onChanged: onChanged,
-          activeColor: isWarning ? Colors.orange : const Color(0xFF83BCB5),
+          activeColor: isWarning
+              ? Colors.orange
+              : (Theme.of(context).brightness == Brightness.dark
+                  ? AppColors.brandGreen
+                  : AppColors.brandGreenDeep),
         ),
       ],
     );
@@ -462,7 +568,9 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: const Color(0xFF171917),
+        color: Theme.of(context).brightness == Brightness.dark
+            ? const Color(0xFF171917)
+            : AppColors.backgroundLight,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
@@ -470,14 +578,20 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
         children: [
           Row(
             children: [
-              const Icon(Icons.payment, color: Color(0xFF83BCB5), size: 24),
+              Icon(Icons.payment,
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? AppColors.brandGreen
+                      : AppColors.brandGreenDeep,
+                  size: 24),
               const SizedBox(width: 12),
               Text(
                 'Payment Settings',
                 style: GoogleFonts.poppins(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: Colors.white,
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? const Color(0xFFFFFFFF)
+                      : AppColors.textPrimary,
                 ),
               ),
             ],
@@ -487,25 +601,38 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
             'Payment Gateway',
             style: GoogleFonts.inter(
               fontSize: 14,
-              color: Colors.white70,
+              color: (Theme.of(context).brightness == Brightness.dark
+                      ? const Color(0xFFFFFFFF)
+                      : AppColors.textPrimary)
+                  .withOpacity(0.7),
               fontWeight: FontWeight.w500,
             ),
           ),
           const SizedBox(height: 12),
           DropdownButtonFormField<String>(
             value: _paymentGateway,
-            dropdownColor: Colors.black,
-            style: const TextStyle(color: Colors.white),
+            dropdownColor: Theme.of(context).scaffoldBackgroundColor,
+            style: TextStyle(
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? const Color(0xFFFFFFFF)
+                    : AppColors.textPrimary),
             decoration: InputDecoration(
               filled: true,
-              fillColor: Colors.black,
+              fillColor: Theme.of(context).scaffoldBackgroundColor,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
-                borderSide: const BorderSide(color: Color(0xFF83BCB5)),
+                borderSide: BorderSide(
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? AppColors.brandGreen
+                        : AppColors.brandGreenDeep),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
-                borderSide: BorderSide(color: Colors.white.withOpacity(0.2)),
+                borderSide: BorderSide(
+                    color: (Theme.of(context).brightness == Brightness.dark
+                            ? const Color(0xFFFFFFFF)
+                            : AppColors.textPrimary)
+                        .withOpacity(0.2)),
               ),
             ),
             items: [
@@ -542,27 +669,44 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
               'Refund Window (Days)',
               style: GoogleFonts.inter(
                 fontSize: 14,
-                color: Colors.white70,
+                color: (Theme.of(context).brightness == Brightness.dark
+                        ? const Color(0xFFFFFFFF)
+                        : AppColors.textPrimary)
+                    .withOpacity(0.7),
                 fontWeight: FontWeight.w500,
               ),
             ),
             const SizedBox(height: 12),
             TextField(
               keyboardType: TextInputType.number,
-              style: const TextStyle(color: Colors.white),
-              controller: TextEditingController(text: _refundWindowDays.toString()),
+              style: TextStyle(
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? const Color(0xFFFFFFFF)
+                      : AppColors.textPrimary),
+              controller:
+                  TextEditingController(text: _refundWindowDays.toString()),
               decoration: InputDecoration(
                 suffixText: 'days',
-                suffixStyle: const TextStyle(color: Color(0xFF83BCB5)),
+                suffixStyle: TextStyle(
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? AppColors.brandGreen
+                        : AppColors.brandGreenDeep),
                 filled: true,
-                fillColor: Colors.black,
+                fillColor: Theme.of(context).scaffoldBackgroundColor,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
-                  borderSide: const BorderSide(color: Color(0xFF83BCB5)),
+                  borderSide: BorderSide(
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? AppColors.brandGreen
+                          : AppColors.brandGreenDeep),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
-                  borderSide: BorderSide(color: Colors.white.withOpacity(0.2)),
+                  borderSide: BorderSide(
+                      color: (Theme.of(context).brightness == Brightness.dark
+                              ? const Color(0xFFFFFFFF)
+                              : AppColors.textPrimary)
+                          .withOpacity(0.2)),
                 ),
               ),
               onChanged: (value) {
@@ -582,7 +726,9 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: const Color(0xFF171917),
+        color: Theme.of(context).brightness == Brightness.dark
+            ? const Color(0xFF171917)
+            : AppColors.backgroundLight,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.red.withOpacity(0.3)),
       ),

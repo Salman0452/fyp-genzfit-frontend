@@ -4,12 +4,14 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:genzfit/models/session_model.dart';
 import 'package:genzfit/models/user_model.dart';
 import 'package:intl/intl.dart';
+import 'package:genzfit/utils/constants.dart';
 
 class SessionMonitoringScreen extends StatefulWidget {
   const SessionMonitoringScreen({super.key});
 
   @override
-  State<SessionMonitoringScreen> createState() => _SessionMonitoringScreenState();
+  State<SessionMonitoringScreen> createState() =>
+      _SessionMonitoringScreenState();
 }
 
 class _SessionMonitoringScreenState extends State<SessionMonitoringScreen> {
@@ -19,12 +21,17 @@ class _SessionMonitoringScreenState extends State<SessionMonitoringScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF171917),
+        backgroundColor: Theme.of(context).brightness == Brightness.dark
+            ? const Color(0xFF171917)
+            : AppColors.backgroundLight,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
+          icon: Icon(Icons.arrow_back_ios,
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? const Color(0xFFFFFFFF)
+                  : AppColors.textPrimary),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
@@ -32,7 +39,9 @@ class _SessionMonitoringScreenState extends State<SessionMonitoringScreen> {
           style: GoogleFonts.poppins(
             fontSize: 20,
             fontWeight: FontWeight.bold,
-            color: Colors.white,
+            color: Theme.of(context).brightness == Brightness.dark
+                ? const Color(0xFFFFFFFF)
+                : AppColors.textPrimary,
           ),
         ),
       ),
@@ -50,18 +59,33 @@ class _SessionMonitoringScreenState extends State<SessionMonitoringScreen> {
   Widget _buildFilterChips() {
     return Container(
       padding: const EdgeInsets.all(16),
-      color: Colors.black,
+      color: Theme.of(context).scaffoldBackgroundColor,
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         child: Row(
           children: [
-            _buildFilterChip('All', 'all', Colors.white),
+            _buildFilterChip(
+                'All',
+                'all',
+                Theme.of(context).brightness == Brightness.dark
+                    ? const Color(0xFFFFFFFF)
+                    : AppColors.textPrimary),
             const SizedBox(width: 8),
             _buildFilterChip('Requested', 'requested', const Color(0xFFFFD166)),
             const SizedBox(width: 8),
-            _buildFilterChip('Active', 'active', const Color(0xFF7FFA88)),
+            _buildFilterChip(
+                'Active',
+                'active',
+                Theme.of(context).brightness == Brightness.dark
+                    ? AppColors.brandGreen
+                    : AppColors.brandGreenDeep),
             const SizedBox(width: 8),
-            _buildFilterChip('Completed', 'completed', Colors.blue),
+            _buildFilterChip(
+                'Completed',
+                'completed',
+                Theme.of(context).brightness == Brightness.dark
+                    ? Colors.blue
+                    : Colors.blue.shade700),
             const SizedBox(width: 8),
             _buildFilterChip('Cancelled', 'cancelled', Colors.red),
           ],
@@ -76,7 +100,13 @@ class _SessionMonitoringScreenState extends State<SessionMonitoringScreen> {
       label: Text(
         label,
         style: GoogleFonts.inter(
-          color: isSelected ? Colors.black : Colors.white,
+          color: isSelected
+              ? (Theme.of(context).brightness == Brightness.dark
+                  ? const Color(0xFF1A1A1A)
+                  : AppColors.textPrimary)
+              : (Theme.of(context).brightness == Brightness.dark
+                  ? const Color(0xFFFFFFFF)
+                  : AppColors.textPrimary),
           fontWeight: FontWeight.w600,
         ),
       ),
@@ -84,11 +114,20 @@ class _SessionMonitoringScreenState extends State<SessionMonitoringScreen> {
       onSelected: (selected) {
         setState(() => _statusFilter = value);
       },
-      backgroundColor: const Color(0xFF171917),
+      backgroundColor: Theme.of(context).brightness == Brightness.dark
+          ? const Color(0xFF171917)
+          : AppColors.backgroundLight,
       selectedColor: color,
-      checkmarkColor: Colors.black,
+      checkmarkColor: Theme.of(context).brightness == Brightness.dark
+          ? const Color(0xFF1A1A1A)
+          : AppColors.textPrimary,
       side: BorderSide(
-        color: isSelected ? color : Colors.white24,
+        color: isSelected
+            ? color
+            : (Theme.of(context).brightness == Brightness.dark
+                    ? const Color(0xFFB0B0B0)
+                    : AppColors.textSecondary)
+                .withOpacity(0.24),
       ),
     );
   }
@@ -106,8 +145,11 @@ class _SessionMonitoringScreenState extends State<SessionMonitoringScreen> {
       stream: query.snapshots(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(
-            child: CircularProgressIndicator(color: Color(0xFF83BCB5)),
+          return Center(
+            child: CircularProgressIndicator(
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? AppColors.brandGreen
+                    : AppColors.brandGreenDeep),
           );
         }
 
@@ -119,14 +161,20 @@ class _SessionMonitoringScreenState extends State<SessionMonitoringScreen> {
                 Icon(
                   Icons.event_note,
                   size: 80,
-                  color: Colors.white.withOpacity(0.3),
+                  color: (Theme.of(context).brightness == Brightness.dark
+                          ? const Color(0xFFFFFFFF)
+                          : AppColors.textPrimary)
+                      .withOpacity(0.3),
                 ),
                 const SizedBox(height: 16),
                 Text(
                   'No sessions found',
                   style: GoogleFonts.poppins(
                     fontSize: 18,
-                    color: Colors.white60,
+                    color: (Theme.of(context).brightness == Brightness.dark
+                            ? const Color(0xFFFFFFFF)
+                            : AppColors.textPrimary)
+                        .withOpacity(0.6),
                   ),
                 ),
               ],
@@ -157,11 +205,15 @@ class _SessionMonitoringScreenState extends State<SessionMonitoringScreen> {
         statusIcon = Icons.pending;
         break;
       case SessionStatus.active:
-        statusColor = const Color(0xFF7FFA88);
+        statusColor = Theme.of(context).brightness == Brightness.dark
+            ? AppColors.brandGreen
+            : AppColors.brandGreenDeep;
         statusIcon = Icons.check_circle;
         break;
       case SessionStatus.completed:
-        statusColor = Colors.blue;
+        statusColor = Theme.of(context).brightness == Brightness.dark
+            ? Colors.blue
+            : Colors.blue.shade700;
         statusIcon = Icons.done_all;
         break;
       case SessionStatus.rejected:
@@ -172,7 +224,9 @@ class _SessionMonitoringScreenState extends State<SessionMonitoringScreen> {
     }
 
     return Card(
-      color: const Color(0xFF171917),
+      color: Theme.of(context).brightness == Brightness.dark
+          ? const Color(0xFF171917)
+          : AppColors.backgroundLight,
       margin: const EdgeInsets.only(bottom: 12),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
@@ -197,7 +251,9 @@ class _SessionMonitoringScreenState extends State<SessionMonitoringScreen> {
                 style: GoogleFonts.poppins(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
-                  color: Colors.white,
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? const Color(0xFFFFFFFF)
+                      : AppColors.textPrimary,
                 ),
               ),
             ),
@@ -225,7 +281,10 @@ class _SessionMonitoringScreenState extends State<SessionMonitoringScreen> {
               'Created: ${DateFormat('MMM d, yyyy • HH:mm').format(session.createdAt)}',
               style: GoogleFonts.inter(
                 fontSize: 12,
-                color: Colors.white60,
+                color: (Theme.of(context).brightness == Brightness.dark
+                        ? const Color(0xFFFFFFFF)
+                        : AppColors.textPrimary)
+                    .withOpacity(0.6),
               ),
             ),
             if (session.amount != null) ...[
@@ -234,7 +293,9 @@ class _SessionMonitoringScreenState extends State<SessionMonitoringScreen> {
                 'Amount: \$${session.amount!.toStringAsFixed(2)}',
                 style: GoogleFonts.inter(
                   fontSize: 12,
-                  color: const Color(0xFF7FFA88),
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? AppColors.brandGreen
+                      : AppColors.brandGreenDeep,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -252,7 +313,11 @@ class _SessionMonitoringScreenState extends State<SessionMonitoringScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Divider(color: Colors.white12),
+        Divider(
+            color: (Theme.of(context).brightness == Brightness.dark
+                    ? const Color(0xFFFFFFFF)
+                    : AppColors.textPrimary)
+                .withOpacity(0.12)),
         const SizedBox(height: 16),
 
         // Client and Trainer Info
@@ -291,21 +356,28 @@ class _SessionMonitoringScreenState extends State<SessionMonitoringScreen> {
             style: GoogleFonts.poppins(
               fontSize: 14,
               fontWeight: FontWeight.w600,
-              color: Colors.white,
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? const Color(0xFFFFFFFF)
+                  : AppColors.textPrimary,
             ),
           ),
           const SizedBox(height: 8),
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: const Color(0xFF1F2120),
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? const Color(0xFF1F2120)
+                  : AppColors.backgroundLight,
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text(
               session.notes!,
               style: GoogleFonts.inter(
                 fontSize: 13,
-                color: Colors.white70,
+                color: (Theme.of(context).brightness == Brightness.dark
+                        ? const Color(0xFFFFFFFF)
+                        : AppColors.textPrimary)
+                    .withOpacity(0.7),
               ),
             ),
           ),
@@ -330,12 +402,17 @@ class _SessionMonitoringScreenState extends State<SessionMonitoringScreen> {
                 label,
                 style: GoogleFonts.inter(
                   fontSize: 12,
-                  color: Colors.white60,
+                  color: (Theme.of(context).brightness == Brightness.dark
+                          ? const Color(0xFFFFFFFF)
+                          : AppColors.textPrimary)
+                      .withOpacity(0.6),
                 ),
               ),
               const SizedBox(height: 8),
-              const CircularProgressIndicator(
-                color: Color(0xFF83BCB5),
+              CircularProgressIndicator(
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? AppColors.brandGreen
+                    : AppColors.brandGreenDeep,
                 strokeWidth: 2,
               ),
             ],
@@ -350,7 +427,10 @@ class _SessionMonitoringScreenState extends State<SessionMonitoringScreen> {
                 label,
                 style: GoogleFonts.inter(
                   fontSize: 12,
-                  color: Colors.white60,
+                  color: (Theme.of(context).brightness == Brightness.dark
+                          ? const Color(0xFFFFFFFF)
+                          : AppColors.textPrimary)
+                      .withOpacity(0.6),
                 ),
               ),
               const SizedBox(height: 8),
@@ -373,7 +453,10 @@ class _SessionMonitoringScreenState extends State<SessionMonitoringScreen> {
               label,
               style: GoogleFonts.inter(
                 fontSize: 12,
-                color: Colors.white60,
+                color: (Theme.of(context).brightness == Brightness.dark
+                        ? const Color(0xFFFFFFFF)
+                        : AppColors.textPrimary)
+                    .withOpacity(0.6),
               ),
             ),
             const SizedBox(height: 8),
@@ -384,13 +467,19 @@ class _SessionMonitoringScreenState extends State<SessionMonitoringScreen> {
                   backgroundImage: user.avatarUrl != null
                       ? NetworkImage(user.avatarUrl!)
                       : null,
-                  backgroundColor: const Color(0xFF1F2120),
+                  backgroundColor:
+                      Theme.of(context).brightness == Brightness.dark
+                          ? const Color(0xFF1F2120)
+                          : AppColors.backgroundLight,
                   child: user.avatarUrl == null
                       ? Text(
                           user.name[0].toUpperCase(),
                           style: GoogleFonts.poppins(
                             fontSize: 12,
-                            color: Colors.white,
+                            color:
+                                Theme.of(context).brightness == Brightness.dark
+                                    ? const Color(0xFFFFFFFF)
+                                    : AppColors.textPrimary,
                             fontWeight: FontWeight.bold,
                           ),
                         )
@@ -406,7 +495,9 @@ class _SessionMonitoringScreenState extends State<SessionMonitoringScreen> {
                         style: GoogleFonts.poppins(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
-                          color: Colors.white,
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? const Color(0xFFFFFFFF)
+                              : AppColors.textPrimary,
                         ),
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -414,7 +505,11 @@ class _SessionMonitoringScreenState extends State<SessionMonitoringScreen> {
                         user.email,
                         style: GoogleFonts.inter(
                           fontSize: 11,
-                          color: Colors.white60,
+                          color:
+                              (Theme.of(context).brightness == Brightness.dark
+                                      ? const Color(0xFFFFFFFF)
+                                      : AppColors.textPrimary)
+                                  .withOpacity(0.6),
                         ),
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -437,7 +532,10 @@ class _SessionMonitoringScreenState extends State<SessionMonitoringScreen> {
           label,
           style: GoogleFonts.inter(
             fontSize: 13,
-            color: Colors.white60,
+            color: (Theme.of(context).brightness == Brightness.dark
+                    ? const Color(0xFFFFFFFF)
+                    : AppColors.textPrimary)
+                .withOpacity(0.6),
           ),
         ),
         Text(
@@ -445,7 +543,9 @@ class _SessionMonitoringScreenState extends State<SessionMonitoringScreen> {
           style: GoogleFonts.poppins(
             fontSize: 14,
             fontWeight: FontWeight.w600,
-            color: Colors.white,
+            color: Theme.of(context).brightness == Brightness.dark
+                ? const Color(0xFFFFFFFF)
+                : AppColors.textPrimary,
           ),
         ),
       ],
@@ -461,7 +561,9 @@ class _SessionMonitoringScreenState extends State<SessionMonitoringScreen> {
           style: GoogleFonts.poppins(
             fontSize: 14,
             fontWeight: FontWeight.w600,
-            color: Colors.white,
+            color: Theme.of(context).brightness == Brightness.dark
+                ? const Color(0xFFFFFFFF)
+                : AppColors.textPrimary,
           ),
         ),
         const SizedBox(height: 12),
@@ -478,9 +580,16 @@ class _SessionMonitoringScreenState extends State<SessionMonitoringScreen> {
                   style: GoogleFonts.inter(fontSize: 12),
                 ),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF7FFA88),
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  backgroundColor:
+                      Theme.of(context).brightness == Brightness.dark
+                          ? AppColors.brandGreen
+                          : AppColors.brandGreenDeep,
+                  foregroundColor:
+                      Theme.of(context).brightness == Brightness.dark
+                          ? const Color(0xFFFFFFFF)
+                          : AppColors.textPrimary,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
@@ -496,7 +605,8 @@ class _SessionMonitoringScreenState extends State<SessionMonitoringScreen> {
                 style: OutlinedButton.styleFrom(
                   foregroundColor: Colors.red,
                   side: const BorderSide(color: Colors.red),
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
@@ -512,9 +622,16 @@ class _SessionMonitoringScreenState extends State<SessionMonitoringScreen> {
                   style: GoogleFonts.inter(fontSize: 12),
                 ),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  backgroundColor:
+                      Theme.of(context).brightness == Brightness.dark
+                          ? Colors.blue
+                          : Colors.blue.shade700,
+                  foregroundColor:
+                      Theme.of(context).brightness == Brightness.dark
+                          ? const Color(0xFFFFFFFF)
+                          : AppColors.textPrimary,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
@@ -530,7 +647,8 @@ class _SessionMonitoringScreenState extends State<SessionMonitoringScreen> {
                 style: OutlinedButton.styleFrom(
                   foregroundColor: Colors.red,
                   side: const BorderSide(color: Colors.red),
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
@@ -545,9 +663,15 @@ class _SessionMonitoringScreenState extends State<SessionMonitoringScreen> {
                 style: GoogleFonts.inter(fontSize: 12),
               ),
               style: OutlinedButton.styleFrom(
-                foregroundColor: const Color(0xFF83BCB5),
-                side: const BorderSide(color: Color(0xFF83BCB5)),
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                foregroundColor: Theme.of(context).brightness == Brightness.dark
+                    ? AppColors.brandGreen
+                    : AppColors.brandGreenDeep,
+                side: BorderSide(
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? AppColors.brandGreen
+                        : AppColors.brandGreenDeep),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
@@ -575,9 +699,11 @@ class _SessionMonitoringScreenState extends State<SessionMonitoringScreen> {
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Session activated'),
-              backgroundColor: Color(0xFF7FFA88),
+            SnackBar(
+              content: const Text('Session activated'),
+              backgroundColor: Theme.of(context).brightness == Brightness.dark
+                  ? AppColors.brandGreen
+                  : AppColors.brandGreenDeep,
             ),
           );
         }
@@ -630,9 +756,11 @@ class _SessionMonitoringScreenState extends State<SessionMonitoringScreen> {
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Session completed'),
-              backgroundColor: Colors.blue,
+            SnackBar(
+              content: const Text('Session completed'),
+              backgroundColor: Theme.of(context).brightness == Brightness.dark
+                  ? Colors.blue
+                  : Colors.blue.shade700,
             ),
           );
         }
@@ -673,8 +801,14 @@ class _SessionMonitoringScreenState extends State<SessionMonitoringScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF171917),
-        title: Text('Session Details', style: GoogleFonts.poppins(color: Colors.white)),
+        backgroundColor: Theme.of(context).brightness == Brightness.dark
+            ? const Color(0xFF171917)
+            : AppColors.backgroundLight,
+        title: Text('Session Details',
+            style: GoogleFonts.poppins(
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? const Color(0xFFFFFFFF)
+                    : AppColors.textPrimary)),
         content: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -683,17 +817,24 @@ class _SessionMonitoringScreenState extends State<SessionMonitoringScreen> {
               _buildDialogRow('Session ID', session.id),
               _buildDialogRow('Client ID', session.clientId),
               _buildDialogRow('Trainer ID', session.trainerId),
-              _buildDialogRow('Status', SessionModel.statusToString(session.status)),
+              _buildDialogRow(
+                  'Status', SessionModel.statusToString(session.status)),
               if (session.amount != null)
-                _buildDialogRow('Amount', '\$${session.amount!.toStringAsFixed(2)}'),
-              _buildDialogRow('Created', DateFormat('MMM d, yyyy HH:mm').format(session.createdAt)),
+                _buildDialogRow(
+                    'Amount', '\$${session.amount!.toStringAsFixed(2)}'),
+              _buildDialogRow('Created',
+                  DateFormat('MMM d, yyyy HH:mm').format(session.createdAt)),
             ],
           ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Close', style: GoogleFonts.inter(color: Colors.white)),
+            child: Text('Close',
+                style: GoogleFonts.inter(
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? const Color(0xFFFFFFFF)
+                        : AppColors.textPrimary)),
           ),
         ],
       ),
@@ -710,7 +851,10 @@ class _SessionMonitoringScreenState extends State<SessionMonitoringScreen> {
             label,
             style: GoogleFonts.inter(
               fontSize: 12,
-              color: Colors.white60,
+              color: (Theme.of(context).brightness == Brightness.dark
+                      ? const Color(0xFFFFFFFF)
+                      : AppColors.textPrimary)
+                  .withOpacity(0.6),
             ),
           ),
           const SizedBox(height: 4),
@@ -718,7 +862,9 @@ class _SessionMonitoringScreenState extends State<SessionMonitoringScreen> {
             value,
             style: GoogleFonts.poppins(
               fontSize: 14,
-              color: Colors.white,
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? const Color(0xFFFFFFFF)
+                  : AppColors.textPrimary,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -731,17 +877,36 @@ class _SessionMonitoringScreenState extends State<SessionMonitoringScreen> {
     return showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF171917),
-        title: Text(title, style: GoogleFonts.poppins(color: Colors.white)),
-        content: Text(message, style: GoogleFonts.inter(color: Colors.white70)),
+        backgroundColor: Theme.of(context).brightness == Brightness.dark
+            ? const Color(0xFF171917)
+            : AppColors.backgroundLight,
+        title: Text(title,
+            style: GoogleFonts.poppins(
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? const Color(0xFFFFFFFF)
+                    : AppColors.textPrimary)),
+        content: Text(message,
+            style: GoogleFonts.inter(
+                color: (Theme.of(context).brightness == Brightness.dark
+                        ? const Color(0xFFFFFFFF)
+                        : AppColors.textPrimary)
+                    .withOpacity(0.7))),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: Text('Cancel', style: GoogleFonts.inter(color: Colors.white)),
+            child: Text('Cancel',
+                style: GoogleFonts.inter(
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? const Color(0xFFFFFFFF)
+                        : AppColors.textPrimary)),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: Text('Confirm', style: GoogleFonts.inter(color: const Color(0xFF83BCB5))),
+            child: Text('Confirm',
+                style: GoogleFonts.inter(
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? AppColors.brandGreen
+                        : AppColors.brandGreenDeep)),
           ),
         ],
       ),

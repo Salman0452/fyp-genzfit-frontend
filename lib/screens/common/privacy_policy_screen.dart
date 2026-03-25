@@ -10,33 +10,39 @@ class PrivacyPolicyScreen extends StatelessWidget {
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: const Text('Privacy Policy'),
-        backgroundColor: AppColors.surface,
+        backgroundColor: Theme.of(context).brightness == Brightness.dark
+            ? const Color(0xFF1A1A1A)
+            : AppColors.surface,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'GenZFit Privacy Policy',
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
-                color: AppColors.textPrimary,
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? const Color(0xFFFFFFFF)
+                    : AppColors.textPrimary,
               ),
             ),
             const SizedBox(height: 8),
-            const Text(
+            Text(
               'Last Updated: November 2025',
-              style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
+              style: TextStyle(
+                  fontSize: 14,
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? const Color(0xFFB0B0B0)
+                      : AppColors.textSecondary),
             ),
             const SizedBox(height: 24),
-
             _buildSection(
               'Introduction',
               'Welcome to GenZFit. We respect your privacy and are committed to protecting your personal data. This privacy policy will inform you about how we look after your personal data when you use our app and tell you about your privacy rights.',
             ),
-
             _buildSection(
               'Information We Collect',
               'We collect the following types of information:\n\n'
@@ -46,7 +52,6 @@ class PrivacyPolicyScreen extends StatelessWidget {
                   '• Device Information: Device type, operating system, unique device identifiers\n'
                   '• Location Data: With your permission, for personalized recommendations',
             ),
-
             _buildSection(
               'How We Use Your Information',
               'We use your information to:\n\n'
@@ -58,7 +63,6 @@ class PrivacyPolicyScreen extends StatelessWidget {
                   '• Analyze usage patterns to improve our app\n'
                   '• Ensure the security of our services',
             ),
-
             _buildSection(
               'Data Storage and Security',
               'We implement appropriate security measures to protect your personal information:\n\n'
@@ -68,7 +72,6 @@ class PrivacyPolicyScreen extends StatelessWidget {
                   '• Regular security audits and updates\n'
                   '• Limited access to personal data by authorized personnel only',
             ),
-
             _buildSection(
               'Sharing Your Information',
               'We do not sell your personal data. We may share your information with:\n\n'
@@ -77,7 +80,6 @@ class PrivacyPolicyScreen extends StatelessWidget {
                   '• Legal authorities when required by law\n\n'
                   'Your body measurements and photos are never shared without your explicit consent.',
             ),
-
             _buildSection(
               'Your Rights',
               'You have the right to:\n\n'
@@ -89,17 +91,14 @@ class PrivacyPolicyScreen extends StatelessWidget {
                   '• Object to data processing\n\n'
                   'To exercise these rights, contact us through the app or email support@genzfit.com',
             ),
-
             _buildSection(
               'Data Retention',
               'We retain your personal data only as long as necessary for the purposes outlined in this policy. Body scan data is kept for your fitness tracking purposes and can be deleted at any time through the app.',
             ),
-
             _buildSection(
               'Children\'s Privacy',
               'GenZFit is not intended for users under 13 years of age. We do not knowingly collect personal information from children under 13. If you believe we have collected such information, please contact us immediately.',
             ),
-
             _buildSection(
               'Third-Party Services',
               'Our app uses third-party services:\n\n'
@@ -109,12 +108,10 @@ class PrivacyPolicyScreen extends StatelessWidget {
                   '• Google Gemini AI for recommendations\n\n'
                   'These services have their own privacy policies governing their use of your information.',
             ),
-
             _buildSection(
               'Changes to This Policy',
               'We may update this privacy policy from time to time. We will notify you of any changes by posting the new policy in the app and updating the "Last Updated" date.',
             ),
-
             _buildSection(
               'Contact Us',
               'If you have any questions about this privacy policy, please contact us:\n\n'
@@ -122,24 +119,33 @@ class PrivacyPolicyScreen extends StatelessWidget {
                   'Website: www.genzfit.com\n\n'
                   'We aim to respond to all inquiries within 48 hours.',
             ),
-
             const SizedBox(height: 40),
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: AppColors.surface,
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? const Color(0xFF1A1A1A)
+                    : AppColors.surface,
                 borderRadius: BorderRadius.circular(AppSizes.borderRadius),
-                border: Border.all(color: AppColors.accent.withOpacity(0.3)),
+                border: Border.all(
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? AppColors.brandGreen.withOpacity(0.3)
+                        : AppColors.accent.withOpacity(0.3)),
               ),
-              child: const Row(
+              child: Row(
                 children: [
-                  Icon(Icons.info_outline, color: AppColors.accent),
-                  SizedBox(width: 12),
+                  Icon(Icons.info_outline,
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? AppColors.brandGreen
+                          : AppColors.brandGreenDeep),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: Text(
                       'By using GenZFit, you agree to this Privacy Policy.',
                       style: TextStyle(
-                        color: AppColors.textSecondary,
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? const Color(0xFFB0B0B0)
+                            : AppColors.textSecondary,
                         fontSize: 14,
                       ),
                     ),
@@ -155,30 +161,36 @@ class PrivacyPolicyScreen extends StatelessWidget {
   }
 
   Widget _buildSection(String title, String content) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: AppColors.accent,
+    return Builder(builder: (context) {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? AppColors.brandGreen
+                    : AppColors.brandGreenDeep,
+              ),
             ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            content,
-            style: const TextStyle(
-              fontSize: 14,
-              color: AppColors.textPrimary,
-              height: 1.6,
+            const SizedBox(height: 8),
+            Text(
+              content,
+              style: TextStyle(
+                fontSize: 14,
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? const Color(0xFFFFFFFF)
+                    : AppColors.textPrimary,
+                height: 1.6,
+              ),
             ),
-          ),
-        ],
-      ),
-    );
+          ],
+        ),
+      );
+    });
   }
 }

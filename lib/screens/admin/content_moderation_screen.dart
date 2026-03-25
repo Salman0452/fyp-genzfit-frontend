@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:genzfit/utils/constants.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
@@ -7,10 +8,12 @@ class ContentModerationScreen extends StatefulWidget {
   const ContentModerationScreen({super.key});
 
   @override
-  State<ContentModerationScreen> createState() => _ContentModerationScreenState();
+  State<ContentModerationScreen> createState() =>
+      _ContentModerationScreenState();
 }
 
-class _ContentModerationScreenState extends State<ContentModerationScreen> with SingleTickerProviderStateMixin {
+class _ContentModerationScreenState extends State<ContentModerationScreen>
+    with SingleTickerProviderStateMixin {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   late TabController _tabController;
 
@@ -28,13 +31,21 @@ class _ContentModerationScreenState extends State<ContentModerationScreen> with 
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final brandGreen = isDark ? AppColors.brandGreen : AppColors.brandGreenDeep;
+    final primaryText =
+        isDark ? const Color(0xFFFFFFFF) : AppColors.textPrimary;
+    final secondaryText =
+        isDark ? const Color(0xFFB0B0B0) : AppColors.textSecondary;
+    final cardBackground = isDark ? const Color(0xFF1A1A1A) : AppColors.surface;
+
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF171917),
+        backgroundColor: cardBackground,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
+          icon: Icon(Icons.arrow_back_ios, color: primaryText),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
@@ -42,14 +53,14 @@ class _ContentModerationScreenState extends State<ContentModerationScreen> with 
           style: GoogleFonts.poppins(
             fontSize: 20,
             fontWeight: FontWeight.bold,
-            color: Colors.white,
+            color: primaryText,
           ),
         ),
         bottom: TabBar(
           controller: _tabController,
-          indicatorColor: const Color(0xFF83BCB5),
-          labelColor: const Color(0xFF83BCB5),
-          unselectedLabelColor: Colors.white60,
+          indicatorColor: brandGreen,
+          labelColor: brandGreen,
+          unselectedLabelColor: secondaryText,
           labelStyle: GoogleFonts.inter(fontWeight: FontWeight.bold),
           tabs: const [
             Tab(text: 'Flagged Content'),
@@ -68,6 +79,13 @@ class _ContentModerationScreenState extends State<ContentModerationScreen> with 
   }
 
   Widget _buildFlaggedContentTab() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final brandGreen = isDark ? AppColors.brandGreen : AppColors.brandGreenDeep;
+    final primaryText =
+        isDark ? const Color(0xFFFFFFFF) : AppColors.textPrimary;
+    final secondaryText =
+        isDark ? const Color(0xFFB0B0B0) : AppColors.textSecondary;
+
     return StreamBuilder<QuerySnapshot>(
       stream: _firestore
           .collection('reports')
@@ -79,14 +97,15 @@ class _ContentModerationScreenState extends State<ContentModerationScreen> with 
           return Center(
             child: Text(
               'Error: ${snapshot.error}',
-              style: GoogleFonts.inter(color: Colors.red),
+              style: GoogleFonts.inter(
+                  color: isDark ? Colors.red.shade300 : Colors.red.shade700),
             ),
           );
         }
 
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(
-            child: CircularProgressIndicator(color: Color(0xFF83BCB5)),
+          return Center(
+            child: CircularProgressIndicator(color: brandGreen),
           );
         }
 
@@ -97,13 +116,17 @@ class _ContentModerationScreenState extends State<ContentModerationScreen> with 
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.check_circle_outline, size: 64, color: Colors.white24),
+                Icon(Icons.check_circle_outline,
+                    size: 64,
+                    color: isDark
+                        ? const Color(0xFF424242)
+                        : AppColors.textSecondary.withOpacity(0.3)),
                 const SizedBox(height: 16),
                 Text(
                   'No flagged content',
                   style: GoogleFonts.poppins(
                     fontSize: 18,
-                    color: Colors.white38,
+                    color: secondaryText.withOpacity(0.6),
                   ),
                 ),
               ],
@@ -125,6 +148,15 @@ class _ContentModerationScreenState extends State<ContentModerationScreen> with 
   }
 
   Widget _buildReportCard(Map<String, dynamic> report, String reportId) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final brandGreen = isDark ? AppColors.brandGreen : AppColors.brandGreenDeep;
+    final primaryText =
+        isDark ? const Color(0xFFFFFFFF) : AppColors.textPrimary;
+    final secondaryText =
+        isDark ? const Color(0xFFB0B0B0) : AppColors.textSecondary;
+    final cardBackground = isDark ? const Color(0xFF1A1A1A) : AppColors.surface;
+    final redColor = isDark ? Colors.red.shade400 : Colors.red.shade700;
+
     final contentType = report['contentType'] as String? ?? 'Unknown';
     final reason = report['reason'] as String? ?? 'No reason provided';
     final details = report['details'] as String? ?? '';
@@ -136,9 +168,9 @@ class _ContentModerationScreenState extends State<ContentModerationScreen> with 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: const Color(0xFF171917),
+        color: cardBackground,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.red.withOpacity(0.3)),
+        border: Border.all(color: redColor.withOpacity(0.3)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -147,14 +179,15 @@ class _ContentModerationScreenState extends State<ContentModerationScreen> with 
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.red.withOpacity(0.1),
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+              color: redColor.withOpacity(0.1),
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(12)),
             ),
             child: Row(
               children: [
                 Icon(
                   _getContentIcon(contentType),
-                  color: Colors.red,
+                  color: redColor,
                   size: 24,
                 ),
                 const SizedBox(width: 12),
@@ -167,24 +200,26 @@ class _ContentModerationScreenState extends State<ContentModerationScreen> with 
                         style: GoogleFonts.poppins(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
-                          color: Colors.white,
+                          color: primaryText,
                         ),
                       ),
                       if (createdAt != null)
                         Text(
-                          DateFormat('MMM dd, yyyy • hh:mm a').format(createdAt),
+                          DateFormat('MMM dd, yyyy • hh:mm a')
+                              .format(createdAt),
                           style: GoogleFonts.inter(
                             fontSize: 12,
-                            color: Colors.white38,
+                            color: secondaryText.withOpacity(0.6),
                           ),
                         ),
                     ],
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
-                    color: Colors.red,
+                    color: redColor,
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
@@ -192,7 +227,9 @@ class _ContentModerationScreenState extends State<ContentModerationScreen> with 
                     style: GoogleFonts.inter(
                       fontSize: 11,
                       fontWeight: FontWeight.bold,
-                      color: Colors.white,
+                      color: isDark
+                          ? AppColors.textPrimary
+                          : const Color(0xFFFFFFFF),
                     ),
                   ),
                 ),
@@ -206,17 +243,18 @@ class _ContentModerationScreenState extends State<ContentModerationScreen> with 
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildInfoRow('Reason', reason, Colors.red),
+                _buildInfoRow('Reason', reason, redColor),
                 if (details.isNotEmpty) ...[
                   const SizedBox(height: 12),
-                  _buildInfoRow('Details', details, Colors.white70),
+                  _buildInfoRow('Details', details, secondaryText),
                 ],
                 const SizedBox(height: 12),
-                _buildInfoRow('Reported By', reportedBy, Colors.white70),
+                _buildInfoRow('Reported By', reportedBy, secondaryText),
                 const SizedBox(height: 12),
-                _buildInfoRow('Reported User', reportedUserId, Colors.white70),
+                _buildInfoRow('Reported User', reportedUserId, secondaryText),
                 const SizedBox(height: 12),
-                _buildInfoRow('Content ID', contentId, Colors.white38),
+                _buildInfoRow(
+                    'Content ID', contentId, secondaryText.withOpacity(0.6)),
               ],
             ),
           ),
@@ -235,8 +273,10 @@ class _ContentModerationScreenState extends State<ContentModerationScreen> with 
                       style: GoogleFonts.inter(fontWeight: FontWeight.bold),
                     ),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF83BCB5),
-                      foregroundColor: Colors.black,
+                      backgroundColor: brandGreen,
+                      foregroundColor: isDark
+                          ? AppColors.textPrimary
+                          : const Color(0xFFFFFFFF),
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
@@ -247,15 +287,18 @@ class _ContentModerationScreenState extends State<ContentModerationScreen> with 
                 const SizedBox(width: 12),
                 Expanded(
                   child: ElevatedButton.icon(
-                    onPressed: () => _takeAction(reportId, contentType, contentId, reportedUserId),
+                    onPressed: () => _takeAction(
+                        reportId, contentType, contentId, reportedUserId),
                     icon: const Icon(Icons.delete_forever),
                     label: Text(
                       'Remove & Ban',
                       style: GoogleFonts.inter(fontWeight: FontWeight.bold),
                     ),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red,
-                      foregroundColor: Colors.white,
+                      backgroundColor: redColor,
+                      foregroundColor: isDark
+                          ? AppColors.textPrimary
+                          : const Color(0xFFFFFFFF),
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
@@ -268,12 +311,12 @@ class _ContentModerationScreenState extends State<ContentModerationScreen> with 
                   onPressed: () => _dismissReport(reportId),
                   style: OutlinedButton.styleFrom(
                     padding: const EdgeInsets.all(14),
-                    side: const BorderSide(color: Color(0xFF83BCB5)),
+                    side: BorderSide(color: brandGreen),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),
                   ),
-                  child: const Icon(Icons.close, color: Color(0xFF83BCB5)),
+                  child: Icon(Icons.close, color: brandGreen),
                 ),
               ],
             ),
@@ -284,6 +327,10 @@ class _ContentModerationScreenState extends State<ContentModerationScreen> with 
   }
 
   Widget _buildInfoRow(String label, String value, Color valueColor) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final secondaryText =
+        isDark ? const Color(0xFFB0B0B0) : AppColors.textSecondary;
+
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -293,7 +340,7 @@ class _ContentModerationScreenState extends State<ContentModerationScreen> with 
             label,
             style: GoogleFonts.inter(
               fontSize: 13,
-              color: Colors.white38,
+              color: secondaryText.withOpacity(0.6),
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -313,6 +360,11 @@ class _ContentModerationScreenState extends State<ContentModerationScreen> with 
   }
 
   Widget _buildReportedMessagesTab() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final brandGreen = isDark ? AppColors.brandGreen : AppColors.brandGreenDeep;
+    final secondaryText =
+        isDark ? const Color(0xFFB0B0B0) : AppColors.textSecondary;
+
     return StreamBuilder<QuerySnapshot>(
       stream: _firestore
           .collection('reports')
@@ -325,14 +377,15 @@ class _ContentModerationScreenState extends State<ContentModerationScreen> with 
           return Center(
             child: Text(
               'Error: ${snapshot.error}',
-              style: GoogleFonts.inter(color: Colors.red),
+              style: GoogleFonts.inter(
+                  color: isDark ? Colors.red.shade300 : Colors.red.shade700),
             ),
           );
         }
 
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(
-            child: CircularProgressIndicator(color: Color(0xFF83BCB5)),
+          return Center(
+            child: CircularProgressIndicator(color: brandGreen),
           );
         }
 
@@ -343,13 +396,17 @@ class _ContentModerationScreenState extends State<ContentModerationScreen> with 
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.check_circle_outline, size: 64, color: Colors.white24),
+                Icon(Icons.check_circle_outline,
+                    size: 64,
+                    color: isDark
+                        ? const Color(0xFF424242)
+                        : AppColors.textSecondary.withOpacity(0.3)),
                 const SizedBox(height: 16),
                 Text(
                   'No reported messages',
                   style: GoogleFonts.poppins(
                     fontSize: 18,
-                    color: Colors.white38,
+                    color: secondaryText.withOpacity(0.6),
                   ),
                 ),
               ],
@@ -371,7 +428,20 @@ class _ContentModerationScreenState extends State<ContentModerationScreen> with 
   }
 
   Widget _buildMessageReportCard(Map<String, dynamic> report, String reportId) {
-    final messageText = report['messageText'] as String? ?? '[Message content unavailable]';
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final brandGreen = isDark ? AppColors.brandGreen : AppColors.brandGreenDeep;
+    final primaryText =
+        isDark ? const Color(0xFFFFFFFF) : AppColors.textPrimary;
+    final secondaryText =
+        isDark ? const Color(0xFFB0B0B0) : AppColors.textSecondary;
+    final cardBackground = isDark ? const Color(0xFF1A1A1A) : AppColors.surface;
+    final messageBackground =
+        isDark ? const Color(0xFF0D0D0D) : const Color(0xFFF5F5F5);
+    final orangeColor =
+        isDark ? Colors.orange.shade400 : Colors.orange.shade700;
+
+    final messageText =
+        report['messageText'] as String? ?? '[Message content unavailable]';
     final reason = report['reason'] as String? ?? 'No reason provided';
     final reportedBy = report['reportedBy'] as String? ?? 'Unknown';
     final reportedUserId = report['reportedUserId'] as String? ?? '';
@@ -381,9 +451,9 @@ class _ContentModerationScreenState extends State<ContentModerationScreen> with 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: const Color(0xFF171917),
+        color: cardBackground,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.orange.withOpacity(0.3)),
+        border: Border.all(color: orangeColor.withOpacity(0.3)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -392,12 +462,13 @@ class _ContentModerationScreenState extends State<ContentModerationScreen> with 
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.orange.withOpacity(0.1),
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+              color: orangeColor.withOpacity(0.1),
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(12)),
             ),
             child: Row(
               children: [
-                const Icon(Icons.message, color: Colors.orange, size: 24),
+                Icon(Icons.message, color: orangeColor, size: 24),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
@@ -408,15 +479,16 @@ class _ContentModerationScreenState extends State<ContentModerationScreen> with 
                         style: GoogleFonts.poppins(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
-                          color: Colors.white,
+                          color: primaryText,
                         ),
                       ),
                       if (createdAt != null)
                         Text(
-                          DateFormat('MMM dd, yyyy • hh:mm a').format(createdAt),
+                          DateFormat('MMM dd, yyyy • hh:mm a')
+                              .format(createdAt),
                           style: GoogleFonts.inter(
                             fontSize: 12,
-                            color: Colors.white38,
+                            color: secondaryText.withOpacity(0.6),
                           ),
                         ),
                     ],
@@ -435,23 +507,23 @@ class _ContentModerationScreenState extends State<ContentModerationScreen> with 
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: Colors.black,
+                    color: messageBackground,
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
                     messageText,
                     style: GoogleFonts.inter(
                       fontSize: 14,
-                      color: Colors.white,
+                      color: primaryText,
                     ),
                   ),
                 ),
                 const SizedBox(height: 16),
-                _buildInfoRow('Reason', reason, Colors.orange),
+                _buildInfoRow('Reason', reason, orangeColor),
                 const SizedBox(height: 12),
-                _buildInfoRow('Reported By', reportedBy, Colors.white70),
+                _buildInfoRow('Reported By', reportedBy, secondaryText),
                 const SizedBox(height: 12),
-                _buildInfoRow('Sender', reportedUserId, Colors.white70),
+                _buildInfoRow('Sender', reportedUserId, secondaryText),
               ],
             ),
           ),
@@ -470,8 +542,10 @@ class _ContentModerationScreenState extends State<ContentModerationScreen> with 
                       style: GoogleFonts.inter(fontWeight: FontWeight.bold),
                     ),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF83BCB5),
-                      foregroundColor: Colors.black,
+                      backgroundColor: brandGreen,
+                      foregroundColor: isDark
+                          ? AppColors.textPrimary
+                          : const Color(0xFFFFFFFF),
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
@@ -489,8 +563,10 @@ class _ContentModerationScreenState extends State<ContentModerationScreen> with 
                       style: GoogleFonts.inter(fontWeight: FontWeight.bold),
                     ),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.orange,
-                      foregroundColor: Colors.white,
+                      backgroundColor: orangeColor,
+                      foregroundColor: isDark
+                          ? AppColors.textPrimary
+                          : const Color(0xFFFFFFFF),
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
@@ -503,12 +579,12 @@ class _ContentModerationScreenState extends State<ContentModerationScreen> with 
                   onPressed: () => _dismissReport(reportId),
                   style: OutlinedButton.styleFrom(
                     padding: const EdgeInsets.all(14),
-                    side: const BorderSide(color: Color(0xFF83BCB5)),
+                    side: BorderSide(color: brandGreen),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),
                   ),
-                  child: const Icon(Icons.close, color: Color(0xFF83BCB5)),
+                  child: Icon(Icons.close, color: brandGreen),
                 ),
               ],
             ),
@@ -534,47 +610,71 @@ class _ContentModerationScreenState extends State<ContentModerationScreen> with 
   }
 
   Future<void> _viewContent(String contentType, String contentId) async {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final brandGreen = isDark ? AppColors.brandGreen : AppColors.brandGreenDeep;
+
     // TODO: Navigate to content detail view based on type
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('View $contentType: $contentId'),
-        backgroundColor: const Color(0xFF83BCB5),
+        backgroundColor: brandGreen,
       ),
     );
   }
 
   Future<void> _viewChat(String chatId) async {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final brandGreen = isDark ? AppColors.brandGreen : AppColors.brandGreenDeep;
+
     // TODO: Navigate to chat view
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('View chat: $chatId'),
-        backgroundColor: const Color(0xFF83BCB5),
+        backgroundColor: brandGreen,
       ),
     );
   }
 
-  Future<void> _takeAction(String reportId, String contentType, String contentId, String userId) async {
+  Future<void> _takeAction(String reportId, String contentType,
+      String contentId, String userId) async {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryText =
+        isDark ? const Color(0xFFFFFFFF) : AppColors.textPrimary;
+    final secondaryText =
+        isDark ? const Color(0xFFB0B0B0) : AppColors.textSecondary;
+    final cardBackground = isDark ? const Color(0xFF1A1A1A) : AppColors.surface;
+    final redColor = isDark ? Colors.red.shade400 : Colors.red.shade700;
+    final greenColor =
+        isDark ? const Color(0xFF7FFA88) : const Color(0xFF66BB6A);
+
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF171917),
+        backgroundColor: cardBackground,
         title: Text(
           'Remove Content & Ban User',
-          style: GoogleFonts.poppins(color: Colors.white),
+          style: GoogleFonts.poppins(color: primaryText),
         ),
         content: Text(
           'This will remove the content and suspend the user account. Continue?',
-          style: GoogleFonts.inter(color: Colors.white70),
+          style: GoogleFonts.inter(color: secondaryText),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: Text('Cancel', style: GoogleFonts.inter(color: Colors.white38)),
+            child: Text('Cancel',
+                style:
+                    GoogleFonts.inter(color: secondaryText.withOpacity(0.6))),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: Text('Remove & Ban', style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
+            style: ElevatedButton.styleFrom(backgroundColor: redColor),
+            child: Text('Remove & Ban',
+                style: GoogleFonts.inter(
+                    fontWeight: FontWeight.bold,
+                    color: isDark
+                        ? AppColors.textPrimary
+                        : const Color(0xFFFFFFFF))),
           ),
         ],
       ),
@@ -600,9 +700,9 @@ class _ContentModerationScreenState extends State<ContentModerationScreen> with 
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Content removed and user banned'),
-              backgroundColor: Color(0xFF7FFA88),
+            SnackBar(
+              content: const Text('Content removed and user banned'),
+              backgroundColor: greenColor,
             ),
           );
         }
@@ -611,7 +711,7 @@ class _ContentModerationScreenState extends State<ContentModerationScreen> with 
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Error: $e'),
-              backgroundColor: Colors.red,
+              backgroundColor: redColor,
             ),
           );
         }
@@ -620,6 +720,11 @@ class _ContentModerationScreenState extends State<ContentModerationScreen> with 
   }
 
   Future<void> _warnUser(String reportId, String userId) async {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final greenColor =
+        isDark ? const Color(0xFF7FFA88) : const Color(0xFF66BB6A);
+    final redColor = isDark ? Colors.red.shade400 : Colors.red.shade700;
+
     try {
       // Update report status
       await _firestore.collection('reports').doc(reportId).update({
@@ -637,9 +742,9 @@ class _ContentModerationScreenState extends State<ContentModerationScreen> with 
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('User has been warned'),
-            backgroundColor: Color(0xFF7FFA88),
+          SnackBar(
+            content: const Text('User has been warned'),
+            backgroundColor: greenColor,
           ),
         );
       }
@@ -648,7 +753,7 @@ class _ContentModerationScreenState extends State<ContentModerationScreen> with 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error: $e'),
-            backgroundColor: Colors.red,
+            backgroundColor: redColor,
           ),
         );
       }
@@ -656,6 +761,11 @@ class _ContentModerationScreenState extends State<ContentModerationScreen> with 
   }
 
   Future<void> _dismissReport(String reportId) async {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final greenColor =
+        isDark ? const Color(0xFF7FFA88) : const Color(0xFF66BB6A);
+    final redColor = isDark ? Colors.red.shade400 : Colors.red.shade700;
+
     try {
       await _firestore.collection('reports').doc(reportId).update({
         'status': 'dismissed',
@@ -664,9 +774,9 @@ class _ContentModerationScreenState extends State<ContentModerationScreen> with 
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Report dismissed'),
-            backgroundColor: Color(0xFF7FFA88),
+          SnackBar(
+            content: const Text('Report dismissed'),
+            backgroundColor: greenColor,
           ),
         );
       }
@@ -675,7 +785,7 @@ class _ContentModerationScreenState extends State<ContentModerationScreen> with 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error: $e'),
-            backgroundColor: Colors.red,
+            backgroundColor: redColor,
           ),
         );
       }

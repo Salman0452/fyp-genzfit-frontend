@@ -200,7 +200,7 @@ class _AvatarViewerScreenState extends State<AvatarViewerScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF1A1A2E),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: _buildAppBar(),
       body: _isLoading
           ? _buildLoadingView('Loading avatar data…')
@@ -254,7 +254,7 @@ class _AvatarViewerScreenState extends State<AvatarViewerScreen>
             Icons.refresh,
             color: Theme.of(context).brightness == Brightness.dark
                 ? const Color(0xFFFFFFFF)
-                : Colors.black,
+                : AppColors.textPrimary,
           ),
           onPressed: _init,
         ),
@@ -287,11 +287,14 @@ class _AvatarViewerScreenState extends State<AvatarViewerScreen>
                     : AppColors.surface,
                 borderRadius:
                     const BorderRadius.vertical(top: Radius.circular(24)),
-                boxShadow: const [
+                boxShadow: [
                   BoxShadow(
-                    color: Colors.black38,
+                    color: (Theme.of(context).brightness == Brightness.dark
+                            ? const Color(0xFF000000)
+                            : Colors.black)
+                        .withOpacity(0.3),
                     blurRadius: 20,
-                    offset: Offset(0, -6),
+                    offset: const Offset(0, -6),
                   ),
                 ],
               ),
@@ -802,12 +805,19 @@ class _AvatarViewerScreenState extends State<AvatarViewerScreen>
         children: [
           RotationTransition(
             turns: _spinCtrl,
-            child: const Icon(Icons.threed_rotation,
-                size: 60, color: AppColors.accent),
+            child: Icon(Icons.threed_rotation,
+                size: 60,
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? AppColors.brandGreen
+                    : AppColors.brandGreenDeep),
           ),
           const SizedBox(height: 20),
           Text(message,
-              style: const TextStyle(color: Colors.white70, fontSize: 16)),
+              style: TextStyle(
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? const Color(0xFFB0B0B0)
+                      : AppColors.textSecondary,
+                  fontSize: 16)),
         ],
       ),
     );
@@ -819,10 +829,19 @@ class _AvatarViewerScreenState extends State<AvatarViewerScreen>
     return FloatingActionButton.extended(
       heroTag: 'fab_update',
       onPressed: _generateAvatar,
-      backgroundColor: AppColors.accent,
-      icon: const Icon(Icons.sync, color: Colors.black),
-      label: const Text('Update Avatar',
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+      backgroundColor: Theme.of(context).brightness == Brightness.dark
+          ? AppColors.brandGreen
+          : AppColors.brandGreenDeep,
+      icon: Icon(Icons.sync,
+          color: Theme.of(context).brightness == Brightness.dark
+              ? const Color(0xFF010101)
+              : AppColors.background),
+      label: Text('Update Avatar',
+          style: TextStyle(
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? const Color(0xFF010101)
+                  : AppColors.background,
+              fontWeight: FontWeight.bold)),
     );
   }
 

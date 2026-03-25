@@ -9,6 +9,7 @@ import 'package:genzfit/screens/admin/analytics_dashboard_screen.dart';
 import 'package:genzfit/screens/admin/content_moderation_screen.dart';
 import 'package:genzfit/screens/admin/financial_management_screen.dart';
 import 'package:genzfit/screens/admin/system_settings_screen.dart';
+import 'package:genzfit/utils/constants.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
@@ -98,44 +99,53 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final brandGreen = isDark ? AppColors.brandGreen : AppColors.brandGreenDeep;
+    final primaryText =
+        isDark ? const Color(0xFFFFFFFF) : AppColors.textPrimary;
+    final secondaryText =
+        isDark ? const Color(0xFFB0B0B0) : AppColors.textSecondary;
+    final cardBackground = isDark ? const Color(0xFF1A1A1A) : AppColors.surface;
+
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF171917),
+        backgroundColor: cardBackground,
         elevation: 0,
         title: Row(
           children: [
-            const Icon(Icons.admin_panel_settings, color: Color(0xFF83BCB5)),
+            Icon(Icons.admin_panel_settings, color: brandGreen),
             const SizedBox(width: 12),
             Text(
               'Admin Dashboard',
               style: GoogleFonts.poppins(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
-                color: Colors.white,
+                color: primaryText,
               ),
             ),
           ],
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh, color: Colors.white),
+            icon: Icon(Icons.refresh, color: primaryText),
             onPressed: _loadDashboardData,
             tooltip: 'Refresh',
           ),
           const SizedBox(width: 8),
           PopupMenuButton<String>(
             icon: CircleAvatar(
-              backgroundColor: const Color(0xFF83BCB5),
+              backgroundColor: brandGreen,
               child: Text(
                 widget.admin.name[0].toUpperCase(),
                 style: GoogleFonts.poppins(
-                  color: Colors.black,
+                  color:
+                      isDark ? AppColors.textPrimary : const Color(0xFFFFFFFF),
                   fontWeight: FontWeight.bold,
                 ),
               ),
             ),
-            color: const Color(0xFF171917),
+            color: cardBackground,
             onSelected: (value) async {
               if (value == 'logout') {
                 await FirebaseAuth.instance.signOut();
@@ -149,11 +159,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 value: 'profile',
                 child: Row(
                   children: [
-                    const Icon(Icons.person, color: Colors.white60),
+                    Icon(Icons.person, color: secondaryText),
                     const SizedBox(width: 12),
                     Text(
                       widget.admin.name,
-                      style: const TextStyle(color: Colors.white),
+                      style: TextStyle(color: primaryText),
                     ),
                   ],
                 ),
@@ -163,11 +173,16 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 value: 'logout',
                 child: Row(
                   children: [
-                    const Icon(Icons.logout, color: Colors.red),
+                    Icon(Icons.logout,
+                        color:
+                            isDark ? Colors.red.shade300 : Colors.red.shade700),
                     const SizedBox(width: 12),
                     Text(
                       'Logout',
-                      style: GoogleFonts.inter(color: Colors.red),
+                      style: GoogleFonts.inter(
+                          color: isDark
+                              ? Colors.red.shade300
+                              : Colors.red.shade700),
                     ),
                   ],
                 ),
@@ -178,13 +193,13 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         ],
       ),
       body: _isLoading
-          ? const Center(
-              child: CircularProgressIndicator(color: Color(0xFF83BCB5)),
+          ? Center(
+              child: CircularProgressIndicator(color: brandGreen),
             )
           : RefreshIndicator(
               onRefresh: _loadDashboardData,
-              color: const Color(0xFF83BCB5),
-              backgroundColor: const Color(0xFF171917),
+              color: brandGreen,
+              backgroundColor: cardBackground,
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 padding: const EdgeInsets.all(24),
@@ -206,11 +221,17 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   }
 
   Widget _buildWelcomeCard() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final brandGreen = isDark ? AppColors.brandGreen : AppColors.brandGreenDeep;
+
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF83BCB5), Color(0xFF7FFA88)],
+        gradient: LinearGradient(
+          colors: [
+            brandGreen,
+            isDark ? const Color(0xFF7FFA88) : AppColors.brandGreen
+          ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -224,7 +245,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             style: GoogleFonts.poppins(
               fontSize: 24,
               fontWeight: FontWeight.bold,
-              color: Colors.white,
+              color: const Color(0xFFFFFFFF),
             ),
           ),
           const SizedBox(height: 8),
@@ -232,7 +253,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             'Here\'s what\'s happening with GenZFit today',
             style: GoogleFonts.inter(
               fontSize: 14,
-              color: Colors.white.withOpacity(0.9),
+              color: const Color(0xFFFFFFFF).withOpacity(0.9),
             ),
           ),
         ],
@@ -241,6 +262,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   }
 
   Widget _buildStatsOverview() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryText =
+        isDark ? const Color(0xFFFFFFFF) : AppColors.textPrimary;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -249,17 +274,21 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           style: GoogleFonts.poppins(
             fontSize: 20,
             fontWeight: FontWeight.bold,
-            color: Colors.white,
+            color: primaryText,
           ),
         ),
         const SizedBox(height: 16),
         LayoutBuilder(
           builder: (context, constraints) {
             // Responsive grid
-            final crossAxisCount = constraints.maxWidth > 1200 ? 4 : 
-                                   constraints.maxWidth > 800 ? 3 : 
-                                   constraints.maxWidth > 600 ? 2 : 1;
-            
+            final crossAxisCount = constraints.maxWidth > 1200
+                ? 4
+                : constraints.maxWidth > 800
+                    ? 3
+                    : constraints.maxWidth > 600
+                        ? 2
+                        : 1;
+
             return GridView.count(
               crossAxisCount: crossAxisCount,
               shrinkWrap: true,
@@ -273,14 +302,17 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   label: 'Total Users',
                   value: _totalUsers.toString(),
                   subtitle: '$_totalClients Clients • $_totalTrainers Trainers',
-                  color: const Color(0xFF83BCB5),
+                  color:
+                      isDark ? AppColors.brandGreen : AppColors.brandGreenDeep,
                 ),
                 _buildStatCard(
                   icon: Icons.pending_actions,
                   label: 'Pending Verifications',
                   value: _pendingVerifications.toString(),
                   subtitle: 'Trainers awaiting approval',
-                  color: const Color(0xFFFFD166),
+                  color: isDark
+                      ? const Color(0xFFFFD166)
+                      : const Color(0xFFFFA726),
                   onTap: () => _navigateToVerification(),
                 ),
                 _buildStatCard(
@@ -288,14 +320,18 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   label: 'Active Sessions',
                   value: _activeSessions.toString(),
                   subtitle: 'Ongoing training sessions',
-                  color: const Color(0xFF7FFA88),
+                  color: isDark
+                      ? const Color(0xFF7FFA88)
+                      : const Color(0xFF66BB6A),
                 ),
                 _buildStatCard(
                   icon: Icons.attach_money,
                   label: 'Platform Revenue',
                   value: '\$${_platformRevenue.toStringAsFixed(0)}',
                   subtitle: 'Total earnings',
-                  color: const Color(0xFF9C27B0),
+                  color: isDark
+                      ? const Color(0xFF9C27B0)
+                      : const Color(0xFF8E24AA),
                 ),
               ],
             );
@@ -313,13 +349,20 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     required Color color,
     VoidCallback? onTap,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryText =
+        isDark ? const Color(0xFFFFFFFF) : AppColors.textPrimary;
+    final secondaryText =
+        isDark ? const Color(0xFFB0B0B0) : AppColors.textSecondary;
+    final cardBackground = isDark ? const Color(0xFF1A1A1A) : AppColors.surface;
+
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(16),
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: const Color(0xFF171917),
+          color: cardBackground,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: color.withOpacity(0.3)),
         ),
@@ -343,7 +386,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   style: GoogleFonts.poppins(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                    color: primaryText,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -351,7 +394,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   label,
                   style: GoogleFonts.inter(
                     fontSize: 13,
-                    color: Colors.white70,
+                    color: secondaryText,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -360,7 +403,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   subtitle,
                   style: GoogleFonts.inter(
                     fontSize: 11,
-                    color: Colors.white38,
+                    color: isDark
+                        ? const Color(0xFF757575)
+                        : AppColors.textSecondary.withOpacity(0.6),
                   ),
                 ),
               ],
@@ -372,6 +417,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   }
 
   Widget _buildQuickActions() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryText =
+        isDark ? const Color(0xFFFFFFFF) : AppColors.textPrimary;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -380,15 +429,18 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           style: GoogleFonts.poppins(
             fontSize: 20,
             fontWeight: FontWeight.bold,
-            color: Colors.white,
+            color: primaryText,
           ),
         ),
         const SizedBox(height: 16),
         LayoutBuilder(
           builder: (context, constraints) {
-            final crossAxisCount = constraints.maxWidth > 900 ? 3 : 
-                                   constraints.maxWidth > 600 ? 2 : 1;
-            
+            final crossAxisCount = constraints.maxWidth > 900
+                ? 3
+                : constraints.maxWidth > 600
+                    ? 2
+                    : 1;
+
             return GridView.count(
               crossAxisCount: crossAxisCount,
               shrinkWrap: true,
@@ -401,49 +453,62 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   icon: Icons.verified_user,
                   title: 'Verify Trainers',
                   description: '$_pendingVerifications pending',
-                  color: const Color(0xFFFFD166),
+                  color: isDark
+                      ? const Color(0xFFFFD166)
+                      : const Color(0xFFFFA726),
                   onTap: _navigateToVerification,
                 ),
                 _buildActionCard(
                   icon: Icons.manage_accounts,
                   title: 'Manage Users',
                   description: '$_totalUsers total users',
-                  color: const Color(0xFF83BCB5),
+                  color:
+                      isDark ? AppColors.brandGreen : AppColors.brandGreenDeep,
                   onTap: _navigateToUserManagement,
                 ),
                 _buildActionCard(
                   icon: Icons.event_note,
                   title: 'Monitor Sessions',
                   description: '$_activeSessions active',
-                  color: const Color(0xFF7FFA88),
+                  color: isDark
+                      ? const Color(0xFF7FFA88)
+                      : const Color(0xFF66BB6A),
                   onTap: _navigateToSessionMonitoring,
                 ),
                 _buildActionCard(
                   icon: Icons.analytics,
                   title: 'Analytics',
                   description: 'View insights',
-                  color: Colors.purple,
+                  color: isDark
+                      ? const Color(0xFF9C27B0)
+                      : const Color(0xFF8E24AA),
                   onTap: _navigateToAnalytics,
                 ),
                 _buildActionCard(
                   icon: Icons.flag,
                   title: 'Moderation',
                   description: 'Review reports',
-                  color: Colors.red,
+                  color: isDark
+                      ? const Color(0xFFEF5350)
+                      : const Color(0xFFD32F2F),
                   onTap: _navigateToModeration,
                 ),
                 _buildActionCard(
                   icon: Icons.attach_money,
                   title: 'Finances',
                   description: 'Payouts & refunds',
-                  color: const Color(0xFF7FFA88),
+                  color: isDark
+                      ? const Color(0xFF7FFA88)
+                      : const Color(0xFF66BB6A),
                   onTap: _navigateToFinances,
                 ),
                 _buildActionCard(
                   icon: Icons.settings,
                   title: 'Settings',
                   description: 'System config',
-                  color: Colors.blueGrey,
+                  color: isDark
+                      ? const Color(0xFF78909C)
+                      : const Color(0xFF546E7A),
                   onTap: _navigateToSettings,
                 ),
               ],
@@ -461,13 +526,20 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     required Color color,
     required VoidCallback onTap,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryText =
+        isDark ? const Color(0xFFFFFFFF) : AppColors.textPrimary;
+    final secondaryText =
+        isDark ? const Color(0xFFB0B0B0) : AppColors.textSecondary;
+    final cardBackground = isDark ? const Color(0xFF1A1A1A) : AppColors.surface;
+
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: const Color(0xFF171917),
+          color: cardBackground,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: color.withOpacity(0.3)),
         ),
@@ -492,7 +564,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     style: GoogleFonts.poppins(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
-                      color: Colors.white,
+                      color: primaryText,
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -500,15 +572,17 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     description,
                     style: GoogleFonts.inter(
                       fontSize: 13,
-                      color: Colors.white60,
+                      color: secondaryText,
                     ),
                   ),
                 ],
               ),
             ),
-            const Icon(
+            Icon(
               Icons.arrow_forward_ios,
-              color: Colors.white38,
+              color: isDark
+                  ? const Color(0xFF757575)
+                  : AppColors.textSecondary.withOpacity(0.6),
               size: 16,
             ),
           ],
@@ -518,6 +592,13 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   }
 
   Widget _buildRecentActivity() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryText =
+        isDark ? const Color(0xFFFFFFFF) : AppColors.textPrimary;
+    final secondaryText =
+        isDark ? const Color(0xFFB0B0B0) : AppColors.textSecondary;
+    final cardBackground = isDark ? const Color(0xFF1A1A1A) : AppColors.surface;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -526,7 +607,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           style: GoogleFonts.poppins(
             fontSize: 20,
             fontWeight: FontWeight.bold,
-            color: Colors.white,
+            color: primaryText,
           ),
         ),
         const SizedBox(height: 16),
@@ -541,13 +622,13 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               return Container(
                 padding: const EdgeInsets.all(32),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF171917),
+                  color: cardBackground,
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: Center(
                   child: Text(
                     'No recent activity',
-                    style: GoogleFonts.inter(color: Colors.white60),
+                    style: GoogleFonts.inter(color: secondaryText),
                   ),
                 ),
               );
@@ -555,15 +636,17 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
             return Container(
               decoration: BoxDecoration(
-                color: const Color(0xFF171917),
+                color: cardBackground,
                 borderRadius: BorderRadius.circular(16),
               ),
               child: ListView.separated(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 itemCount: snapshot.data!.docs.length,
-                separatorBuilder: (context, index) => const Divider(
-                  color: Colors.white12,
+                separatorBuilder: (context, index) => Divider(
+                  color: isDark
+                      ? const Color(0xFF424242)
+                      : AppColors.textSecondary.withOpacity(0.2),
                   height: 1,
                 ),
                 itemBuilder: (context, index) {
@@ -579,6 +662,12 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   }
 
   Widget _buildActivityItem(QueryDocumentSnapshot session) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryText =
+        isDark ? const Color(0xFFFFFFFF) : AppColors.textPrimary;
+    final secondaryText =
+        isDark ? const Color(0xFFB0B0B0) : AppColors.textSecondary;
+
     final data = session.data() as Map<String, dynamic>;
     final status = data['status'] as String? ?? 'unknown';
     final createdAt = (data['createdAt'] as Timestamp?)?.toDate();
@@ -588,19 +677,23 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
     switch (status) {
       case 'requested':
-        statusColor = const Color(0xFFFFD166);
+        statusColor =
+            isDark ? const Color(0xFFFFD166) : const Color(0xFFFFA726);
         statusIcon = Icons.pending;
         break;
       case 'active':
-        statusColor = const Color(0xFF7FFA88);
+        statusColor =
+            isDark ? const Color(0xFF7FFA88) : const Color(0xFF66BB6A);
         statusIcon = Icons.check_circle;
         break;
       case 'completed':
-        statusColor = Colors.blue;
+        statusColor =
+            isDark ? const Color(0xFF42A5F5) : const Color(0xFF1E88E5);
         statusIcon = Icons.done_all;
         break;
       default:
-        statusColor = Colors.grey;
+        statusColor =
+            isDark ? const Color(0xFF9E9E9E) : const Color(0xFF757575);
         statusIcon = Icons.info;
     }
 
@@ -619,16 +712,16 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         style: GoogleFonts.poppins(
           fontSize: 14,
           fontWeight: FontWeight.w600,
-          color: Colors.white,
+          color: primaryText,
         ),
       ),
       subtitle: Text(
-        createdAt != null 
+        createdAt != null
             ? '${createdAt.day}/${createdAt.month}/${createdAt.year} at ${createdAt.hour}:${createdAt.minute.toString().padLeft(2, '0')}'
             : 'Unknown date',
         style: GoogleFonts.inter(
           fontSize: 12,
-          color: Colors.white60,
+          color: secondaryText,
         ),
       ),
       trailing: Chip(

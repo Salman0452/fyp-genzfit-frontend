@@ -144,8 +144,13 @@ class _SplashScreenState extends State<SplashScreen>
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
-                      AppColors.brandGreen,
-                      AppColors.brandGreen.withOpacity(0.85),
+                      Theme.of(context).brightness == Brightness.dark
+                          ? AppColors.brandGreen
+                          : AppColors.brandGreenDeep,
+                      (Theme.of(context).brightness == Brightness.dark
+                              ? AppColors.brandGreen
+                              : AppColors.brandGreenDeep)
+                          .withOpacity(0.85),
                     ],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
@@ -153,7 +158,10 @@ class _SplashScreenState extends State<SplashScreen>
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.brandGreen.withOpacity(0.25),
+                      color: (Theme.of(context).brightness == Brightness.dark
+                              ? AppColors.brandGreen
+                              : AppColors.brandGreenDeep)
+                          .withOpacity(0.25),
                       blurRadius: 20,
                       spreadRadius: 5,
                     ),
@@ -197,7 +205,11 @@ class _SplashScreenState extends State<SplashScreen>
               const SizedBox(height: 64),
               // Loading Indicator
               CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(AppColors.brandGreen),
+                valueColor: AlwaysStoppedAnimation<Color>(
+                  Theme.of(context).brightness == Brightness.dark
+                      ? AppColors.brandGreen
+                      : AppColors.brandGreenDeep,
+                ),
                 strokeWidth: 3,
               ),
             ],

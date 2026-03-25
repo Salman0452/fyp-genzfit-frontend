@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:genzfit/models/user_model.dart';
 import 'package:genzfit/models/session_model.dart';
+import 'package:genzfit/utils/constants.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
@@ -16,7 +17,7 @@ class TrainerDashboardScreen extends StatefulWidget {
 
 class _TrainerDashboardScreenState extends State<TrainerDashboardScreen> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  
+
   int _totalClients = 0;
   int _activeSessions = 0;
   double _totalEarnings = 0.0;
@@ -31,7 +32,7 @@ class _TrainerDashboardScreenState extends State<TrainerDashboardScreen> {
 
   Future<void> _loadDashboardData() async {
     setState(() => _isLoading = true);
-    
+
     try {
       // Get all sessions for this trainer
       final sessionsSnapshot = await _firestore
@@ -47,18 +48,19 @@ class _TrainerDashboardScreenState extends State<TrainerDashboardScreen> {
 
       for (var doc in sessionsSnapshot.docs) {
         final session = SessionModel.fromFirestore(doc);
-        
+
         uniqueClients.add(session.clientId);
-        
+
         if (session.status == SessionStatus.active) {
           active++;
         }
-        
+
         if (session.status == SessionStatus.requested) {
           pending++;
         }
-        
-        if (session.status == SessionStatus.completed && session.amount != null) {
+
+        if (session.status == SessionStatus.completed &&
+            session.amount != null) {
           earnings += session.amount!;
         }
       }
@@ -86,13 +88,23 @@ class _TrainerDashboardScreenState extends State<TrainerDashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final accentColor = Theme.of(context).brightness == Brightness.dark
+        ? AppColors.brandGreen
+        : AppColors.brandGreenDeep;
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF171917),
+        backgroundColor: Theme.of(context).brightness == Brightness.dark
+            ? const Color(0xFF1A1A1A)
+            : AppColors.surface,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
+          icon: Icon(
+            Icons.arrow_back_ios,
+            color: Theme.of(context).brightness == Brightness.dark
+                ? const Color(0xFFFFFFFF)
+                : AppColors.textPrimary,
+          ),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
@@ -100,24 +112,33 @@ class _TrainerDashboardScreenState extends State<TrainerDashboardScreen> {
           style: GoogleFonts.poppins(
             fontSize: 20,
             fontWeight: FontWeight.bold,
-            color: Colors.white,
+            color: Theme.of(context).brightness == Brightness.dark
+                ? const Color(0xFFFFFFFF)
+                : AppColors.textPrimary,
           ),
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh, color: Colors.white),
+            icon: Icon(
+              Icons.refresh,
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? const Color(0xFFFFFFFF)
+                  : AppColors.textPrimary,
+            ),
             onPressed: _loadDashboardData,
           ),
         ],
       ),
       body: _isLoading
-          ? const Center(
-              child: CircularProgressIndicator(color: Color(0xFF83BCB5)),
+          ? Center(
+              child: CircularProgressIndicator(color: accentColor),
             )
           : RefreshIndicator(
               onRefresh: _loadDashboardData,
-              color: const Color(0xFF83BCB5),
-              backgroundColor: const Color(0xFF171917),
+              color: accentColor,
+              backgroundColor: Theme.of(context).brightness == Brightness.dark
+                  ? const Color(0xFF1A1A1A)
+                  : AppColors.surface,
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 padding: const EdgeInsets.all(16),
@@ -139,6 +160,9 @@ class _TrainerDashboardScreenState extends State<TrainerDashboardScreen> {
   }
 
   Widget _buildStatsOverview() {
+    final accentColor = Theme.of(context).brightness == Brightness.dark
+        ? AppColors.brandGreen
+        : AppColors.brandGreenDeep;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -147,7 +171,9 @@ class _TrainerDashboardScreenState extends State<TrainerDashboardScreen> {
           style: GoogleFonts.poppins(
             fontSize: 18,
             fontWeight: FontWeight.bold,
-            color: Colors.white,
+            color: Theme.of(context).brightness == Brightness.dark
+                ? const Color(0xFFFFFFFF)
+                : AppColors.textPrimary,
           ),
         ),
         const SizedBox(height: 16),
@@ -158,7 +184,7 @@ class _TrainerDashboardScreenState extends State<TrainerDashboardScreen> {
                 icon: Icons.people,
                 label: 'Total Clients',
                 value: _totalClients.toString(),
-                color: const Color(0xFF83BCB5),
+                color: accentColor,
               ),
             ),
             const SizedBox(width: 12),
@@ -207,7 +233,9 @@ class _TrainerDashboardScreenState extends State<TrainerDashboardScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF171917),
+        color: Theme.of(context).brightness == Brightness.dark
+            ? const Color(0xFF1A1A1A)
+            : AppColors.surface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: color.withOpacity(0.3)),
       ),
@@ -228,7 +256,9 @@ class _TrainerDashboardScreenState extends State<TrainerDashboardScreen> {
             style: GoogleFonts.poppins(
               fontSize: 24,
               fontWeight: FontWeight.bold,
-              color: Colors.white,
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? const Color(0xFFFFFFFF)
+                  : AppColors.textPrimary,
             ),
           ),
           const SizedBox(height: 4),
@@ -236,7 +266,9 @@ class _TrainerDashboardScreenState extends State<TrainerDashboardScreen> {
             label,
             style: GoogleFonts.inter(
               fontSize: 12,
-              color: Colors.white60,
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? const Color(0xFFB0B0B0)
+                  : AppColors.textSecondary,
             ),
           ),
         ],
@@ -256,12 +288,15 @@ class _TrainerDashboardScreenState extends State<TrainerDashboardScreen> {
               style: GoogleFonts.poppins(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
-                color: Colors.white,
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? const Color(0xFFFFFFFF)
+                    : AppColors.textPrimary,
               ),
             ),
             if (_pendingRequests > 0)
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                 decoration: BoxDecoration(
                   color: const Color(0xFFFFD166),
                   borderRadius: BorderRadius.circular(12),
@@ -271,7 +306,9 @@ class _TrainerDashboardScreenState extends State<TrainerDashboardScreen> {
                   style: GoogleFonts.poppins(
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? const Color(0xFF000000)
+                        : const Color(0xFFFFFFFF),
                   ),
                 ),
               ),
@@ -295,13 +332,19 @@ class _TrainerDashboardScreenState extends State<TrainerDashboardScreen> {
               return Container(
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF171917),
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? const Color(0xFF1A1A1A)
+                      : AppColors.surface,
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: Center(
                   child: Text(
                     'No pending requests',
-                    style: GoogleFonts.inter(color: Colors.white60),
+                    style: GoogleFonts.inter(
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? const Color(0xFFB0B0B0)
+                          : AppColors.textSecondary,
+                    ),
                   ),
                 ),
               );
@@ -335,7 +378,9 @@ class _TrainerDashboardScreenState extends State<TrainerDashboardScreen> {
           margin: const EdgeInsets.only(bottom: 12),
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: const Color(0xFF171917),
+            color: Theme.of(context).brightness == Brightness.dark
+                ? const Color(0xFF1A1A1A)
+                : AppColors.surface,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(color: const Color(0xFFFFD166).withOpacity(0.3)),
           ),
@@ -343,15 +388,18 @@ class _TrainerDashboardScreenState extends State<TrainerDashboardScreen> {
             children: [
               CircleAvatar(
                 radius: 24,
-                backgroundImage: clientAvatar != null
-                    ? NetworkImage(clientAvatar)
-                    : null,
-                backgroundColor: const Color(0xFF1F2120),
+                backgroundImage:
+                    clientAvatar != null ? NetworkImage(clientAvatar) : null,
+                backgroundColor: Theme.of(context).brightness == Brightness.dark
+                    ? const Color(0xFF2A2A2A)
+                    : const Color(0xFFE0E0E0),
                 child: clientAvatar == null
                     ? Text(
                         clientName[0].toUpperCase(),
                         style: GoogleFonts.poppins(
-                          color: Colors.white,
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? const Color(0xFFFFFFFF)
+                              : AppColors.textPrimary,
                           fontWeight: FontWeight.w600,
                         ),
                       )
@@ -367,14 +415,18 @@ class _TrainerDashboardScreenState extends State<TrainerDashboardScreen> {
                       style: GoogleFonts.poppins(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
-                        color: Colors.white,
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? const Color(0xFFFFFFFF)
+                            : AppColors.textPrimary,
                       ),
                     ),
                     Text(
                       DateFormat('MMM d, y').format(session.createdAt),
                       style: GoogleFonts.inter(
                         fontSize: 12,
-                        color: Colors.white60,
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? const Color(0xFFB0B0B0)
+                            : AppColors.textSecondary,
                       ),
                     ),
                   ],
@@ -383,7 +435,8 @@ class _TrainerDashboardScreenState extends State<TrainerDashboardScreen> {
               Row(
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.check_circle, color: Color(0xFF7FFA88)),
+                    icon: const Icon(Icons.check_circle,
+                        color: Color(0xFF7FFA88)),
                     onPressed: () => _acceptRequest(session),
                   ),
                   IconButton(
@@ -408,7 +461,9 @@ class _TrainerDashboardScreenState extends State<TrainerDashboardScreen> {
           style: GoogleFonts.poppins(
             fontSize: 18,
             fontWeight: FontWeight.bold,
-            color: Colors.white,
+            color: Theme.of(context).brightness == Brightness.dark
+                ? const Color(0xFFFFFFFF)
+                : AppColors.textPrimary,
           ),
         ),
         const SizedBox(height: 16),
@@ -423,13 +478,19 @@ class _TrainerDashboardScreenState extends State<TrainerDashboardScreen> {
               return Container(
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF171917),
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? const Color(0xFF1A1A1A)
+                      : AppColors.surface,
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: Center(
                   child: Text(
                     'No active clients',
-                    style: GoogleFonts.inter(color: Colors.white60),
+                    style: GoogleFonts.inter(
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? const Color(0xFFB0B0B0)
+                          : AppColors.textSecondary,
+                    ),
                   ),
                 ),
               );
@@ -448,6 +509,9 @@ class _TrainerDashboardScreenState extends State<TrainerDashboardScreen> {
   }
 
   Widget _buildClientCard(SessionModel session) {
+    final accentColor = Theme.of(context).brightness == Brightness.dark
+        ? AppColors.brandGreen
+        : AppColors.brandGreenDeep;
     return FutureBuilder<DocumentSnapshot>(
       future: _firestore.collection('users').doc(session.clientId).get(),
       builder: (context, snapshot) {
@@ -462,22 +526,27 @@ class _TrainerDashboardScreenState extends State<TrainerDashboardScreen> {
           margin: const EdgeInsets.only(bottom: 12),
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: const Color(0xFF171917),
+            color: Theme.of(context).brightness == Brightness.dark
+                ? const Color(0xFF1A1A1A)
+                : AppColors.surface,
             borderRadius: BorderRadius.circular(16),
           ),
           child: Row(
             children: [
               CircleAvatar(
                 radius: 24,
-                backgroundImage: clientAvatar != null
-                    ? NetworkImage(clientAvatar)
-                    : null,
-                backgroundColor: const Color(0xFF1F2120),
+                backgroundImage:
+                    clientAvatar != null ? NetworkImage(clientAvatar) : null,
+                backgroundColor: Theme.of(context).brightness == Brightness.dark
+                    ? const Color(0xFF2A2A2A)
+                    : const Color(0xFFE0E0E0),
                 child: clientAvatar == null
                     ? Text(
                         clientName[0].toUpperCase(),
                         style: GoogleFonts.poppins(
-                          color: Colors.white,
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? const Color(0xFFFFFFFF)
+                              : AppColors.textPrimary,
                           fontWeight: FontWeight.w600,
                         ),
                       )
@@ -493,21 +562,25 @@ class _TrainerDashboardScreenState extends State<TrainerDashboardScreen> {
                       style: GoogleFonts.poppins(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
-                        color: Colors.white,
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? const Color(0xFFFFFFFF)
+                            : AppColors.textPrimary,
                       ),
                     ),
                     Text(
                       'Goal: ${goals}',
                       style: GoogleFonts.inter(
                         fontSize: 12,
-                        color: Colors.white60,
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? const Color(0xFFB0B0B0)
+                            : AppColors.textSecondary,
                       ),
                     ),
                   ],
                 ),
               ),
               IconButton(
-                icon: const Icon(Icons.chat_bubble_outline, color: Color(0xFF83BCB5)),
+                icon: Icon(Icons.chat_bubble_outline, color: accentColor),
                 onPressed: () {
                   // Navigate to chat
                 },
@@ -528,7 +601,9 @@ class _TrainerDashboardScreenState extends State<TrainerDashboardScreen> {
           style: GoogleFonts.poppins(
             fontSize: 18,
             fontWeight: FontWeight.bold,
-            color: Colors.white,
+            color: Theme.of(context).brightness == Brightness.dark
+                ? const Color(0xFFFFFFFF)
+                : AppColors.textPrimary,
           ),
         ),
         const SizedBox(height: 16),
@@ -544,13 +619,19 @@ class _TrainerDashboardScreenState extends State<TrainerDashboardScreen> {
               return Container(
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF171917),
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? const Color(0xFF1A1A1A)
+                      : AppColors.surface,
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: Center(
                   child: Text(
                     'No sessions yet',
-                    style: GoogleFonts.inter(color: Colors.white60),
+                    style: GoogleFonts.inter(
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? const Color(0xFFB0B0B0)
+                          : AppColors.textSecondary,
+                    ),
                   ),
                 ),
               );
@@ -596,7 +677,9 @@ class _TrainerDashboardScreenState extends State<TrainerDashboardScreen> {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF171917),
+        color: Theme.of(context).brightness == Brightness.dark
+            ? const Color(0xFF1A1A1A)
+            : AppColors.surface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: statusColor.withOpacity(0.3)),
       ),
@@ -627,7 +710,9 @@ class _TrainerDashboardScreenState extends State<TrainerDashboardScreen> {
                   DateFormat('MMM d, y').format(session.createdAt),
                   style: GoogleFonts.inter(
                     fontSize: 12,
-                    color: Colors.white60,
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? const Color(0xFFB0B0B0)
+                        : AppColors.textSecondary,
                   ),
                 ),
               ],
@@ -639,7 +724,9 @@ class _TrainerDashboardScreenState extends State<TrainerDashboardScreen> {
               style: GoogleFonts.poppins(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
-                color: Colors.white,
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? const Color(0xFFFFFFFF)
+                    : AppColors.textPrimary,
               ),
             ),
         ],

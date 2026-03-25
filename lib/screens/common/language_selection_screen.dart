@@ -12,19 +12,24 @@ class LanguageSelectionScreen extends StatelessWidget {
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: const Text('Select Language'),
-        backgroundColor: AppColors.surface,
+        backgroundColor: Theme.of(context).brightness == Brightness.dark
+            ? const Color(0xFF1A1A1A)
+            : AppColors.surface,
       ),
       body: Consumer<LanguageProvider>(
         builder: (context, languageProvider, child) {
           return ListView(
             padding: const EdgeInsets.all(20),
             children: [
-              const Text(
+              Text(
                 'Choose your preferred language',
-                style: TextStyle(fontSize: 16, color: AppColors.textSecondary),
+                style: TextStyle(
+                    fontSize: 16,
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? const Color(0xFFB0B0B0)
+                        : AppColors.textSecondary),
               ),
               const SizedBox(height: 20),
-
               _buildLanguageOption(
                 context,
                 languageProvider,
@@ -33,9 +38,7 @@ class LanguageSelectionScreen extends StatelessWidget {
                 'English',
                 Icons.language,
               ),
-
               const SizedBox(height: 12),
-
               _buildLanguageOption(
                 context,
                 languageProvider,
@@ -44,25 +47,33 @@ class LanguageSelectionScreen extends StatelessWidget {
                 'Urdu',
                 Icons.language,
               ),
-
               const SizedBox(height: 32),
-
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: AppColors.surface,
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? const Color(0xFF1A1A1A)
+                      : AppColors.surface,
                   borderRadius: BorderRadius.circular(AppSizes.borderRadius),
-                  border: Border.all(color: AppColors.accent.withOpacity(0.3)),
+                  border: Border.all(
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? AppColors.brandGreen.withOpacity(0.3)
+                          : AppColors.accent.withOpacity(0.3)),
                 ),
-                child: const Row(
+                child: Row(
                   children: [
-                    Icon(Icons.info_outline, color: AppColors.accent),
-                    SizedBox(width: 12),
+                    Icon(Icons.info_outline,
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? AppColors.brandGreen
+                            : AppColors.brandGreenDeep),
+                    const SizedBox(width: 12),
                     Expanded(
                       child: Text(
                         'The app will restart to apply the language change.',
                         style: TextStyle(
-                          color: AppColors.textSecondary,
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? const Color(0xFFB0B0B0)
+                              : AppColors.textSecondary,
                           fontSize: 14,
                         ),
                       ),
@@ -107,13 +118,22 @@ class LanguageSelectionScreen extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color:
-              isSelected
-                  ? AppColors.accent.withOpacity(0.1)
-                  : AppColors.surface,
+          color: isSelected
+              ? (Theme.of(context).brightness == Brightness.dark
+                  ? AppColors.brandGreen.withOpacity(0.1)
+                  : AppColors.accent.withOpacity(0.1))
+              : (Theme.of(context).brightness == Brightness.dark
+                  ? const Color(0xFF1A1A1A)
+                  : AppColors.surface),
           borderRadius: BorderRadius.circular(AppSizes.borderRadius),
           border: Border.all(
-            color: isSelected ? AppColors.accent : AppColors.surface,
+            color: isSelected
+                ? (Theme.of(context).brightness == Brightness.dark
+                    ? AppColors.brandGreen
+                    : AppColors.brandGreenDeep)
+                : (Theme.of(context).brightness == Brightness.dark
+                    ? const Color(0xFF1A1A1A)
+                    : AppColors.surface),
             width: 2,
           ),
         ),
@@ -122,13 +142,24 @@ class LanguageSelectionScreen extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: isSelected ? AppColors.accent : AppColors.charcoal,
+                color: isSelected
+                    ? (Theme.of(context).brightness == Brightness.dark
+                        ? AppColors.brandGreen
+                        : AppColors.brandGreenDeep)
+                    : (Theme.of(context).brightness == Brightness.dark
+                        ? const Color(0xFF2A2A2A)
+                        : AppColors.charcoal),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(
                 icon,
-                color:
-                    isSelected ? AppColors.background : AppColors.textSecondary,
+                color: isSelected
+                    ? (Theme.of(context).brightness == Brightness.dark
+                        ? const Color(0xFF000000)
+                        : const Color(0xFFFFFFFF))
+                    : (Theme.of(context).brightness == Brightness.dark
+                        ? const Color(0xFFB0B0B0)
+                        : AppColors.textSecondary),
                 size: 28,
               ),
             ),
@@ -142,23 +173,34 @@ class LanguageSelectionScreen extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
-                      color:
-                          isSelected ? AppColors.accent : AppColors.textPrimary,
+                      color: isSelected
+                          ? (Theme.of(context).brightness == Brightness.dark
+                              ? AppColors.brandGreen
+                              : AppColors.brandGreenDeep)
+                          : (Theme.of(context).brightness == Brightness.dark
+                              ? const Color(0xFFFFFFFF)
+                              : AppColors.textPrimary),
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     englishName,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 14,
-                      color: AppColors.textSecondary,
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? const Color(0xFFB0B0B0)
+                          : AppColors.textSecondary,
                     ),
                   ),
                 ],
               ),
             ),
             if (isSelected)
-              const Icon(Icons.check_circle, color: AppColors.accent, size: 28),
+              Icon(Icons.check_circle,
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? AppColors.brandGreen
+                      : AppColors.brandGreenDeep,
+                  size: 28),
           ],
         ),
       ),

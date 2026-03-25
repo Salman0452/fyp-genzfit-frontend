@@ -118,7 +118,7 @@ class SettingsScreen extends StatelessWidget {
                       onPressed: () => Navigator.pop(context, true),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.error,
-                        foregroundColor: Colors.white,
+                        foregroundColor: const Color(0xFFFFFFFF),
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -248,7 +248,10 @@ class SettingsScreen extends StatelessWidget {
                         Theme.of(context).brightness == Brightness.dark
                             ? AppColors.accent
                             : AppColors.brandGreenDeep,
-                    foregroundColor: Colors.white,
+                    foregroundColor:
+                        Theme.of(context).brightness == Brightness.dark
+                            ? const Color(0xFF010101)
+                            : const Color(0xFFFFFFFF),
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),

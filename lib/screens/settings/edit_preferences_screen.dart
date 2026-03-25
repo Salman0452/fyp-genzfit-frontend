@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:genzfit/utils/constants.dart';
 import 'package:provider/provider.dart';
 import '../../models/onboarding_data.dart';
 import '../../providers/auth_provider.dart';
@@ -26,22 +27,36 @@ class _EditPreferencesScreenState extends State<EditPreferencesScreen> {
   late TextEditingController _heightCtrl;
   late TextEditingController _weightCtrl;
 
-  // ── Colors (matching the dark onboarding palette) ──────────────────────────
-  static const _bg = Color(0xFF0A0A0A);
-  static const _surface = Color(0xFF1A1A1A);
-  static const _purple = Color(0xFF6C63FF);
-  static const _blue = Color(0xFF3B82F6);
-  static const _red = Color(0xFFEF4444);
-  static const _green = Color(0xFF10B981);
-  static const _white = Color(0xFFFFFFFF);
-  static const _muted = Color(0xFF9CA3AF);
-  static const _border = Color(0xFF2A2A2A);
+  // ── Theme-aware color getters ──────────────────────────────────────────────
+  Color get _bg => Theme.of(context).brightness == Brightness.dark
+      ? const Color(0xFF0A0A0A)
+      : const Color(0xFFFAFAFA);
+  Color get _surface => Theme.of(context).brightness == Brightness.dark
+      ? const Color(0xFF1A1A1A)
+      : AppColors.surface;
+  Color get _purple => Theme.of(context).brightness == Brightness.dark
+      ? const Color(0xFF6C63FF)
+      : const Color(0xFF5A52D5);
+  Color get _blue => Theme.of(context).brightness == Brightness.dark
+      ? const Color(0xFF3B82F6)
+      : const Color(0xFF2563EB);
+  Color get _red => const Color(0xFFEF4444);
+  Color get _green => const Color(0xFF10B981);
+  Color get _white => Theme.of(context).brightness == Brightness.dark
+      ? const Color(0xFFFFFFFF)
+      : AppColors.textPrimary;
+  Color get _muted => Theme.of(context).brightness == Brightness.dark
+      ? const Color(0xFF9CA3AF)
+      : AppColors.textSecondary;
+  Color get _border => Theme.of(context).brightness == Brightness.dark
+      ? const Color(0xFF2A2A2A)
+      : const Color(0xFFE0E0E0);
 
-  static const LinearGradient _btnGradient = LinearGradient(
-    colors: [_purple, _blue],
-    begin: Alignment.centerLeft,
-    end: Alignment.centerRight,
-  );
+  LinearGradient get _btnGradient => LinearGradient(
+        colors: [_purple, _blue],
+        begin: Alignment.centerLeft,
+        end: Alignment.centerRight,
+      );
 
   @override
   void initState() {
@@ -154,7 +169,11 @@ class _EditPreferencesScreenState extends State<EditPreferencesScreen> {
     final b = _bmi;
     if (b < 18.5) return _blue;
     if (b < 25) return _green;
-    if (b < 30) return const Color(0xFFF59E0B);
+    if (b < 30) {
+      return Theme.of(context).brightness == Brightness.dark
+          ? const Color(0xFFF59E0B)
+          : const Color(0xFFD97706);
+    }
     return _red;
   }
 
@@ -307,9 +326,7 @@ class _EditPreferencesScreenState extends State<EditPreferencesScreen> {
     );
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // Section 1: Fitness Goal
-  // ─────────────────────────────────────────────────────────────────────────
+  // ── Section 1: Fitness Goal ─────────────────────────────────────────────────
   static const _goals = [
     {
       'title': 'Lose Weight',
@@ -386,9 +403,7 @@ class _EditPreferencesScreenState extends State<EditPreferencesScreen> {
     );
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // Section 2: Fitness Level
-  // ─────────────────────────────────────────────────────────────────────────
+  // ── Section 2: Fitness Level ────────────────────────────────────────────────
   static const _levels = [
     {'title': 'Beginner', 'value': 'beginner', 'color': Color(0xFF10B981)},
     {
@@ -448,9 +463,7 @@ class _EditPreferencesScreenState extends State<EditPreferencesScreen> {
     );
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // Section 3: Workout Setup
-  // ─────────────────────────────────────────────────────────────────────────
+  // ── Section 3: Workout Setup ────────────────────────────────────────────────
   static const Map<String, List<Map<String, String>>> _equipmentOptions = {
     'gym': [
       {'label': 'Barbell'},
@@ -637,9 +650,7 @@ class _EditPreferencesScreenState extends State<EditPreferencesScreen> {
     );
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // Section 4: Body Measurements
-  // ─────────────────────────────────────────────────────────────────────────
+  // ── Section 4: Body Measurements ────────────────────────────────────────────
   Widget _buildBodyMeasurementsSection() {
     return _sectionCard(
       child: Column(
@@ -825,9 +836,7 @@ class _EditPreferencesScreenState extends State<EditPreferencesScreen> {
     );
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // Section 5: Diet Preferences
-  // ─────────────────────────────────────────────────────────────────────────
+  // ── Section 5: Diet Preferences ─────────────────────────────────────────────
   Widget _buildDietSection() {
     return _sectionCard(
       child: Column(
@@ -977,9 +986,7 @@ class _EditPreferencesScreenState extends State<EditPreferencesScreen> {
         style: const TextStyle(color: _muted, fontSize: 13),
       );
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // Save Button
-  // ─────────────────────────────────────────────────────────────────────────
+  // ── Save Button ─────────────────────────────────────────────────────────────
   Widget _buildSaveButton() {
     return GestureDetector(
       onTap: _isSaving ? null : _savePreferences,

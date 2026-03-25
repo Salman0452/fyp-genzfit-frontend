@@ -46,8 +46,8 @@ class _WeeklyPlanScreenState extends State<WeeklyPlanScreen>
       if (user == null) return;
 
       // Check if weekly schedule exists
-      final weeklySchedule = await _recommendationService
-          .getCurrentWeekSchedule(user.id);
+      final weeklySchedule =
+          await _recommendationService.getCurrentWeekSchedule(user.id);
 
       if (weeklySchedule == null) {
         // Generate new weekly schedule
@@ -83,10 +83,9 @@ class _WeeklyPlanScreenState extends State<WeeklyPlanScreen>
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder:
-          (context) => const Center(
-            child: CircularProgressIndicator(color: Colors.white),
-          ),
+      builder: (context) => const Center(
+        child: CircularProgressIndicator(color: Colors.white),
+      ),
     );
 
     try {
@@ -128,51 +127,67 @@ class _WeeklyPlanScreenState extends State<WeeklyPlanScreen>
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
+          icon: Icon(Icons.arrow_back,
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? const Color(0xFFFFFFFF)
+                  : AppColors.textPrimary),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
+        title: Text(
           'My Weekly Plan',
           style: TextStyle(
-            color: AppColors.textPrimary,
+            color: Theme.of(context).brightness == Brightness.dark
+                ? const Color(0xFFFFFFFF)
+                : AppColors.textPrimary,
             fontSize: 20,
             fontWeight: FontWeight.bold,
           ),
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh, color: AppColors.textPrimary),
+            icon: Icon(Icons.refresh,
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? const Color(0xFFFFFFFF)
+                    : AppColors.textPrimary),
             onPressed: _generateWeeklyPlan,
             tooltip: 'Generate New Plan',
           ),
         ],
         bottom: TabBar(
           controller: _tabController,
-          indicatorColor: AppColors.accent,
-          labelColor: AppColors.accent,
-          unselectedLabelColor: AppColors.textSecondary,
+          indicatorColor: Theme.of(context).brightness == Brightness.dark
+              ? AppColors.brandGreen
+              : AppColors.brandGreenDeep,
+          labelColor: Theme.of(context).brightness == Brightness.dark
+              ? AppColors.brandGreen
+              : AppColors.brandGreenDeep,
+          unselectedLabelColor: Theme.of(context).brightness == Brightness.dark
+              ? const Color(0xFFB0B0B0)
+              : AppColors.textSecondary,
           tabs: const [
             Tab(text: 'Today\'s Meals'),
             Tab(text: 'Today\'s Workouts'),
           ],
         ),
       ),
-      body:
-          _isLoading
-              ? const Center(
-                child: CircularProgressIndicator(color: AppColors.accent),
-              )
-              : Column(
-                children: [
-                  _buildStatsCard(),
-                  Expanded(
-                    child: TabBarView(
-                      controller: _tabController,
-                      children: [_buildMealsTab(), _buildExercisesTab()],
-                    ),
+      body: _isLoading
+          ? Center(
+              child: CircularProgressIndicator(
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? AppColors.brandGreen
+                      : AppColors.brandGreenDeep),
+            )
+          : Column(
+              children: [
+                _buildStatsCard(),
+                Expanded(
+                  child: TabBarView(
+                    controller: _tabController,
+                    children: [_buildMealsTab(), _buildExercisesTab()],
                   ),
-                ],
-              ),
+                ),
+              ],
+            ),
     );
   }
 
@@ -189,12 +204,22 @@ class _WeeklyPlanScreenState extends State<WeeklyPlanScreen>
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            AppColors.accent.withOpacity(0.2),
-            AppColors.accent.withOpacity(0.05),
+            (Theme.of(context).brightness == Brightness.dark
+                    ? AppColors.brandGreen
+                    : AppColors.brandGreenDeep)
+                .withOpacity(0.2),
+            (Theme.of(context).brightness == Brightness.dark
+                    ? AppColors.brandGreen
+                    : AppColors.brandGreenDeep)
+                .withOpacity(0.05),
           ],
         ),
         borderRadius: BorderRadius.circular(AppSizes.borderRadius),
-        border: Border.all(color: AppColors.accent.withOpacity(0.3)),
+        border: Border.all(
+            color: (Theme.of(context).brightness == Brightness.dark
+                    ? AppColors.brandGreen
+                    : AppColors.brandGreenDeep)
+                .withOpacity(0.3)),
       ),
       child: Column(
         children: [
@@ -222,19 +247,29 @@ class _WeeklyPlanScreenState extends State<WeeklyPlanScreen>
   Widget _buildStatItem(String label, String value, IconData icon) {
     return Column(
       children: [
-        Icon(icon, color: AppColors.accent, size: 28),
+        Icon(icon,
+            color: Theme.of(context).brightness == Brightness.dark
+                ? AppColors.brandGreen
+                : AppColors.brandGreenDeep,
+            size: 28),
         const SizedBox(height: 8),
         Text(
           value,
-          style: const TextStyle(
-            color: AppColors.accent,
+          style: TextStyle(
+            color: Theme.of(context).brightness == Brightness.dark
+                ? AppColors.brandGreen
+                : AppColors.brandGreenDeep,
             fontSize: 20,
             fontWeight: FontWeight.bold,
           ),
         ),
         Text(
           label,
-          style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
+          style: TextStyle(
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? const Color(0xFFB0B0B0)
+                  : AppColors.textSecondary,
+              fontSize: 12),
         ),
       ],
     );
@@ -345,10 +380,18 @@ class _WeeklyPlanScreenState extends State<WeeklyPlanScreen>
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: Theme.of(context).brightness == Brightness.dark
+            ? const Color(0xFF1A1A1A)
+            : AppColors.surface,
         borderRadius: BorderRadius.circular(AppSizes.borderRadius),
         border: Border.all(
-          color: isCompleted ? AppColors.success : AppColors.charcoal,
+          color: isCompleted
+              ? (Theme.of(context).brightness == Brightness.dark
+                  ? AppColors.brandGreen.withOpacity(0.4)
+                  : AppColors.success)
+              : (Theme.of(context).brightness == Brightness.dark
+                  ? const Color(0xFF2A2A2A)
+                  : AppColors.charcoal),
           width: isCompleted ? 2 : 1,
         ),
       ),
@@ -415,9 +458,15 @@ class _WeeklyPlanScreenState extends State<WeeklyPlanScreen>
                     onPressed:
                         isCompleted ? null : () => _completeMeal(meal.id),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor:
-                          isCompleted ? AppColors.success : AppColors.accent,
-                      foregroundColor: AppColors.background,
+                      backgroundColor: isCompleted
+                          ? AppColors.success
+                          : (Theme.of(context).brightness == Brightness.dark
+                              ? AppColors.brandGreen
+                              : AppColors.brandGreenDeep),
+                      foregroundColor:
+                          Theme.of(context).brightness == Brightness.dark
+                              ? const Color(0xFF010101)
+                              : AppColors.background,
                       disabledBackgroundColor: AppColors.success.withOpacity(
                         0.5,
                       ),
@@ -461,10 +510,18 @@ class _WeeklyPlanScreenState extends State<WeeklyPlanScreen>
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: Theme.of(context).brightness == Brightness.dark
+            ? const Color(0xFF1A1A1A)
+            : AppColors.surface,
         borderRadius: BorderRadius.circular(AppSizes.borderRadius),
         border: Border.all(
-          color: isCompleted ? AppColors.success : AppColors.charcoal,
+          color: isCompleted
+              ? (Theme.of(context).brightness == Brightness.dark
+                  ? AppColors.brandGreen.withOpacity(0.4)
+                  : AppColors.success)
+              : (Theme.of(context).brightness == Brightness.dark
+                  ? const Color(0xFF2A2A2A)
+                  : AppColors.charcoal),
           width: isCompleted ? 2 : 1,
         ),
       ),
@@ -524,14 +581,19 @@ class _WeeklyPlanScreenState extends State<WeeklyPlanScreen>
               children: [
                 Expanded(
                   child: ElevatedButton.icon(
-                    onPressed:
-                        isCompleted
-                            ? null
-                            : () => _completeExercise(exercise.id),
+                    onPressed: isCompleted
+                        ? null
+                        : () => _completeExercise(exercise.id),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor:
-                          isCompleted ? AppColors.success : AppColors.accent,
-                      foregroundColor: AppColors.background,
+                      backgroundColor: isCompleted
+                          ? AppColors.success
+                          : (Theme.of(context).brightness == Brightness.dark
+                              ? AppColors.brandGreen
+                              : AppColors.brandGreenDeep),
+                      foregroundColor:
+                          Theme.of(context).brightness == Brightness.dark
+                              ? const Color(0xFF010101)
+                              : AppColors.background,
                       disabledBackgroundColor: AppColors.success.withOpacity(
                         0.5,
                       ),

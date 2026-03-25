@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:genzfit/utils/constants.dart';
 import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../models/recommendation_model.dart';
@@ -61,7 +62,8 @@ class _RecommendationsScreenState extends State<RecommendationsScreen>
     ]);
   }
 
-  Future<void> _generateMealRecommendations(user, MeasurementModel? measurement) async {
+  Future<void> _generateMealRecommendations(
+      user, MeasurementModel? measurement) async {
     setState(() => _isLoadingMeals = true);
     try {
       final meals = await _recommendationService.generateMealRecommendations(
@@ -79,10 +81,12 @@ class _RecommendationsScreenState extends State<RecommendationsScreen>
     }
   }
 
-  Future<void> _generateExerciseRecommendations(user, MeasurementModel? measurement) async {
+  Future<void> _generateExerciseRecommendations(
+      user, MeasurementModel? measurement) async {
     setState(() => _isLoadingExercises = true);
     try {
-      final exercises = await _recommendationService.generateExerciseRecommendations(
+      final exercises =
+          await _recommendationService.generateExerciseRecommendations(
         user: user,
         latestMeasurement: measurement,
         count: 5,
@@ -100,33 +104,47 @@ class _RecommendationsScreenState extends State<RecommendationsScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.black,
+        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          icon: Icon(Icons.arrow_back,
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? const Color(0xFFFFFFFF)
+                  : AppColors.textPrimary),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
+        title: Text(
           'AI Recommendations',
           style: TextStyle(
-            color: Colors.white,
+            color: Theme.of(context).brightness == Brightness.dark
+                ? const Color(0xFFFFFFFF)
+                : AppColors.textPrimary,
             fontSize: 20,
             fontWeight: FontWeight.bold,
           ),
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh, color: Colors.white),
+            icon: Icon(Icons.refresh,
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? const Color(0xFFFFFFFF)
+                    : AppColors.textPrimary),
             onPressed: _loadRecommendations,
           ),
         ],
         bottom: TabBar(
           controller: _tabController,
-          indicatorColor: Colors.white,
-          labelColor: Colors.white,
-          unselectedLabelColor: Colors.white.withOpacity(0.5),
+          indicatorColor: Theme.of(context).brightness == Brightness.dark
+              ? AppColors.brandGreen
+              : AppColors.brandGreenDeep,
+          labelColor: Theme.of(context).brightness == Brightness.dark
+              ? AppColors.brandGreen
+              : AppColors.brandGreenDeep,
+          unselectedLabelColor: Theme.of(context).brightness == Brightness.dark
+              ? const Color(0xFFB0B0B0)
+              : AppColors.textSecondary,
           tabs: const [
             Tab(text: 'Meals'),
             Tab(text: 'Exercises'),
@@ -145,8 +163,11 @@ class _RecommendationsScreenState extends State<RecommendationsScreen>
 
   Widget _buildMealsTab() {
     if (_isLoadingMeals) {
-      return const Center(
-        child: CircularProgressIndicator(color: Colors.white),
+      return Center(
+        child: CircularProgressIndicator(
+            color: Theme.of(context).brightness == Brightness.dark
+                ? AppColors.brandGreen
+                : AppColors.brandGreenDeep),
       );
     }
 
@@ -165,8 +186,11 @@ class _RecommendationsScreenState extends State<RecommendationsScreen>
 
   Widget _buildExercisesTab() {
     if (_isLoadingExercises) {
-      return const Center(
-        child: CircularProgressIndicator(color: Colors.white),
+      return Center(
+        child: CircularProgressIndicator(
+            color: Theme.of(context).brightness == Brightness.dark
+                ? AppColors.brandGreen
+                : AppColors.brandGreenDeep),
       );
     }
 
@@ -191,13 +215,19 @@ class _RecommendationsScreenState extends State<RecommendationsScreen>
           Icon(
             Icons.lightbulb_outline,
             size: 80,
-            color: Colors.white.withOpacity(0.3),
+            color: (Theme.of(context).brightness == Brightness.dark
+                    ? const Color(0xFFB0B0B0)
+                    : AppColors.textSecondary)
+                .withOpacity(0.3),
           ),
           const SizedBox(height: 16),
           Text(
             message,
             style: TextStyle(
-              color: Colors.white.withOpacity(0.7),
+              color: (Theme.of(context).brightness == Brightness.dark
+                      ? const Color(0xFFB0B0B0)
+                      : AppColors.textSecondary)
+                  .withOpacity(0.7),
               fontSize: 16,
             ),
           ),
@@ -231,12 +261,9 @@ class _RecommendationsScreenState extends State<RecommendationsScreen>
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            Colors.grey[900]!,
-            Colors.grey[850]!,
-          ],
-        ),
+        color: Theme.of(context).brightness == Brightness.dark
+            ? const Color(0xFF1A1A1A)
+            : AppColors.surface,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
@@ -247,7 +274,8 @@ class _RecommendationsScreenState extends State<RecommendationsScreen>
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: mealTypeColor.withOpacity(0.2),
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(16)),
             ),
             child: Row(
               children: [
@@ -284,7 +312,8 @@ class _RecommendationsScreenState extends State<RecommendationsScreen>
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
@@ -301,7 +330,7 @@ class _RecommendationsScreenState extends State<RecommendationsScreen>
               ],
             ),
           ),
-          
+
           // Content
           Padding(
             padding: const EdgeInsets.all(16),
@@ -317,20 +346,23 @@ class _RecommendationsScreenState extends State<RecommendationsScreen>
                   ),
                 ),
                 const SizedBox(height: 16),
-                
+
                 // Macros
                 Row(
                   children: [
-                    _buildMacroChip('Protein', '${meal.macros['protein']}g', Colors.red),
+                    _buildMacroChip(
+                        'Protein', '${meal.macros['protein']}g', Colors.red),
                     const SizedBox(width: 8),
-                    _buildMacroChip('Carbs', '${meal.macros['carbs']}g', Colors.blue),
+                    _buildMacroChip(
+                        'Carbs', '${meal.macros['carbs']}g', Colors.blue),
                     const SizedBox(width: 8),
-                    _buildMacroChip('Fats', '${meal.macros['fats']}g', Colors.orange),
+                    _buildMacroChip(
+                        'Fats', '${meal.macros['fats']}g', Colors.orange),
                   ],
                 ),
-                
+
                 const SizedBox(height: 16),
-                
+
                 // Ingredients
                 Text(
                   'Ingredients:',
@@ -346,7 +378,8 @@ class _RecommendationsScreenState extends State<RecommendationsScreen>
                   runSpacing: 6,
                   children: meal.ingredients.map((ingredient) {
                     return Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
                         color: Colors.white.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(8),
@@ -388,12 +421,9 @@ class _RecommendationsScreenState extends State<RecommendationsScreen>
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            Colors.grey[900]!,
-            Colors.grey[850]!,
-          ],
-        ),
+        color: Theme.of(context).brightness == Brightness.dark
+            ? const Color(0xFF1A1A1A)
+            : AppColors.surface,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
@@ -404,7 +434,8 @@ class _RecommendationsScreenState extends State<RecommendationsScreen>
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: difficultyColor.withOpacity(0.2),
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(16)),
             ),
             child: Row(
               children: [
@@ -414,7 +445,8 @@ class _RecommendationsScreenState extends State<RecommendationsScreen>
                     color: difficultyColor,
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Icon(Icons.fitness_center, color: Colors.white, size: 20),
+                  child: const Icon(Icons.fitness_center,
+                      color: Colors.white, size: 20),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -441,7 +473,8 @@ class _RecommendationsScreenState extends State<RecommendationsScreen>
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
@@ -458,7 +491,7 @@ class _RecommendationsScreenState extends State<RecommendationsScreen>
               ],
             ),
           ),
-          
+
           // Content
           Padding(
             padding: const EdgeInsets.all(16),
@@ -474,18 +507,20 @@ class _RecommendationsScreenState extends State<RecommendationsScreen>
                   ),
                 ),
                 const SizedBox(height: 16),
-                
+
                 // Sets and Reps
                 Row(
                   children: [
-                    _buildInfoBox('Sets', exercise.sets.toString(), Icons.repeat),
+                    _buildInfoBox(
+                        'Sets', exercise.sets.toString(), Icons.repeat),
                     const SizedBox(width: 12),
-                    _buildInfoBox('Reps', exercise.reps.toString(), Icons.numbers),
+                    _buildInfoBox(
+                        'Reps', exercise.reps.toString(), Icons.numbers),
                   ],
                 ),
-                
+
                 const SizedBox(height: 16),
-                
+
                 // Target Muscles
                 Text(
                   'Target Muscles:',
@@ -501,7 +536,8 @@ class _RecommendationsScreenState extends State<RecommendationsScreen>
                   runSpacing: 6,
                   children: exercise.targetMuscles.map((muscle) {
                     return Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
                         color: Colors.white.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(8),

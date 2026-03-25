@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
 import 'package:flutter_chat_ui/flutter_chat_ui.dart';
+import 'package:genzfit/utils/constants.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:file_picker/file_picker.dart';
@@ -59,18 +60,27 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
     );
 
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.grey[900],
+        backgroundColor: Theme.of(context).brightness == Brightness.dark
+            ? const Color(0xFF1A1A1A)
+            : AppColors.surface,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          icon: Icon(
+            Icons.arrow_back,
+            color: Theme.of(context).brightness == Brightness.dark
+                ? const Color(0xFFFFFFFF)
+                : AppColors.textPrimary,
+          ),
           onPressed: () => Navigator.pop(context),
         ),
         title: Row(
           children: [
             CircleAvatar(
               radius: 18,
-              backgroundColor: Colors.grey[800],
+              backgroundColor: Theme.of(context).brightness == Brightness.dark
+                  ? const Color(0xFF2A2A2A)
+                  : const Color(0xFFE0E0E0),
               backgroundImage: widget.otherUserAvatar != null &&
                       widget.otherUserAvatar!.isNotEmpty
                   ? CachedNetworkImageProvider(widget.otherUserAvatar!)
@@ -79,8 +89,10 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                       widget.otherUserAvatar!.isEmpty
                   ? Text(
                       widget.otherUserName[0].toUpperCase(),
-                      style: const TextStyle(
-                        color: Colors.white,
+                      style: TextStyle(
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? const Color(0xFFFFFFFF)
+                            : AppColors.textPrimary,
                         fontSize: 16,
                       ),
                     )
@@ -90,8 +102,10 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
             Expanded(
               child: Text(
                 widget.otherUserName,
-                style: const TextStyle(
-                  color: Colors.white,
+                style: TextStyle(
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? const Color(0xFFFFFFFF)
+                      : AppColors.textPrimary,
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
                 ),
@@ -113,14 +127,19 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                 return Center(
                   child: Text(
                     'Error loading messages',
-                    style: TextStyle(color: Colors.grey[400]),
+                    style: TextStyle(
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? const Color(0xFFB0B0B0)
+                          : AppColors.textSecondary,
+                    ),
                   ),
                 );
               }
 
               final messages = snapshot.data ?? [];
-              final chatMessages =
-                  messages.map((msg) => _convertToFlutterChatMessage(msg)).toList();
+              final chatMessages = messages
+                  .map((msg) => _convertToFlutterChatMessage(msg))
+                  .toList();
 
               return Chat(
                 messages: chatMessages,
@@ -128,16 +147,33 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                   message,
                   currentUserId,
                 ),
-                onAttachmentPressed: () => _handleAttachmentPressed(currentUserId),
+                onAttachmentPressed: () =>
+                    _handleAttachmentPressed(currentUserId),
                 user: user,
                 theme: DarkChatTheme(
-                  backgroundColor: Colors.black,
-                  primaryColor: Colors.blue,
-                  secondaryColor: Colors.grey[900]!,
-                  inputBackgroundColor: Colors.grey[900]!,
-                  inputTextColor: Colors.white,
+                  backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+                  primaryColor: Theme.of(context).brightness == Brightness.dark
+                      ? AppColors.brandGreen
+                      : AppColors.brandGreenDeep,
+                  secondaryColor:
+                      Theme.of(context).brightness == Brightness.dark
+                          ? const Color(0xFF1A1A1A)
+                          : AppColors.surface,
+                  inputBackgroundColor:
+                      Theme.of(context).brightness == Brightness.dark
+                          ? const Color(0xFF1A1A1A)
+                          : AppColors.surface,
+                  inputTextColor:
+                      Theme.of(context).brightness == Brightness.dark
+                          ? const Color(0xFFFFFFFF)
+                          : AppColors.textPrimary,
                   messageBorderRadius: 12,
-                  userAvatarNameColors: [Colors.blue, Colors.purple],
+                  userAvatarNameColors: [
+                    Theme.of(context).brightness == Brightness.dark
+                        ? AppColors.brandGreen
+                        : AppColors.brandGreenDeep,
+                    const Color(0xFF6C63FF),
+                  ],
                 ),
                 showUserAvatars: true,
                 showUserNames: false,
@@ -146,7 +182,10 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
           ),
           if (_isUploading)
             Container(
-              color: Colors.black.withOpacity(0.5),
+              color: (Theme.of(context).brightness == Brightness.dark
+                      ? const Color(0xFF000000)
+                      : const Color(0xFFFFFFFF))
+                  .withOpacity(0.5),
               child: const Center(
                 child: LoadingWidget(),
               ),
@@ -216,7 +255,9 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
   Future<void> _handleAttachmentPressed(String currentUserId) async {
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.grey[900],
+      backgroundColor: Theme.of(context).brightness == Brightness.dark
+          ? const Color(0xFF1A1A1A)
+          : AppColors.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -224,24 +265,60 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
         child: Wrap(
           children: [
             ListTile(
-              leading: const Icon(Icons.photo, color: Colors.blue),
-              title: const Text('Photo', style: TextStyle(color: Colors.white)),
+              leading: Icon(
+                Icons.photo,
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? AppColors.brandGreen
+                    : AppColors.brandGreenDeep,
+              ),
+              title: Text(
+                'Photo',
+                style: TextStyle(
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? const Color(0xFFFFFFFF)
+                      : AppColors.textPrimary,
+                ),
+              ),
               onTap: () {
                 Navigator.pop(context);
                 _pickImage(currentUserId);
               },
             ),
             ListTile(
-              leading: const Icon(Icons.videocam, color: Colors.green),
-              title: const Text('Video', style: TextStyle(color: Colors.white)),
+              leading: Icon(
+                Icons.videocam,
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? const Color(0xFF10B981)
+                    : const Color(0xFF059669),
+              ),
+              title: Text(
+                'Video',
+                style: TextStyle(
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? const Color(0xFFFFFFFF)
+                      : AppColors.textPrimary,
+                ),
+              ),
               onTap: () {
                 Navigator.pop(context);
                 _pickVideo(currentUserId);
               },
             ),
             ListTile(
-              leading: const Icon(Icons.attach_file, color: Colors.orange),
-              title: const Text('File', style: TextStyle(color: Colors.white)),
+              leading: Icon(
+                Icons.attach_file,
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? const Color(0xFFFFA500)
+                    : const Color(0xFFFF8C00),
+              ),
+              title: Text(
+                'File',
+                style: TextStyle(
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? const Color(0xFFFFFFFF)
+                      : AppColors.textPrimary,
+                ),
+              ),
               onTap: () {
                 Navigator.pop(context);
                 _pickFile(currentUserId);
@@ -326,7 +403,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: Colors.red,
+        backgroundColor: const Color(0xFFE53935),
       ),
     );
   }

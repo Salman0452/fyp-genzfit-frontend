@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:genzfit/utils/constants.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'dart:convert';
@@ -203,9 +204,11 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Analytics report exported successfully'),
-            backgroundColor: Color(0xFF7FFA88),
+          SnackBar(
+            content: const Text('Analytics report exported successfully'),
+            backgroundColor: Theme.of(context).brightness == Brightness.dark
+                ? const Color(0xFF7FFA88)
+                : const Color(0xFF66BB6A),
           ),
         );
       }
@@ -215,7 +218,9 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to export: $e'),
-            backgroundColor: Colors.red,
+            backgroundColor: Theme.of(context).brightness == Brightness.dark
+                ? Colors.red.shade700
+                : Colors.red.shade900,
           ),
         );
       }
@@ -224,13 +229,21 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final brandGreen = isDark ? AppColors.brandGreen : AppColors.brandGreenDeep;
+    final primaryText =
+        isDark ? const Color(0xFFFFFFFF) : AppColors.textPrimary;
+    final secondaryText =
+        isDark ? const Color(0xFFB0B0B0) : AppColors.textSecondary;
+    final cardBackground = isDark ? const Color(0xFF1A1A1A) : AppColors.surface;
+
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF171917),
+        backgroundColor: cardBackground,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
+          icon: Icon(Icons.arrow_back_ios, color: primaryText),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
@@ -238,13 +251,13 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen> {
           style: GoogleFonts.poppins(
             fontSize: 20,
             fontWeight: FontWeight.bold,
-            color: Colors.white,
+            color: primaryText,
           ),
         ),
         actions: [
           PopupMenuButton<String>(
-            icon: const Icon(Icons.file_download, color: Color(0xFF83BCB5)),
-            color: const Color(0xFF171917),
+            icon: Icon(Icons.file_download, color: brandGreen),
+            color: cardBackground,
             onSelected: (value) {
               if (value == 'csv') _exportToCSV();
             },
@@ -253,11 +266,11 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen> {
                 value: 'csv',
                 child: Row(
                   children: [
-                    const Icon(Icons.table_chart, color: Color(0xFF83BCB5)),
+                    Icon(Icons.table_chart, color: brandGreen),
                     const SizedBox(width: 12),
                     Text(
                       'Export CSV',
-                      style: GoogleFonts.inter(color: Colors.white),
+                      style: GoogleFonts.inter(color: primaryText),
                     ),
                   ],
                 ),
@@ -268,8 +281,8 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen> {
         ],
       ),
       body: _isLoading
-          ? const Center(
-              child: CircularProgressIndicator(color: Color(0xFF83BCB5)),
+          ? Center(
+              child: CircularProgressIndicator(color: brandGreen),
             )
           : SingleChildScrollView(
               padding: const EdgeInsets.all(24),
@@ -290,10 +303,14 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen> {
   }
 
   Widget _buildPeriodSelector() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final brandGreen = isDark ? AppColors.brandGreen : AppColors.brandGreenDeep;
+    final cardBackground = isDark ? const Color(0xFF1A1A1A) : AppColors.surface;
+
     return Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: const Color(0xFF171917),
+        color: cardBackground,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -309,6 +326,11 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen> {
   }
 
   Widget _buildPeriodButton(String label, String value) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final brandGreen = isDark ? AppColors.brandGreen : AppColors.brandGreenDeep;
+    final primaryText =
+        isDark ? const Color(0xFFFFFFFF) : AppColors.textPrimary;
+
     final isSelected = _selectedPeriod == value;
     return Expanded(
       child: GestureDetector(
@@ -319,14 +341,16 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen> {
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
           decoration: BoxDecoration(
-            color: isSelected ? const Color(0xFF83BCB5) : Colors.transparent,
+            color: isSelected ? brandGreen : Colors.transparent,
             borderRadius: BorderRadius.circular(10),
           ),
           child: Text(
             label,
             textAlign: TextAlign.center,
             style: GoogleFonts.inter(
-              color: isSelected ? Colors.black : Colors.white,
+              color: isSelected
+                  ? (isDark ? AppColors.textPrimary : const Color(0xFFFFFFFF))
+                  : primaryText,
               fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
               fontSize: 13,
             ),
@@ -337,6 +361,14 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen> {
   }
 
   Widget _buildUserGrowthChart() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final brandGreen = isDark ? AppColors.brandGreen : AppColors.brandGreenDeep;
+    final primaryText =
+        isDark ? const Color(0xFFFFFFFF) : AppColors.textPrimary;
+    final secondaryText =
+        isDark ? const Color(0xFFB0B0B0) : AppColors.textSecondary;
+    final cardBackground = isDark ? const Color(0xFF1A1A1A) : AppColors.surface;
+
     final totalUsers = _userGrowthData.fold<int>(
         0, (sum, data) => sum + (data['total'] as int));
     final totalClients = _userGrowthData.fold<int>(
@@ -347,7 +379,7 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen> {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: const Color(0xFF171917),
+        color: cardBackground,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
@@ -361,20 +393,20 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen> {
                 style: GoogleFonts.poppins(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: Colors.white,
+                  color: primaryText,
                 ),
               ),
               Container(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF83BCB5).withOpacity(0.1),
+                  color: brandGreen.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
                   'Total: $totalUsers',
                   style: GoogleFonts.inter(
-                    color: const Color(0xFF83BCB5),
+                    color: brandGreen,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -384,9 +416,15 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen> {
           const SizedBox(height: 24),
           Row(
             children: [
-              _buildLegendItem(Colors.blue, 'Clients', totalClients),
+              _buildLegendItem(
+                  isDark ? const Color(0xFF42A5F5) : const Color(0xFF1E88E5),
+                  'Clients',
+                  totalClients),
               const SizedBox(width: 24),
-              _buildLegendItem(Colors.orange, 'Trainers', totalTrainers),
+              _buildLegendItem(
+                  isDark ? const Color(0xFFFFA726) : const Color(0xFFF57C00),
+                  'Trainers',
+                  totalTrainers),
             ],
           ),
           const SizedBox(height: 24),
@@ -396,7 +434,10 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen> {
                 padding: const EdgeInsets.all(32),
                 child: Text(
                   'No user growth data for this period',
-                  style: GoogleFonts.inter(color: Colors.white38),
+                  style: GoogleFonts.inter(
+                      color: isDark
+                          ? const Color(0xFF757575)
+                          : AppColors.textSecondary.withOpacity(0.6)),
                 ),
               ),
             )
@@ -408,13 +449,20 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen> {
   }
 
   Widget _buildRevenueChart() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryText =
+        isDark ? const Color(0xFFFFFFFF) : AppColors.textPrimary;
+    final secondaryText =
+        isDark ? const Color(0xFFB0B0B0) : AppColors.textSecondary;
+    final cardBackground = isDark ? const Color(0xFF1A1A1A) : AppColors.surface;
+
     final totalRevenue = _revenueData.fold<double>(
         0, (sum, data) => sum + (data['revenue'] as double));
 
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: const Color(0xFF171917),
+        color: cardBackground,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
@@ -428,20 +476,25 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen> {
                 style: GoogleFonts.poppins(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: Colors.white,
+                  color: primaryText,
                 ),
               ),
               Container(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF7FFA88).withOpacity(0.1),
+                  color: (isDark
+                          ? const Color(0xFF7FFA88)
+                          : const Color(0xFF66BB6A))
+                      .withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
                   '\$${totalRevenue.toStringAsFixed(2)}',
                   style: GoogleFonts.inter(
-                    color: const Color(0xFF7FFA88),
+                    color: isDark
+                        ? const Color(0xFF7FFA88)
+                        : const Color(0xFF66BB6A),
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -455,7 +508,10 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen> {
                 padding: const EdgeInsets.all(32),
                 child: Text(
                   'No revenue data for this period',
-                  style: GoogleFonts.inter(color: Colors.white38),
+                  style: GoogleFonts.inter(
+                      color: isDark
+                          ? const Color(0xFF757575)
+                          : AppColors.textSecondary.withOpacity(0.6)),
                 ),
               ),
             )
@@ -467,6 +523,13 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen> {
   }
 
   Widget _buildSessionStatsChart() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryText =
+        isDark ? const Color(0xFFFFFFFF) : AppColors.textPrimary;
+    final secondaryText =
+        isDark ? const Color(0xFFB0B0B0) : AppColors.textSecondary;
+    final cardBackground = isDark ? const Color(0xFF1A1A1A) : AppColors.surface;
+
     final totalSessions = _sessionStatsData.fold<int>(
         0, (sum, data) => sum + (data['total'] as int));
     final completed = _sessionStatsData.fold<int>(
@@ -477,7 +540,7 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen> {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: const Color(0xFF171917),
+        color: cardBackground,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
@@ -491,20 +554,25 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen> {
                 style: GoogleFonts.poppins(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: Colors.white,
+                  color: primaryText,
                 ),
               ),
               Container(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: Colors.purple.withOpacity(0.1),
+                  color: (isDark
+                          ? const Color(0xFF9C27B0)
+                          : const Color(0xFF8E24AA))
+                      .withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
                   'Total: $totalSessions',
                   style: GoogleFonts.inter(
-                    color: Colors.purple,
+                    color: isDark
+                        ? const Color(0xFF9C27B0)
+                        : const Color(0xFF8E24AA),
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -514,9 +582,15 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen> {
           const SizedBox(height: 24),
           Row(
             children: [
-              _buildLegendItem(const Color(0xFF7FFA88), 'Completed', completed),
+              _buildLegendItem(
+                  isDark ? const Color(0xFF7FFA88) : const Color(0xFF66BB6A),
+                  'Completed',
+                  completed),
               const SizedBox(width: 24),
-              _buildLegendItem(Colors.red, 'Cancelled', cancelled),
+              _buildLegendItem(
+                  isDark ? Colors.red.shade300 : Colors.red.shade700,
+                  'Cancelled',
+                  cancelled),
             ],
           ),
           const SizedBox(height: 24),
@@ -526,7 +600,10 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen> {
                 padding: const EdgeInsets.all(32),
                 child: Text(
                   'No session data for this period',
-                  style: GoogleFonts.inter(color: Colors.white38),
+                  style: GoogleFonts.inter(
+                      color: isDark
+                          ? const Color(0xFF757575)
+                          : AppColors.textSecondary.withOpacity(0.6)),
                 ),
               ),
             )
@@ -538,6 +615,10 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen> {
   }
 
   Widget _buildLegendItem(Color color, String label, int count) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final secondaryText =
+        isDark ? const Color(0xFFB0B0B0) : AppColors.textSecondary;
+
     return Row(
       children: [
         Container(
@@ -552,7 +633,7 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen> {
         Text(
           '$label: $count',
           style: GoogleFonts.inter(
-            color: Colors.white70,
+            color: secondaryText,
             fontSize: 13,
           ),
         ),
@@ -562,6 +643,11 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen> {
 
   Widget _buildSimpleBarChart(
       List<Map<String, dynamic>> data, String valueKey, double height) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final brandGreen = isDark ? AppColors.brandGreen : AppColors.brandGreenDeep;
+    final secondaryText =
+        isDark ? const Color(0xFFB0B0B0) : AppColors.textSecondary;
+
     if (data.isEmpty) return const SizedBox();
 
     final maxValue = data.fold<num>(0, (max, item) {
@@ -592,7 +678,7 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen> {
                       ? '\$${value.toStringAsFixed(0)}'
                       : value.toStringAsFixed(0),
                   style: GoogleFonts.inter(
-                    color: Colors.white70,
+                    color: secondaryText,
                     fontSize: 11,
                     fontWeight: FontWeight.bold,
                   ),
@@ -607,8 +693,10 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen> {
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           colors: [
-                            const Color(0xFF83BCB5),
-                            const Color(0xFF7FFA88),
+                            brandGreen,
+                            isDark
+                                ? const Color(0xFF7FFA88)
+                                : AppColors.brandGreen,
                           ],
                           begin: Alignment.topCenter,
                           end: Alignment.bottomCenter,
@@ -624,7 +712,9 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen> {
                   DateFormat('MMM\nd').format(date),
                   textAlign: TextAlign.center,
                   style: GoogleFonts.inter(
-                    color: Colors.white38,
+                    color: isDark
+                        ? const Color(0xFF757575)
+                        : AppColors.textSecondary.withOpacity(0.6),
                     fontSize: 10,
                   ),
                 ),

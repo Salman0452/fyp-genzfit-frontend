@@ -104,12 +104,11 @@ class _TrainerProfileScreenState extends State<TrainerProfileScreen> {
       );
 
       // Get trainer document
-      final trainerSnapshot =
-          await FirebaseFirestore.instance
-              .collection('trainers')
-              .where('userId', isEqualTo: userId)
-              .limit(1)
-              .get();
+      final trainerSnapshot = await FirebaseFirestore.instance
+          .collection('trainers')
+          .where('userId', isEqualTo: userId)
+          .limit(1)
+          .get();
 
       if (trainerSnapshot.docs.isNotEmpty) {
         final trainerId = trainerSnapshot.docs.first.id;
@@ -193,12 +192,11 @@ class _TrainerProfileScreenState extends State<TrainerProfileScreen> {
       final videoUrl = response.secureUrl;
 
       // Get trainer document
-      final trainerSnapshot =
-          await FirebaseFirestore.instance
-              .collection('trainers')
-              .where('userId', isEqualTo: userId)
-              .limit(1)
-              .get();
+      final trainerSnapshot = await FirebaseFirestore.instance
+          .collection('trainers')
+          .where('userId', isEqualTo: userId)
+          .limit(1)
+          .get();
 
       if (trainerSnapshot.docs.isNotEmpty) {
         final trainerId = trainerSnapshot.docs.first.id;
@@ -239,12 +237,11 @@ class _TrainerProfileScreenState extends State<TrainerProfileScreen> {
   }
 
   Future<DocumentSnapshot?> _getTrainerData(String userId) async {
-    final snapshot =
-        await FirebaseFirestore.instance
-            .collection('trainers')
-            .where('userId', isEqualTo: userId)
-            .limit(1)
-            .get();
+    final snapshot = await FirebaseFirestore.instance
+        .collection('trainers')
+        .where('userId', isEqualTo: userId)
+        .limit(1)
+        .get();
 
     if (snapshot.docs.isNotEmpty) {
       return snapshot.docs.first;
@@ -255,34 +252,47 @@ class _TrainerProfileScreenState extends State<TrainerProfileScreen> {
   Future<void> _showLogoutDialog() async {
     final confirmed = await showDialog<bool>(
       context: context,
-      builder:
-          (context) => AlertDialog(
-            backgroundColor: AppColors.surface,
-            title: const Text(
-              'Logout',
-              style: TextStyle(color: AppColors.textPrimary),
-            ),
-            content: const Text(
-              'Are you sure you want to logout?',
-              style: TextStyle(color: AppColors.textSecondary),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context, false),
-                child: const Text(
-                  'Cancel',
-                  style: TextStyle(color: AppColors.textSecondary),
-                ),
-              ),
-              TextButton(
-                onPressed: () => Navigator.pop(context, true),
-                child: const Text(
-                  'Logout',
-                  style: TextStyle(color: AppColors.error),
-                ),
-              ),
-            ],
+      builder: (context) => AlertDialog(
+        backgroundColor: Theme.of(context).brightness == Brightness.dark
+            ? const Color(0xFF1A1A1A)
+            : AppColors.surface,
+        title: Text(
+          'Logout',
+          style: TextStyle(
+            color: Theme.of(context).brightness == Brightness.dark
+                ? const Color(0xFFFFFFFF)
+                : AppColors.textPrimary,
           ),
+        ),
+        content: Text(
+          'Are you sure you want to logout?',
+          style: TextStyle(
+            color: Theme.of(context).brightness == Brightness.dark
+                ? const Color(0xFFB0B0B0)
+                : AppColors.textSecondary,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(
+              'Cancel',
+              style: TextStyle(
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? const Color(0xFFB0B0B0)
+                    : AppColors.textSecondary,
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text(
+              'Logout',
+              style: TextStyle(color: AppColors.error),
+            ),
+          ),
+        ],
+      ),
     );
 
     if (confirmed == true && mounted) {
@@ -308,7 +318,9 @@ class _TrainerProfileScreenState extends State<TrainerProfileScreen> {
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: const Text('My Profile'),
-        backgroundColor: AppColors.surface,
+        backgroundColor: Theme.of(context).brightness == Brightness.dark
+            ? const Color(0xFF1A1A1A)
+            : AppColors.surface,
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
@@ -356,12 +368,17 @@ class _TrainerProfileScreenState extends State<TrainerProfileScreen> {
   }
 
   Widget _buildProfileHeader(user) {
+    final accentColor = Theme.of(context).brightness == Brightness.dark
+        ? AppColors.brandGreen
+        : AppColors.brandGreenDeep;
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: Theme.of(context).brightness == Brightness.dark
+            ? const Color(0xFF1A1A1A)
+            : AppColors.surface,
         borderRadius: BorderRadius.circular(AppSizes.borderRadius),
-        border: Border.all(color: AppColors.accent.withOpacity(0.2)),
+        border: Border.all(color: accentColor.withOpacity(0.2)),
       ),
       child: Column(
         children: [
@@ -370,22 +387,22 @@ class _TrainerProfileScreenState extends State<TrainerProfileScreen> {
             children: [
               CircleAvatar(
                 radius: 50,
-                backgroundColor: AppColors.accent,
-                backgroundImage:
-                    user?.avatarUrl != null
-                        ? CachedNetworkImageProvider(user!.avatarUrl!)
-                        : null,
-                child:
-                    user?.avatarUrl == null
-                        ? Text(
-                          user?.name?.substring(0, 1).toUpperCase() ?? 'T',
-                          style: const TextStyle(
-                            fontSize: 36,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.background,
-                          ),
-                        )
-                        : null,
+                backgroundColor: accentColor,
+                backgroundImage: user?.avatarUrl != null
+                    ? CachedNetworkImageProvider(user!.avatarUrl!)
+                    : null,
+                child: user?.avatarUrl == null
+                    ? Text(
+                        user?.name?.substring(0, 1).toUpperCase() ?? 'T',
+                        style: TextStyle(
+                          fontSize: 36,
+                          fontWeight: FontWeight.bold,
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? const Color(0xFF000000)
+                              : const Color(0xFFFFFFFF),
+                        ),
+                      )
+                    : null,
               ),
               Positioned(
                 bottom: 0,
@@ -395,25 +412,35 @@ class _TrainerProfileScreenState extends State<TrainerProfileScreen> {
                   child: Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: AppColors.accent,
+                      color: accentColor,
                       shape: BoxShape.circle,
-                      border: Border.all(color: AppColors.surface, width: 2),
+                      border: Border.all(
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? const Color(0xFF1A1A1A)
+                            : AppColors.surface,
+                        width: 2,
+                      ),
                     ),
-                    child:
-                        _isLoading
-                            ? const SizedBox(
-                              width: 16,
-                              height: 16,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: AppColors.background,
-                              ),
-                            )
-                            : const Icon(
-                              Icons.camera_alt,
-                              color: AppColors.background,
-                              size: 16,
+                    child: _isLoading
+                        ? SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Theme.of(context).brightness ==
+                                      Brightness.dark
+                                  ? const Color(0xFF000000)
+                                  : const Color(0xFFFFFFFF),
                             ),
+                          )
+                        : Icon(
+                            Icons.camera_alt,
+                            color:
+                                Theme.of(context).brightness == Brightness.dark
+                                    ? const Color(0xFF000000)
+                                    : const Color(0xFFFFFFFF),
+                            size: 16,
+                          ),
                   ),
                 ),
               ),
@@ -424,10 +451,12 @@ class _TrainerProfileScreenState extends State<TrainerProfileScreen> {
           // Name
           Text(
             user?.name ?? 'Trainer',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
-              color: AppColors.textPrimary,
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? const Color(0xFFFFFFFF)
+                  : AppColors.textPrimary,
             ),
           ),
           const SizedBox(height: 8),
@@ -435,9 +464,11 @@ class _TrainerProfileScreenState extends State<TrainerProfileScreen> {
           // Email
           Text(
             user?.email ?? '',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 14,
-              color: AppColors.textSecondary,
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? const Color(0xFFB0B0B0)
+                  : AppColors.textSecondary,
             ),
           ),
           const SizedBox(height: 16),
@@ -446,22 +477,22 @@ class _TrainerProfileScreenState extends State<TrainerProfileScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             decoration: BoxDecoration(
-              color: AppColors.accent.withOpacity(0.2),
+              color: accentColor.withOpacity(0.2),
               borderRadius: BorderRadius.circular(20),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(
+                Icon(
                   Icons.attach_money,
-                  color: AppColors.accent,
+                  color: accentColor,
                   size: 16,
                 ),
                 const SizedBox(width: 4),
                 Text(
                   '${user?.hourlyRate ?? 0}/hour',
-                  style: const TextStyle(
-                    color: AppColors.accent,
+                  style: TextStyle(
+                    color: accentColor,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -490,16 +521,14 @@ class _TrainerProfileScreenState extends State<TrainerProfileScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color:
-            isVerified
-                ? AppColors.success.withOpacity(0.1)
-                : AppColors.warning.withOpacity(0.1),
+        color: isVerified
+            ? AppColors.success.withOpacity(0.1)
+            : AppColors.warning.withOpacity(0.1),
         borderRadius: BorderRadius.circular(AppSizes.borderRadius),
         border: Border.all(
-          color:
-              isVerified
-                  ? AppColors.success.withOpacity(0.3)
-                  : AppColors.warning.withOpacity(0.3),
+          color: isVerified
+              ? AppColors.success.withOpacity(0.3)
+              : AppColors.warning.withOpacity(0.3),
         ),
       ),
       child: Row(
@@ -540,6 +569,9 @@ class _TrainerProfileScreenState extends State<TrainerProfileScreen> {
   }
 
   Widget _buildStatsCard(user, DocumentSnapshot? trainerDoc) {
+    final accentColor = Theme.of(context).brightness == Brightness.dark
+        ? AppColors.brandGreen
+        : AppColors.brandGreenDeep;
     final trainerData = trainerDoc?.data() as Map<String, dynamic>?;
     final rating = (trainerData?['rating'] ?? 0.0).toDouble();
     final clients = trainerData?['clients'] ?? 0;
@@ -547,7 +579,9 @@ class _TrainerProfileScreenState extends State<TrainerProfileScreen> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: Theme.of(context).brightness == Brightness.dark
+            ? const Color(0xFF1A1A1A)
+            : AppColors.surface,
         borderRadius: BorderRadius.circular(AppSizes.borderRadius),
       ),
       child: Row(
@@ -557,16 +591,25 @@ class _TrainerProfileScreenState extends State<TrainerProfileScreen> {
               'Rating',
               rating.toStringAsFixed(1),
               Icons.star,
+              accentColor,
             ),
           ),
           Container(width: 1, height: 40, color: AppColors.charcoal),
-          Expanded(child: _buildStatItem('Clients', '$clients', Icons.people)),
+          Expanded(
+            child: _buildStatItem(
+              'Clients',
+              '$clients',
+              Icons.people,
+              accentColor,
+            ),
+          ),
           Container(width: 1, height: 40, color: AppColors.charcoal),
           Expanded(
             child: _buildStatItem(
               'Earnings',
               '\$${totalEarnings.toStringAsFixed(0)}',
               Icons.monetization_on,
+              accentColor,
             ),
           ),
         ],
@@ -574,81 +617,100 @@ class _TrainerProfileScreenState extends State<TrainerProfileScreen> {
     );
   }
 
-  Widget _buildStatItem(String label, String value, IconData icon) {
+  Widget _buildStatItem(
+      String label, String value, IconData icon, Color color) {
     return Column(
       children: [
-        Icon(icon, color: AppColors.accent, size: 24),
+        Icon(icon, color: color, size: 24),
         const SizedBox(height: 8),
         Text(
           value,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
-            color: AppColors.textPrimary,
+            color: Theme.of(context).brightness == Brightness.dark
+                ? const Color(0xFFFFFFFF)
+                : AppColors.textPrimary,
           ),
         ),
         const SizedBox(height: 4),
         Text(
           label,
-          style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+          style: TextStyle(
+            fontSize: 12,
+            color: Theme.of(context).brightness == Brightness.dark
+                ? const Color(0xFFB0B0B0)
+                : AppColors.textSecondary,
+          ),
         ),
       ],
     );
   }
 
   Widget _buildExpertiseSection(user, DocumentSnapshot? trainerDoc) {
+    final accentColor = Theme.of(context).brightness == Brightness.dark
+        ? AppColors.brandGreen
+        : AppColors.brandGreenDeep;
     final trainerData = trainerDoc?.data() as Map<String, dynamic>?;
     final expertise = List<String>.from(trainerData?['expertise'] ?? []);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'Expertise',
           style: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.bold,
-            color: AppColors.textPrimary,
+            color: Theme.of(context).brightness == Brightness.dark
+                ? const Color(0xFFFFFFFF)
+                : AppColors.textPrimary,
           ),
         ),
         const SizedBox(height: 12),
         expertise.isEmpty
-            ? const Text(
-              'No expertise added',
-              style: TextStyle(color: AppColors.textSecondary),
-            )
+            ? Text(
+                'No expertise added',
+                style: TextStyle(
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? const Color(0xFFB0B0B0)
+                      : AppColors.textSecondary,
+                ),
+              )
             : Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children:
-                  expertise.map((exp) {
-                    return Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 8,
+                spacing: 8,
+                runSpacing: 8,
+                children: expertise.map((exp) {
+                  return Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: accentColor.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: accentColor.withOpacity(0.3),
                       ),
-                      decoration: BoxDecoration(
-                        color: AppColors.accent.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                          color: AppColors.accent.withOpacity(0.3),
-                        ),
+                    ),
+                    child: Text(
+                      exp,
+                      style: TextStyle(
+                        color: accentColor,
+                        fontWeight: FontWeight.w500,
                       ),
-                      child: Text(
-                        exp,
-                        style: const TextStyle(
-                          color: AppColors.accent,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    );
-                  }).toList(),
-            ),
+                    ),
+                  );
+                }).toList(),
+              ),
       ],
     );
   }
 
   Widget _buildCertificationsSection(user, DocumentSnapshot? trainerDoc) {
+    final accentColor = Theme.of(context).brightness == Brightness.dark
+        ? AppColors.brandGreen
+        : AppColors.brandGreenDeep;
     final trainerData = trainerDoc?.data() as Map<String, dynamic>?;
     final certifications = List<String>.from(
       trainerData?['certifications'] ?? [],
@@ -660,20 +722,22 @@ class _TrainerProfileScreenState extends State<TrainerProfileScreen> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text(
+            Text(
               'Certifications',
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
-                color: AppColors.textPrimary,
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? const Color(0xFFFFFFFF)
+                    : AppColors.textPrimary,
               ),
             ),
             TextButton.icon(
               onPressed: _isLoading ? null : _uploadCertificate,
-              icon: const Icon(Icons.add, color: AppColors.accent),
-              label: const Text(
+              icon: Icon(Icons.add, color: accentColor),
+              label: Text(
                 'Add',
-                style: TextStyle(color: AppColors.accent),
+                style: TextStyle(color: accentColor),
               ),
             ),
           ],
@@ -681,69 +745,78 @@ class _TrainerProfileScreenState extends State<TrainerProfileScreen> {
         const SizedBox(height: 12),
         certifications.isEmpty
             ? Container(
-              padding: const EdgeInsets.all(40),
-              decoration: BoxDecoration(
-                color: AppColors.surface,
-                borderRadius: BorderRadius.circular(AppSizes.borderRadius),
-              ),
-              child: const Center(
-                child: Column(
-                  children: [
-                    Icon(
-                      Icons.workspace_premium,
-                      size: 48,
-                      color: AppColors.textSecondary,
-                    ),
-                    SizedBox(height: 12),
-                    Text(
-                      'No certifications yet',
-                      style: TextStyle(color: AppColors.textSecondary),
-                    ),
-                  ],
-                ),
-              ),
-            )
-            : GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                crossAxisSpacing: 12,
-                mainAxisSpacing: 12,
-              ),
-              itemCount: certifications.length,
-              itemBuilder: (context, index) {
-                return ClipRRect(
+                padding: const EdgeInsets.all(40),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? const Color(0xFF1A1A1A)
+                      : AppColors.surface,
                   borderRadius: BorderRadius.circular(AppSizes.borderRadius),
-                  child: CachedNetworkImage(
-                    imageUrl: certifications[index],
-                    fit: BoxFit.cover,
-                    placeholder:
-                        (context, url) => Container(
-                          color: AppColors.charcoal,
-                          child: const Center(
-                            child: CircularProgressIndicator(
-                              color: AppColors.accent,
-                            ),
-                          ),
+                ),
+                child: Center(
+                  child: Column(
+                    children: [
+                      Icon(
+                        Icons.workspace_premium,
+                        size: 48,
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? const Color(0xFFB0B0B0)
+                            : AppColors.textSecondary,
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        'No certifications yet',
+                        style: TextStyle(
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? const Color(0xFFB0B0B0)
+                              : AppColors.textSecondary,
                         ),
-                    errorWidget:
-                        (context, url, error) => Container(
-                          color: AppColors.charcoal,
-                          child: const Icon(
-                            Icons.error,
-                            color: AppColors.error,
-                          ),
-                        ),
+                      ),
+                    ],
                   ),
-                );
-              },
-            ),
+                ),
+              )
+            : GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  crossAxisSpacing: 12,
+                  mainAxisSpacing: 12,
+                ),
+                itemCount: certifications.length,
+                itemBuilder: (context, index) {
+                  return ClipRRect(
+                    borderRadius: BorderRadius.circular(AppSizes.borderRadius),
+                    child: CachedNetworkImage(
+                      imageUrl: certifications[index],
+                      fit: BoxFit.cover,
+                      placeholder: (context, url) => Container(
+                        color: AppColors.charcoal,
+                        child: CircularProgressIndicator(
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? AppColors.brandGreen
+                              : AppColors.brandGreenDeep,
+                        ),
+                      ),
+                      errorWidget: (context, url, error) => Container(
+                        color: AppColors.charcoal,
+                        child: const Icon(
+                          Icons.error,
+                          color: AppColors.error,
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
       ],
     );
   }
 
   Widget _buildVideosSection(user, DocumentSnapshot? trainerDoc) {
+    final accentColor = Theme.of(context).brightness == Brightness.dark
+        ? AppColors.brandGreen
+        : AppColors.brandGreenDeep;
     final trainerData = trainerDoc?.data() as Map<String, dynamic>?;
     final videoUrls = List<String>.from(trainerData?['videoUrls'] ?? []);
 
@@ -753,30 +826,31 @@ class _TrainerProfileScreenState extends State<TrainerProfileScreen> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text(
+            Text(
               'Training Videos',
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
-                color: AppColors.textPrimary,
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? const Color(0xFFFFFFFF)
+                    : AppColors.textPrimary,
               ),
             ),
             TextButton.icon(
               onPressed: _isUploadingVideo ? null : _uploadVideo,
-              icon:
-                  _isUploadingVideo
-                      ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: AppColors.accent,
-                        ),
-                      )
-                      : const Icon(Icons.add, color: AppColors.accent),
+              icon: _isUploadingVideo
+                  ? SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: accentColor,
+                      ),
+                    )
+                  : Icon(Icons.add, color: accentColor),
               label: Text(
                 _isUploadingVideo ? 'Uploading...' : 'Add',
-                style: const TextStyle(color: AppColors.accent),
+                style: TextStyle(color: accentColor),
               ),
             ),
           ],
@@ -784,90 +858,99 @@ class _TrainerProfileScreenState extends State<TrainerProfileScreen> {
         const SizedBox(height: 12),
         videoUrls.isEmpty
             ? Container(
-              padding: const EdgeInsets.all(40),
-              decoration: BoxDecoration(
-                color: AppColors.surface,
-                borderRadius: BorderRadius.circular(AppSizes.borderRadius),
-              ),
-              child: const Center(
-                child: Column(
-                  children: [
-                    Icon(
-                      Icons.video_library,
-                      size: 48,
-                      color: AppColors.textSecondary,
-                    ),
-                    SizedBox(height: 12),
-                    Text(
-                      'No videos yet',
-                      style: TextStyle(color: AppColors.textSecondary),
-                    ),
-                    SizedBox(height: 4),
-                    Text(
-                      'Upload training videos to showcase your expertise',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: AppColors.textSecondary,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            )
-            : GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                crossAxisSpacing: 12,
-                mainAxisSpacing: 12,
-                childAspectRatio: 16 / 9,
-              ),
-              itemCount: videoUrls.length,
-              itemBuilder: (context, index) {
-                return ClipRRect(
+                padding: const EdgeInsets.all(40),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? const Color(0xFF1A1A1A)
+                      : AppColors.surface,
                   borderRadius: BorderRadius.circular(AppSizes.borderRadius),
-                  child: Stack(
-                    fit: StackFit.expand,
+                ),
+                child: Center(
+                  child: Column(
                     children: [
-                      Container(
-                        color: AppColors.charcoal,
-                        child: CachedNetworkImage(
-                          imageUrl: videoUrls[index],
-                          fit: BoxFit.cover,
-                          errorWidget:
-                              (context, url, error) => const Icon(
-                                Icons.video_library,
-                                color: AppColors.textSecondary,
-                                size: 40,
-                              ),
+                      Icon(
+                        Icons.video_library,
+                        size: 48,
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? const Color(0xFFB0B0B0)
+                            : AppColors.textSecondary,
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        'No videos yet',
+                        style: TextStyle(
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? const Color(0xFFB0B0B0)
+                              : AppColors.textSecondary,
                         ),
                       ),
-                      Container(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                            colors: [
-                              Colors.transparent,
-                              Colors.black.withOpacity(0.5),
-                            ],
-                          ),
-                        ),
-                      ),
-                      const Center(
-                        child: Icon(
-                          Icons.play_circle_outline,
-                          color: Colors.white,
-                          size: 48,
+                      const SizedBox(height: 4),
+                      Text(
+                        'Upload training videos to showcase your expertise',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? const Color(0xFFB0B0B0)
+                              : AppColors.textSecondary,
+                          fontSize: 12,
                         ),
                       ),
                     ],
                   ),
-                );
-              },
-            ),
+                ),
+              )
+            : GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  crossAxisSpacing: 12,
+                  mainAxisSpacing: 12,
+                  childAspectRatio: 16 / 9,
+                ),
+                itemCount: videoUrls.length,
+                itemBuilder: (context, index) {
+                  return ClipRRect(
+                    borderRadius: BorderRadius.circular(AppSizes.borderRadius),
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        Container(
+                          color: AppColors.charcoal,
+                          child: CachedNetworkImage(
+                            imageUrl: videoUrls[index],
+                            fit: BoxFit.cover,
+                            errorWidget: (context, url, error) => const Icon(
+                              Icons.video_library,
+                              color: AppColors.textSecondary,
+                              size: 40,
+                            ),
+                          ),
+                        ),
+                        Container(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                Colors.transparent,
+                                Colors.black.withOpacity(0.5),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const Center(
+                          child: Icon(
+                            Icons.play_circle_outline,
+                            color: Colors.white,
+                            size: 48,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
       ],
     );
   }

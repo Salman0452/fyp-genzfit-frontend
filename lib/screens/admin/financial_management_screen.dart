@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:genzfit/utils/constants.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
@@ -7,10 +8,12 @@ class FinancialManagementScreen extends StatefulWidget {
   const FinancialManagementScreen({super.key});
 
   @override
-  State<FinancialManagementScreen> createState() => _FinancialManagementScreenState();
+  State<FinancialManagementScreen> createState() =>
+      _FinancialManagementScreenState();
 }
 
-class _FinancialManagementScreenState extends State<FinancialManagementScreen> with SingleTickerProviderStateMixin {
+class _FinancialManagementScreenState extends State<FinancialManagementScreen>
+    with SingleTickerProviderStateMixin {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   late TabController _tabController;
 
@@ -36,7 +39,10 @@ class _FinancialManagementScreenState extends State<FinancialManagementScreen> w
 
   Future<void> _loadCommissionRate() async {
     try {
-      final settingsDoc = await _firestore.collection('platform_settings').doc('commission').get();
+      final settingsDoc = await _firestore
+          .collection('platform_settings')
+          .doc('commission')
+          .get();
       if (settingsDoc.exists) {
         final rate = settingsDoc.data()?['rate'] as num?;
         if (rate != null) {
@@ -82,13 +88,19 @@ class _FinancialManagementScreenState extends State<FinancialManagementScreen> w
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final brandGreen = isDark ? AppColors.brandGreen : AppColors.brandGreenDeep;
+    final primaryText =
+        isDark ? const Color(0xFFFFFFFF) : AppColors.textPrimary;
+    final cardBackground = isDark ? const Color(0xFF1A1A1A) : AppColors.surface;
+
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF171917),
+        backgroundColor: cardBackground,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
+          icon: Icon(Icons.arrow_back_ios, color: primaryText),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
@@ -96,15 +108,17 @@ class _FinancialManagementScreenState extends State<FinancialManagementScreen> w
           style: GoogleFonts.poppins(
             fontSize: 20,
             fontWeight: FontWeight.bold,
-            color: Colors.white,
+            color: primaryText,
           ),
         ),
         bottom: TabBar(
           controller: _tabController,
-          indicatorColor: const Color(0xFF83BCB5),
-          labelColor: const Color(0xFF83BCB5),
-          unselectedLabelColor: Colors.white60,
-          labelStyle: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 13),
+          indicatorColor: brandGreen,
+          labelColor: brandGreen,
+          unselectedLabelColor:
+              isDark ? const Color(0xFFB0B0B0) : AppColors.textSecondary,
+          labelStyle:
+              GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 13),
           tabs: const [
             Tab(text: 'Payouts'),
             Tab(text: 'Refunds'),
@@ -131,9 +145,17 @@ class _FinancialManagementScreenState extends State<FinancialManagementScreen> w
   }
 
   Widget _buildFinancialSummary() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final brandGreen = isDark ? AppColors.brandGreen : AppColors.brandGreenDeep;
+    final cardBackground = isDark ? const Color(0xFF1A1A1A) : AppColors.surface;
+    final greenColor =
+        isDark ? const Color(0xFF7FFA88) : const Color(0xFF66BB6A);
+    final orangeColor =
+        isDark ? Colors.orange.shade400 : Colors.orange.shade700;
+
     return Container(
       padding: const EdgeInsets.all(16),
-      color: const Color(0xFF171917),
+      color: cardBackground,
       child: Row(
         children: [
           Expanded(
@@ -141,7 +163,7 @@ class _FinancialManagementScreenState extends State<FinancialManagementScreen> w
               'Total Revenue',
               '\$${_totalRevenue.toStringAsFixed(2)}',
               Icons.attach_money,
-              const Color(0xFF7FFA88),
+              greenColor,
             ),
           ),
           const SizedBox(width: 12),
@@ -150,7 +172,7 @@ class _FinancialManagementScreenState extends State<FinancialManagementScreen> w
               'Platform Share',
               '\$${_platformRevenue.toStringAsFixed(2)}',
               Icons.account_balance,
-              const Color(0xFF83BCB5),
+              brandGreen,
             ),
           ),
           const SizedBox(width: 12),
@@ -159,7 +181,7 @@ class _FinancialManagementScreenState extends State<FinancialManagementScreen> w
               'Pending Payouts',
               '\$${_pendingPayouts.toStringAsFixed(2)}',
               Icons.pending_actions,
-              Colors.orange,
+              orangeColor,
             ),
           ),
         ],
@@ -167,11 +189,18 @@ class _FinancialManagementScreenState extends State<FinancialManagementScreen> w
     );
   }
 
-  Widget _buildSummaryCard(String label, String value, IconData icon, Color color) {
+  Widget _buildSummaryCard(
+      String label, String value, IconData icon, Color color) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final secondaryText =
+        isDark ? const Color(0xFFB0B0B0) : AppColors.textSecondary;
+    final cardInnerBackground =
+        isDark ? const Color(0xFF0D0D0D) : const Color(0xFFF5F5F5);
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.black,
+        color: cardInnerBackground,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: color.withOpacity(0.3)),
       ),
@@ -197,7 +226,7 @@ class _FinancialManagementScreenState extends State<FinancialManagementScreen> w
             label,
             style: GoogleFonts.inter(
               fontSize: 12,
-              color: Colors.white70,
+              color: secondaryText,
             ),
           ),
         ],
@@ -236,7 +265,8 @@ class _FinancialManagementScreenState extends State<FinancialManagementScreen> w
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.check_circle_outline, size: 64, color: Colors.white24),
+                Icon(Icons.check_circle_outline,
+                    size: 64, color: Colors.white24),
                 const SizedBox(height: 16),
                 Text(
                   'No pending payouts',
@@ -291,7 +321,8 @@ class _FinancialManagementScreenState extends State<FinancialManagementScreen> w
                     color: Colors.orange.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Icon(Icons.pending_actions, color: Colors.orange, size: 20),
+                  child: const Icon(Icons.pending_actions,
+                      color: Colors.orange, size: 20),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -389,7 +420,9 @@ class _FinancialManagementScreenState extends State<FinancialManagementScreen> w
                     future: _firestore.collection('users').doc(trainerId).get(),
                     builder: (context, snapshot) {
                       final trainerName = snapshot.data?.data() != null
-                          ? (snapshot.data!.data() as Map<String, dynamic>)['name'] as String? ?? 'Unknown'
+                          ? (snapshot.data!.data()
+                                  as Map<String, dynamic>)['name'] as String? ??
+                              'Unknown'
                           : 'Loading...';
                       return Text(
                         'Trainer: $trainerName',
@@ -405,7 +438,8 @@ class _FinancialManagementScreenState extends State<FinancialManagementScreen> w
             ),
             const SizedBox(height: 16),
             ElevatedButton.icon(
-              onPressed: () => _processPayou(sessionId, trainerId, trainerAmount),
+              onPressed: () =>
+                  _processPayou(sessionId, trainerId, trainerAmount),
               icon: const Icon(Icons.payment),
               label: Text(
                 'Process Payout',
@@ -456,7 +490,8 @@ class _FinancialManagementScreenState extends State<FinancialManagementScreen> w
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.check_circle_outline, size: 64, color: Colors.white24),
+                Icon(Icons.check_circle_outline,
+                    size: 64, color: Colors.white24),
                 const SizedBox(height: 16),
                 Text(
                   'No pending refunds',
@@ -470,7 +505,8 @@ class _FinancialManagementScreenState extends State<FinancialManagementScreen> w
                   onPressed: () => _createTestRefund(),
                   icon: const Icon(Icons.add),
                   label: const Text('Create Test Refund'),
-                  style: TextButton.styleFrom(foregroundColor: const Color(0xFF83BCB5)),
+                  style: TextButton.styleFrom(
+                      foregroundColor: const Color(0xFF83BCB5)),
                 ),
               ],
             ),
@@ -517,7 +553,8 @@ class _FinancialManagementScreenState extends State<FinancialManagementScreen> w
                     color: Colors.red.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Icon(Icons.money_off, color: Colors.red, size: 20),
+                  child:
+                      const Icon(Icons.money_off, color: Colors.red, size: 20),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -534,7 +571,8 @@ class _FinancialManagementScreenState extends State<FinancialManagementScreen> w
                       ),
                       if (createdAt != null)
                         Text(
-                          DateFormat('MMM dd, yyyy • hh:mm a').format(createdAt),
+                          DateFormat('MMM dd, yyyy • hh:mm a')
+                              .format(createdAt),
                           style: GoogleFonts.inter(
                             fontSize: 12,
                             color: Colors.white38,
@@ -575,7 +613,9 @@ class _FinancialManagementScreenState extends State<FinancialManagementScreen> w
               future: _firestore.collection('users').doc(userId).get(),
               builder: (context, snapshot) {
                 final userName = snapshot.data?.data() != null
-                    ? (snapshot.data!.data() as Map<String, dynamic>)['name'] as String? ?? 'Unknown'
+                    ? (snapshot.data!.data() as Map<String, dynamic>)['name']
+                            as String? ??
+                        'Unknown'
                     : 'Loading...';
                 return Text(
                   'User: $userName',
@@ -696,7 +736,8 @@ class _FinancialManagementScreenState extends State<FinancialManagementScreen> w
                 color: const Color(0xFF7FFA88).withOpacity(0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: const Icon(Icons.attach_money, color: Color(0xFF7FFA88), size: 20),
+              child: const Icon(Icons.attach_money,
+                  color: Color(0xFF7FFA88), size: 20),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -749,7 +790,8 @@ class _FinancialManagementScreenState extends State<FinancialManagementScreen> w
     );
   }
 
-  Future<void> _processPayou(String sessionId, String trainerId, double amount) async {
+  Future<void> _processPayou(
+      String sessionId, String trainerId, double amount) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -765,12 +807,15 @@ class _FinancialManagementScreenState extends State<FinancialManagementScreen> w
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: Text('Cancel', style: GoogleFonts.inter(color: Colors.white38)),
+            child:
+                Text('Cancel', style: GoogleFonts.inter(color: Colors.white38)),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF7FFA88)),
-            child: Text('Confirm', style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
+            style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF7FFA88)),
+            child: Text('Confirm',
+                style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -809,7 +854,8 @@ class _FinancialManagementScreenState extends State<FinancialManagementScreen> w
     }
   }
 
-  Future<void> _processRefund(String refundId, String userId, double amount) async {
+  Future<void> _processRefund(
+      String refundId, String userId, double amount) async {
     try {
       await _firestore.collection('refund_requests').doc(refundId).update({
         'status': 'approved',

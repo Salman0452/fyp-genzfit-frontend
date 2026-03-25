@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:genzfit/utils/constants.dart';
 import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../models/trainer_model.dart';
@@ -89,8 +90,7 @@ class _TrainerDetailScreenState extends State<TrainerDetailScreen> {
               );
             }
 
-            final userData =
-                userSnapshot.data!.data() as Map<String, dynamic>;
+            final userData = userSnapshot.data!.data() as Map<String, dynamic>;
             final trainerData =
                 trainerSnapshot.data!.data() as Map<String, dynamic>;
 
@@ -117,289 +117,293 @@ class _TrainerDetailScreenState extends State<TrainerDetailScreen> {
     final videoUrls = List<String>.from(trainerData['videoUrls'] ?? []);
 
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: CustomScrollView(
         slivers: [
           SliverAppBar(
             expandedHeight: 300,
-          pinned: true,
-          backgroundColor: Colors.grey[900],
-          iconTheme: const IconThemeData(color: Colors.white),
-          flexibleSpace: FlexibleSpaceBar(
-            background: Stack(
-              fit: StackFit.expand,
-              children: [
-                if (avatarUrl.isNotEmpty)
-                  CachedNetworkImage(
-                    imageUrl: avatarUrl,
-                    fit: BoxFit.cover,
-                  )
-                else
-                  Container(
-                    color: Colors.grey[850],
-                    child: Icon(
-                      Icons.person,
-                      size: 100,
-                      color: Colors.grey[700],
-                    ),
-                  ),
-                Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        Colors.transparent,
-                        Colors.black.withOpacity(0.7),
-                      ],
-                    ),
-                  ),
-                ),
-                Positioned(
-                  bottom: 16,
-                  left: 16,
-                  right: 16,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        name,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 28,
-                          fontWeight: FontWeight.bold,
-                        ),
+            pinned: true,
+            backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
+            iconTheme: IconThemeData(
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? const Color(0xFFFFFFFF)
+                    : AppColors.textPrimary),
+            flexibleSpace: FlexibleSpaceBar(
+              background: Stack(
+                fit: StackFit.expand,
+                children: [
+                  if (avatarUrl.isNotEmpty)
+                    CachedNetworkImage(
+                      imageUrl: avatarUrl,
+                      fit: BoxFit.cover,
+                    )
+                  else
+                    Container(
+                      color: Colors.grey[850],
+                      child: Icon(
+                        Icons.person,
+                        size: 100,
+                        color: Colors.grey[700],
                       ),
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          Icon(Icons.star, color: Colors.amber, size: 20),
-                          const SizedBox(width: 4),
-                          Text(
-                            rating.toStringAsFixed(1),
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 16,
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          Icon(Icons.people, color: Colors.blue, size: 20),
-                          const SizedBox(width: 4),
-                          Text(
-                            '$clients clients',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 16,
-                            ),
-                          ),
+                    ),
+                  Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.transparent,
+                          Colors.black.withOpacity(0.7),
                         ],
                       ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Price card
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: Colors.blue.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Colors.blue, width: 2),
-                  ),
-                  child: Column(
-                    children: [
-                      Text(
-                        '\$${hourlyRate.toStringAsFixed(0)}',
-                        style: const TextStyle(
-                          color: Colors.blue,
-                          fontSize: 36,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      Text(
-                        'per hour',
-                        style: TextStyle(
-                          color: Colors.grey[400],
-                          fontSize: 16,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 24),
-
-                // Bio
-                if (bio.isNotEmpty) ...[
-                  const Text(
-                    'About',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  Text(
-                    bio,
-                    style: TextStyle(
-                      color: Colors.grey[400],
-                      fontSize: 16,
-                      height: 1.5,
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                ],
-
-                // Expertise
-                if (expertise.isNotEmpty) ...[
-                  const Text(
-                    'Expertise',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: expertise.map((exp) {
-                      return Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 8,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.blue.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: Colors.blue, width: 1),
-                        ),
-                        child: Text(
-                          exp,
+                  Positioned(
+                    bottom: 16,
+                    left: 16,
+                    right: 16,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          name,
                           style: const TextStyle(
-                            color: Colors.blue,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
+                            color: Colors.white,
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
-                      );
-                    }).toList(),
-                  ),
-                  const SizedBox(height: 24),
-                ],
-
-                // Certifications
-                if (certifications.isNotEmpty) ...[
-                  const Text(
-                    'Certifications',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  ...certifications.map((cert) {
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 8),
-                      child: Row(
-                        children: [
-                          Icon(Icons.verified, color: Colors.green, size: 20),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              cert,
-                              style: TextStyle(
-                                color: Colors.grey[300],
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Icon(Icons.star, color: Colors.amber, size: 20),
+                            const SizedBox(width: 4),
+                            Text(
+                              rating.toStringAsFixed(1),
+                              style: const TextStyle(
+                                color: Colors.white,
                                 fontSize: 16,
                               ),
                             ),
-                          ),
-                        ],
-                      ),
-                    );
-                  }),
-                  const SizedBox(height: 24),
-                ],
-
-                // Videos
-                if (videoUrls.isNotEmpty) ...[
-                  const Text(
-                    'Training Videos',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
+                            const SizedBox(width: 16),
+                            Icon(Icons.people, color: Colors.blue, size: 20),
+                            const SizedBox(width: 4),
+                            Text(
+                              '$clients clients',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 12),
-                  SizedBox(
-                    height: 120,
-                    child: ListView.builder(
-                      scrollDirection: Axis.horizontal,
-                      itemCount: videoUrls.length,
-                      itemBuilder: (context, index) {
-                        return Container(
-                          width: 200,
-                          margin: const EdgeInsets.only(right: 12),
-                          decoration: BoxDecoration(
-                            color: Colors.grey[850],
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Stack(
-                            alignment: Alignment.center,
-                            children: [
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(12),
-                                child: CachedNetworkImage(
-                                  imageUrl: videoUrls[index],
-                                  fit: BoxFit.cover,
-                                  width: double.infinity,
-                                  height: double.infinity,
-                                  errorWidget: (context, url, error) =>
-                                      Icon(Icons.video_library,
-                                          color: Colors.grey[600], size: 40),
-                                ),
-                              ),
-                              Container(
-                                decoration: BoxDecoration(
-                                  color: Colors.black.withOpacity(0.3),
-                                  shape: BoxShape.circle,
-                                ),
-                                padding: const EdgeInsets.all(12),
-                                child: const Icon(
-                                  Icons.play_arrow,
-                                  color: Colors.white,
-                                  size: 32,
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                  const SizedBox(height: 24),
                 ],
-
-                // Action buttons
-                const SizedBox(height: 100),
-              ],
+              ),
             ),
           ),
-        ),
-      ],
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Price card
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: Colors.blue.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: Colors.blue, width: 2),
+                    ),
+                    child: Column(
+                      children: [
+                        Text(
+                          '\$${hourlyRate.toStringAsFixed(0)}',
+                          style: const TextStyle(
+                            color: Colors.blue,
+                            fontSize: 36,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Text(
+                          'per hour',
+                          style: TextStyle(
+                            color: Colors.grey[400],
+                            fontSize: 16,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Bio
+                  if (bio.isNotEmpty) ...[
+                    const Text(
+                      'About',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      bio,
+                      style: TextStyle(
+                        color: Colors.grey[400],
+                        fontSize: 16,
+                        height: 1.5,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                  ],
+
+                  // Expertise
+                  if (expertise.isNotEmpty) ...[
+                    const Text(
+                      'Expertise',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: expertise.map((exp) {
+                        return Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 8,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.blue.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: Colors.blue, width: 1),
+                          ),
+                          child: Text(
+                            exp,
+                            style: const TextStyle(
+                              color: Colors.blue,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                    const SizedBox(height: 24),
+                  ],
+
+                  // Certifications
+                  if (certifications.isNotEmpty) ...[
+                    const Text(
+                      'Certifications',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    ...certifications.map((cert) {
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: Row(
+                          children: [
+                            Icon(Icons.verified, color: Colors.green, size: 20),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                cert,
+                                style: TextStyle(
+                                  color: Colors.grey[300],
+                                  fontSize: 16,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }),
+                    const SizedBox(height: 24),
+                  ],
+
+                  // Videos
+                  if (videoUrls.isNotEmpty) ...[
+                    const Text(
+                      'Training Videos',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      height: 120,
+                      child: ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: videoUrls.length,
+                        itemBuilder: (context, index) {
+                          return Container(
+                            width: 200,
+                            margin: const EdgeInsets.only(right: 12),
+                            decoration: BoxDecoration(
+                              color: Colors.grey[850],
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Stack(
+                              alignment: Alignment.center,
+                              children: [
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(12),
+                                  child: CachedNetworkImage(
+                                    imageUrl: videoUrls[index],
+                                    fit: BoxFit.cover,
+                                    width: double.infinity,
+                                    height: double.infinity,
+                                    errorWidget: (context, url, error) => Icon(
+                                        Icons.video_library,
+                                        color: Colors.grey[600],
+                                        size: 40),
+                                  ),
+                                ),
+                                Container(
+                                  decoration: BoxDecoration(
+                                    color: Colors.black.withOpacity(0.3),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  padding: const EdgeInsets.all(12),
+                                  child: const Icon(
+                                    Icons.play_arrow,
+                                    color: Colors.white,
+                                    size: 32,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                  ],
+
+                  // Action buttons
+                  const SizedBox(height: 100),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
       bottomNavigationBar: _buildBottomBar(hourlyRate),
     );
@@ -409,10 +413,13 @@ class _TrainerDetailScreenState extends State<TrainerDetailScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.grey[900],
+        color: Theme.of(context).appBarTheme.backgroundColor,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.3),
+            color: (Theme.of(context).brightness == Brightness.dark
+                    ? const Color(0xFF000000)
+                    : Colors.black)
+                .withOpacity(0.3),
             blurRadius: 10,
             offset: const Offset(0, -2),
           ),
@@ -520,10 +527,15 @@ class _TrainerDetailScreenState extends State<TrainerDetailScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: Colors.grey[900],
-        title: const Text(
+        backgroundColor: Theme.of(context).brightness == Brightness.dark
+            ? const Color(0xFF1A1A1A)
+            : AppColors.surface,
+        title: Text(
           'Hire Trainer',
-          style: TextStyle(color: Colors.white),
+          style: TextStyle(
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? const Color(0xFFFFFFFF)
+                  : AppColors.textPrimary),
         ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -582,8 +594,8 @@ class _TrainerDetailScreenState extends State<TrainerDetailScreen> {
         clientId: currentUserId,
         trainerId: widget.userId,
         amount: hourlyRate,
-        notes: _notesController.text.trim().isNotEmpty 
-            ? _notesController.text.trim() 
+        notes: _notesController.text.trim().isNotEmpty
+            ? _notesController.text.trim()
             : null,
       );
 
