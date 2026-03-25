@@ -24,7 +24,7 @@ class _TrainerVerificationScreenState extends State<TrainerVerificationScreen> {
       appBar: AppBar(
         backgroundColor: Theme.of(context).brightness == Brightness.dark
             ? const Color(0xFF171917)
-            : AppColors.backgroundLight,
+            : AppColors.surface,
         elevation: 0,
         leading: IconButton(
           icon: Icon(Icons.arrow_back_ios,
@@ -93,7 +93,7 @@ class _TrainerVerificationScreenState extends State<TrainerVerificationScreen> {
       },
       backgroundColor: Theme.of(context).brightness == Brightness.dark
           ? const Color(0xFF171917)
-          : AppColors.backgroundLight,
+          : AppColors.surface,
       selectedColor: Theme.of(context).brightness == Brightness.dark
           ? AppColors.brandGreen
           : AppColors.brandGreenDeep,
@@ -181,7 +181,7 @@ class _TrainerVerificationScreenState extends State<TrainerVerificationScreen> {
     return Card(
       color: Theme.of(context).brightness == Brightness.dark
           ? const Color(0xFF171917)
-          : AppColors.backgroundLight,
+          : AppColors.surface,
       margin: const EdgeInsets.only(bottom: 16),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
@@ -206,7 +206,7 @@ class _TrainerVerificationScreenState extends State<TrainerVerificationScreen> {
                   : null,
               backgroundColor: Theme.of(context).brightness == Brightness.dark
                   ? const Color(0xFF1F2120)
-                  : AppColors.backgroundLight,
+                  : AppColors.surface,
               child: trainer.avatarUrl == null
                   ? Text(
                       trainer.name[0].toUpperCase(),
@@ -467,7 +467,7 @@ class _TrainerVerificationScreenState extends State<TrainerVerificationScreen> {
                     decoration: BoxDecoration(
                       color: Theme.of(context).brightness == Brightness.dark
                           ? const Color(0xFF1F2120)
-                          : AppColors.backgroundLight,
+                          : AppColors.surface,
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Row(
@@ -644,7 +644,7 @@ class _TrainerVerificationScreenState extends State<TrainerVerificationScreen> {
             AppBar(
               backgroundColor: Theme.of(context).brightness == Brightness.dark
                   ? const Color(0xFF171917)
-                  : AppColors.backgroundLight,
+                  : AppColors.surface,
               leading: IconButton(
                 icon: const Icon(Icons.close),
                 onPressed: () => Navigator.pop(context),
@@ -678,7 +678,7 @@ class _TrainerVerificationScreenState extends State<TrainerVerificationScreen> {
       builder: (context) => AlertDialog(
         backgroundColor: Theme.of(context).brightness == Brightness.dark
             ? const Color(0xFF171917)
-            : AppColors.backgroundLight,
+            : AppColors.surface,
         title: Text('Video Link',
             style: GoogleFonts.poppins(
                 color: Theme.of(context).brightness == Brightness.dark
@@ -740,7 +740,7 @@ class _TrainerVerificationScreenState extends State<TrainerVerificationScreen> {
       builder: (context) => AlertDialog(
         backgroundColor: Theme.of(context).brightness == Brightness.dark
             ? const Color(0xFF171917)
-            : AppColors.backgroundLight,
+            : AppColors.surface,
         title: Text('Reject Trainer?',
             style: GoogleFonts.poppins(
                 color: Theme.of(context).brightness == Brightness.dark
@@ -789,7 +789,7 @@ class _TrainerVerificationScreenState extends State<TrainerVerificationScreen> {
       builder: (context) => AlertDialog(
         backgroundColor: Theme.of(context).brightness == Brightness.dark
             ? const Color(0xFF171917)
-            : AppColors.backgroundLight,
+            : AppColors.surface,
         title: Text('Revoke Verification?',
             style: GoogleFonts.poppins(
                 color: Theme.of(context).brightness == Brightness.dark
@@ -855,7 +855,7 @@ class _TrainerVerificationScreenState extends State<TrainerVerificationScreen> {
       builder: (context) => AlertDialog(
         backgroundColor: Theme.of(context).brightness == Brightness.dark
             ? const Color(0xFF171917)
-            : AppColors.backgroundLight,
+            : AppColors.surface,
         title: Text('Suspend Trainer?',
             style: GoogleFonts.poppins(
                 color: Theme.of(context).brightness == Brightness.dark

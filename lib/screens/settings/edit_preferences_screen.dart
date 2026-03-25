@@ -181,9 +181,9 @@ class _EditPreferencesScreenState extends State<EditPreferencesScreen> {
   InputDecoration _fieldDecoration(String hint, {String? suffix}) =>
       InputDecoration(
         hintText: hint,
-        hintStyle: const TextStyle(color: _muted),
+        hintStyle: TextStyle(color: _muted),
         suffixText: suffix,
-        suffixStyle: const TextStyle(color: _muted),
+        suffixStyle: TextStyle(color: _muted),
         filled: true,
         fillColor: _surface,
         border: OutlineInputBorder(
@@ -237,7 +237,7 @@ class _EditPreferencesScreenState extends State<EditPreferencesScreen> {
         padding: const EdgeInsets.only(bottom: 12),
         child: Text(
           title,
-          style: const TextStyle(
+          style: TextStyle(
             color: _white,
             fontSize: 16,
             fontWeight: FontWeight.bold,
@@ -268,7 +268,7 @@ class _EditPreferencesScreenState extends State<EditPreferencesScreen> {
         appBar: AppBar(
           backgroundColor: _surface,
           elevation: 0,
-          title: const Text(
+          title: Text(
             'Edit Preferences',
             style: TextStyle(
               color: _white,
@@ -277,7 +277,7 @@ class _EditPreferencesScreenState extends State<EditPreferencesScreen> {
             ),
           ),
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back_ios_new, color: _white),
+            icon: Icon(Icons.arrow_back_ios_new, color: _white),
             onPressed: () => Navigator.pop(context),
           ),
         ),
@@ -543,7 +543,7 @@ class _EditPreferencesScreenState extends State<EditPreferencesScreen> {
                 ),
               )
             else if (equipment != null) ...[
-              const Text('Equipment available',
+              Text('Equipment available',
                   style: TextStyle(color: _muted, fontSize: 13)),
               const SizedBox(height: 8),
               Wrap(
@@ -574,11 +574,11 @@ class _EditPreferencesScreenState extends State<EditPreferencesScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('Workout duration',
+              Text('Workout duration',
                   style: TextStyle(color: _muted, fontSize: 13)),
               Text(
                 '${_data.workoutDurationMinutes} min',
-                style: const TextStyle(
+                style: TextStyle(
                     color: _purple, fontWeight: FontWeight.bold, fontSize: 14),
               ),
             ],
@@ -603,7 +603,7 @@ class _EditPreferencesScreenState extends State<EditPreferencesScreen> {
           const SizedBox(height: 12),
 
           // Days per week
-          const Text('Days per week',
+          Text('Days per week',
               style: TextStyle(color: _muted, fontSize: 13)),
           const SizedBox(height: 10),
           Row(
@@ -983,7 +983,7 @@ class _EditPreferencesScreenState extends State<EditPreferencesScreen> {
 
   Widget _subLabel(String text) => Text(
         text,
-        style: const TextStyle(color: _muted, fontSize: 13),
+        style: TextStyle(color: _muted, fontSize: 13),
       );
 
   // ── Save Button ─────────────────────────────────────────────────────────────
@@ -1009,9 +1009,9 @@ class _EditPreferencesScreenState extends State<EditPreferencesScreen> {
                   width: 24,
                   height: 24,
                   child: CircularProgressIndicator(
-                      color: _white, strokeWidth: 2.5),
+                      color: Color(0xFFFFFFFF), strokeWidth: 2.5),
                 )
-              : const Text(
+              : Text(
                   'Save Preferences 💾',
                   style: TextStyle(
                     color: _white,

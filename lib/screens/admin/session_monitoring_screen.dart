@@ -25,7 +25,7 @@ class _SessionMonitoringScreenState extends State<SessionMonitoringScreen> {
       appBar: AppBar(
         backgroundColor: Theme.of(context).brightness == Brightness.dark
             ? const Color(0xFF171917)
-            : AppColors.backgroundLight,
+            : AppColors.surface,
         elevation: 0,
         leading: IconButton(
           icon: Icon(Icons.arrow_back_ios,
@@ -116,7 +116,7 @@ class _SessionMonitoringScreenState extends State<SessionMonitoringScreen> {
       },
       backgroundColor: Theme.of(context).brightness == Brightness.dark
           ? const Color(0xFF171917)
-          : AppColors.backgroundLight,
+          : AppColors.surface,
       selectedColor: color,
       checkmarkColor: Theme.of(context).brightness == Brightness.dark
           ? const Color(0xFF1A1A1A)
@@ -225,8 +225,8 @@ class _SessionMonitoringScreenState extends State<SessionMonitoringScreen> {
 
     return Card(
       color: Theme.of(context).brightness == Brightness.dark
-          ? const Color(0xFF171917)
-          : AppColors.backgroundLight,
+          ? Color(0xFF171917)
+          : AppColors.surface,
       margin: const EdgeInsets.only(bottom: 12),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
@@ -367,7 +367,7 @@ class _SessionMonitoringScreenState extends State<SessionMonitoringScreen> {
             decoration: BoxDecoration(
               color: Theme.of(context).brightness == Brightness.dark
                   ? const Color(0xFF1F2120)
-                  : AppColors.backgroundLight,
+                  : AppColors.surface,
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text(
@@ -470,7 +470,7 @@ class _SessionMonitoringScreenState extends State<SessionMonitoringScreen> {
                   backgroundColor:
                       Theme.of(context).brightness == Brightness.dark
                           ? const Color(0xFF1F2120)
-                          : AppColors.backgroundLight,
+                          : AppColors.surface,
                   child: user.avatarUrl == null
                       ? Text(
                           user.name[0].toUpperCase(),
@@ -803,7 +803,7 @@ class _SessionMonitoringScreenState extends State<SessionMonitoringScreen> {
       builder: (context) => AlertDialog(
         backgroundColor: Theme.of(context).brightness == Brightness.dark
             ? const Color(0xFF171917)
-            : AppColors.backgroundLight,
+            : AppColors.surface,
         title: Text('Session Details',
             style: GoogleFonts.poppins(
                 color: Theme.of(context).brightness == Brightness.dark
@@ -879,7 +879,7 @@ class _SessionMonitoringScreenState extends State<SessionMonitoringScreen> {
       builder: (context) => AlertDialog(
         backgroundColor: Theme.of(context).brightness == Brightness.dark
             ? const Color(0xFF171917)
-            : AppColors.backgroundLight,
+            : AppColors.surface,
         title: Text(title,
             style: GoogleFonts.poppins(
                 color: Theme.of(context).brightness == Brightness.dark

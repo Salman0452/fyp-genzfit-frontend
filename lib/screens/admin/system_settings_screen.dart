@@ -162,7 +162,7 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
       appBar: AppBar(
         backgroundColor: Theme.of(context).brightness == Brightness.dark
             ? const Color(0xFF171917)
-            : AppColors.backgroundLight,
+            : AppColors.surface,
         elevation: 0,
         leading: IconButton(
           icon: Icon(Icons.arrow_back_ios,
@@ -183,9 +183,9 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
         ),
         actions: [
           if (_isSaving)
-            const Center(
+            Center(
               child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16),
+                padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: SizedBox(
                   width: 20,
                   height: 20,
@@ -240,7 +240,7 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
       decoration: BoxDecoration(
         color: Theme.of(context).brightness == Brightness.dark
             ? const Color(0xFF171917)
-            : AppColors.backgroundLight,
+            : AppColors.surface,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
@@ -413,7 +413,7 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
       decoration: BoxDecoration(
         color: Theme.of(context).brightness == Brightness.dark
             ? const Color(0xFF171917)
-            : AppColors.backgroundLight,
+            : AppColors.surface,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
@@ -570,7 +570,7 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
       decoration: BoxDecoration(
         color: Theme.of(context).brightness == Brightness.dark
             ? const Color(0xFF171917)
-            : AppColors.backgroundLight,
+            : AppColors.surface,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
@@ -728,7 +728,7 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
       decoration: BoxDecoration(
         color: Theme.of(context).brightness == Brightness.dark
             ? const Color(0xFF171917)
-            : AppColors.backgroundLight,
+            : AppColors.surface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.red.withOpacity(0.3)),
       ),

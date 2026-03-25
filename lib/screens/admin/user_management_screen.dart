@@ -32,7 +32,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
       appBar: AppBar(
         backgroundColor: Theme.of(context).brightness == Brightness.dark
             ? const Color(0xFF171917)
-            : AppColors.backgroundLight,
+            : AppColors.surface,
         elevation: 0,
         leading: IconButton(
           icon: Icon(Icons.arrow_back_ios,
@@ -104,7 +104,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
               filled: true,
               fillColor: Theme.of(context).brightness == Brightness.dark
                   ? const Color(0xFF171917)
-                  : AppColors.backgroundLight,
+                  : AppColors.surface,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide.none,
@@ -153,7 +153,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
       },
       backgroundColor: Theme.of(context).brightness == Brightness.dark
           ? const Color(0xFF171917)
-          : AppColors.backgroundLight,
+          : AppColors.surface,
       selectedColor: Theme.of(context).brightness == Brightness.dark
           ? AppColors.brandGreen
           : AppColors.brandGreenDeep,
@@ -261,7 +261,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
     return Card(
       color: Theme.of(context).brightness == Brightness.dark
           ? const Color(0xFF171917)
-          : AppColors.backgroundLight,
+          : AppColors.surface,
       margin: const EdgeInsets.only(bottom: 12),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
@@ -285,7 +285,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                   user.avatarUrl != null ? NetworkImage(user.avatarUrl!) : null,
               backgroundColor: Theme.of(context).brightness == Brightness.dark
                   ? const Color(0xFF1F2120)
-                  : AppColors.backgroundLight,
+                  : AppColors.surface,
               child: user.avatarUrl == null
                   ? Text(
                       user.name[0].toUpperCase(),
@@ -583,7 +583,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
       builder: (context) => AlertDialog(
         backgroundColor: Theme.of(context).brightness == Brightness.dark
             ? const Color(0xFF171917)
-            : AppColors.backgroundLight,
+            : AppColors.surface,
         title: Text('Suspend User?',
             style: GoogleFonts.poppins(
                 color: Theme.of(context).brightness == Brightness.dark
@@ -677,7 +677,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
       builder: (context) => AlertDialog(
         backgroundColor: Theme.of(context).brightness == Brightness.dark
             ? const Color(0xFF171917)
-            : AppColors.backgroundLight,
+            : AppColors.surface,
         title: Text('Delete User?',
             style: GoogleFonts.poppins(
                 color: Theme.of(context).brightness == Brightness.dark
