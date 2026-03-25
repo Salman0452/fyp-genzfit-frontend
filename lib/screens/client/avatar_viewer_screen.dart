@@ -314,8 +314,8 @@ class _AvatarViewerScreenState extends State<AvatarViewerScreen>
                           decoration: BoxDecoration(
                             color:
                                 Theme.of(context).brightness == Brightness.dark
-                                    ? Colors.grey[500]
-                                    : Colors.grey[600],
+                                    ? Colors.grey[400]
+                                    : Colors.grey[400],
                             borderRadius: BorderRadius.circular(2),
                           ),
                         ),
@@ -333,8 +333,8 @@ class _AvatarViewerScreenState extends State<AvatarViewerScreen>
                                   size: 16,
                                   color: Theme.of(context).brightness ==
                                           Brightness.dark
-                                      ? Colors.white30
-                                      : Colors.white38,
+                                      ? const Color(0xFF606060)
+                                      : const Color(0xFFAAAAAA),
                                 ),
                                 const SizedBox(width: 4),
                                 Text(
@@ -342,8 +342,8 @@ class _AvatarViewerScreenState extends State<AvatarViewerScreen>
                                   style: TextStyle(
                                     color: Theme.of(context).brightness ==
                                             Brightness.dark
-                                        ? Colors.white30
-                                        : Colors.white38,
+                                        ? const Color(0xFF606060)
+                                        : const Color(0xFFAAAAAA),
                                     fontSize: 12,
                                   ),
                                 ),
@@ -400,11 +400,18 @@ class _AvatarViewerScreenState extends State<AvatarViewerScreen>
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(Icons.threed_rotation,
-                  size: 64, color: Colors.white.withOpacity(0.3)),
+                  size: 64,
+                  color: (Theme.of(context).brightness == Brightness.dark
+                          ? const Color(0xFFFFFFFF)
+                          : AppColors.textPrimary)
+                      .withOpacity(0.3)),
               const SizedBox(height: 16),
               Text(
                 _statusMessage.isNotEmpty ? _statusMessage : 'No model loaded',
-                style: TextStyle(color: Colors.white.withOpacity(0.6)),
+                style: TextStyle(
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? const Color(0xFFB0B0B0)
+                        : AppColors.textSecondary),
               ),
             ],
           ),
@@ -467,7 +474,11 @@ class _AvatarViewerScreenState extends State<AvatarViewerScreen>
               ),
               child: Text(
                 _snapshots[_selectedIndex].date,
-                style: const TextStyle(color: Colors.white70, fontSize: 12),
+                style: TextStyle(
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? const Color(0xFFB0B0B0)
+                        : AppColors.textSecondary,
+                    fontSize: 12),
               ),
             ),
           ),
@@ -483,11 +494,17 @@ class _AvatarViewerScreenState extends State<AvatarViewerScreen>
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.view_in_ar, size: 11, color: AppColors.accent),
+                Icon(Icons.view_in_ar,
+                    size: 11,
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? AppColors.accent
+                        : AppColors.brandGreenDeep),
                 const SizedBox(width: 4),
-                const Text('SMPL-X',
+                Text('SMPL-X',
                     style: TextStyle(
-                        color: Colors.white60,
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? const Color(0xFFB0B0B0)
+                            : AppColors.textSecondary,
                         fontSize: 10,
                         letterSpacing: 0.3)),
               ],
@@ -535,10 +552,12 @@ class _AvatarViewerScreenState extends State<AvatarViewerScreen>
         children: [
           Row(
             children: [
-              const Text(
+              Text(
                 'Body Measurements',
                 style: TextStyle(
-                    color: Colors.white,
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? const Color(0xFFFFFFFF)
+                        : AppColors.textPrimary,
                     fontSize: 16,
                     fontWeight: FontWeight.bold),
               ),
@@ -546,13 +565,24 @@ class _AvatarViewerScreenState extends State<AvatarViewerScreen>
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: AppColors.accent.withOpacity(0.15),
+                  color: (Theme.of(context).brightness == Brightness.dark
+                          ? AppColors.accent
+                          : AppColors.brandGreenDeep)
+                      .withOpacity(0.15),
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: AppColors.accent.withOpacity(0.4)),
+                  border: Border.all(
+                      color: (Theme.of(context).brightness == Brightness.dark
+                              ? AppColors.accent
+                              : AppColors.brandGreenDeep)
+                          .withOpacity(0.4)),
                 ),
                 child: Text(
                   _backendAvailable ? 'SMPL-X morphed' : 'cached',
-                  style: const TextStyle(color: AppColors.accent, fontSize: 10),
+                  style: TextStyle(
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? AppColors.accent
+                          : AppColors.brandGreenDeep,
+                      fontSize: 10),
                 ),
               ),
             ],
@@ -607,8 +637,11 @@ class _AvatarViewerScreenState extends State<AvatarViewerScreen>
                         color: bmiColor,
                         borderRadius: BorderRadius.circular(10)),
                     child: Text(bmiLabel,
-                        style: const TextStyle(
-                            color: Colors.white,
+                        style: TextStyle(
+                            color:
+                                Theme.of(context).brightness == Brightness.dark
+                                    ? const Color(0xFF010101)
+                                    : const Color(0xFFFFFFFF),
                             fontSize: 12,
                             fontWeight: FontWeight.bold)),
                   ),
@@ -642,15 +675,17 @@ class _AvatarViewerScreenState extends State<AvatarViewerScreen>
 
   Widget _deltaCard(String label, double delta, String unit) {
     final color = delta == 0
-        ? Colors.white54
+        ? (Theme.of(context).brightness == Brightness.dark
+            ? Colors.grey[500]
+            : Colors.grey[600])
         : delta <= 0
-            ? Colors.greenAccent[400]!
-            : Colors.redAccent[200]!;
+            ? Colors.green[400]!
+            : Colors.red[400]!;
     final prefix = delta > 0 ? '+' : '';
     return Container(
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color!.withOpacity(0.1),
         borderRadius: BorderRadius.circular(10),
         border: Border.all(color: color.withOpacity(0.3)),
       ),
@@ -658,14 +693,21 @@ class _AvatarViewerScreenState extends State<AvatarViewerScreen>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(label,
-              style: const TextStyle(color: Colors.white54, fontSize: 11)),
+              style: TextStyle(
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? const Color(0xFF808080)
+                      : const Color(0xFF9F9F9F),
+                  fontSize: 11)),
           const SizedBox(height: 4),
           Text('$prefix${delta.toStringAsFixed(1)} $unit',
               style: TextStyle(
                   color: color, fontSize: 16, fontWeight: FontWeight.bold)),
           Text('since start',
-              style:
-                  TextStyle(color: Colors.white.withOpacity(0.4), fontSize: 9)),
+              style: TextStyle(
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? const Color(0xFF606060)
+                      : const Color(0xFFAAAAAA),
+                  fontSize: 9)),
         ],
       ),
     );
@@ -675,20 +717,33 @@ class _AvatarViewerScreenState extends State<AvatarViewerScreen>
     return Container(
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-          color: AppColors.charcoal, borderRadius: BorderRadius.circular(10)),
+          color: Theme.of(context).brightness == Brightness.dark
+              ? const Color(0xFF2A2A2A)
+              : const Color(0xFFF5F5F5),
+          borderRadius: BorderRadius.circular(10)),
       child: Row(
         children: [
-          Icon(icon, color: Colors.white54, size: 18),
+          Icon(icon,
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? const Color(0xFF808080)
+                  : const Color(0xFF9F9F9F),
+              size: 18),
           const SizedBox(width: 8),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(label,
-                  style: const TextStyle(color: Colors.white54, fontSize: 10)),
+                  style: TextStyle(
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? const Color(0xFF808080)
+                          : const Color(0xFF9F9F9F),
+                      fontSize: 10)),
               Text(value,
-                  style: const TextStyle(
-                      color: Colors.white,
+                  style: TextStyle(
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? const Color(0xFFFFFFFF)
+                          : AppColors.textPrimary,
                       fontSize: 13,
                       fontWeight: FontWeight.w600)),
             ],
@@ -710,17 +765,29 @@ class _AvatarViewerScreenState extends State<AvatarViewerScreen>
               height: 120,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: AppColors.charcoal,
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? const Color(0xFF2A2A2A)
+                    : const Color(0xFFF5F5F5),
                 border: Border.all(
-                    color: AppColors.accent.withOpacity(0.4), width: 2),
+                    color: (Theme.of(context).brightness == Brightness.dark
+                            ? AppColors.accent
+                            : AppColors.brandGreenDeep)
+                        .withOpacity(0.4),
+                    width: 2),
               ),
               child: Icon(Icons.view_in_ar,
-                  size: 60, color: AppColors.accent.withOpacity(0.8)),
+                  size: 60,
+                  color: (Theme.of(context).brightness == Brightness.dark
+                          ? AppColors.accent
+                          : AppColors.brandGreenDeep)
+                      .withOpacity(0.8)),
             ),
             const SizedBox(height: 28),
-            const Text('Generate Your 3D Avatar',
+            Text('Generate Your 3D Avatar',
                 style: TextStyle(
-                    color: Colors.white,
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? const Color(0xFFFFFFFF)
+                        : AppColors.textPrimary,
                     fontSize: 24,
                     fontWeight: FontWeight.bold)),
             const SizedBox(height: 12),
@@ -729,7 +796,9 @@ class _AvatarViewerScreenState extends State<AvatarViewerScreen>
               'Complete a body scan first, then tap the button below.',
               textAlign: TextAlign.center,
               style: TextStyle(
-                  color: Colors.white.withOpacity(0.6),
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? const Color(0xFFB0B0B0)
+                      : AppColors.textSecondary,
                   fontSize: 15,
                   height: 1.5),
             ),
@@ -777,15 +846,27 @@ class _AvatarViewerScreenState extends State<AvatarViewerScreen>
               width: double.infinity,
               child: ElevatedButton.icon(
                 onPressed: _backendAvailable ? _generateAvatar : null,
-                icon: const Icon(Icons.auto_awesome, color: Colors.black),
-                label: const Text('Generate My Avatar',
+                icon: Icon(Icons.auto_awesome,
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? const Color(0xFF010101)
+                        : const Color(0xFFFFFFFF)),
+                label: Text('Generate My Avatar',
                     style: TextStyle(
-                        color: Colors.black,
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? const Color(0xFF010101)
+                            : const Color(0xFFFFFFFF),
                         fontSize: 16,
                         fontWeight: FontWeight.bold)),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.accent,
-                  disabledBackgroundColor: AppColors.accent.withOpacity(0.4),
+                  backgroundColor:
+                      Theme.of(context).brightness == Brightness.dark
+                          ? AppColors.accent
+                          : AppColors.brandGreenDeep,
+                  disabledBackgroundColor:
+                      (Theme.of(context).brightness == Brightness.dark
+                              ? AppColors.accent
+                              : AppColors.brandGreenDeep)
+                          .withOpacity(0.4),
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14)),
@@ -876,17 +957,32 @@ class _FeatureChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: AppColors.accent.withOpacity(0.1),
+        color: (Theme.of(context).brightness == Brightness.dark
+                ? AppColors.accent
+                : AppColors.brandGreenDeep)
+            .withOpacity(0.1),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.accent.withOpacity(0.3)),
+        border: Border.all(
+            color: (Theme.of(context).brightness == Brightness.dark
+                    ? AppColors.accent
+                    : AppColors.brandGreenDeep)
+                .withOpacity(0.3)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 13, color: AppColors.accent),
+          Icon(icon,
+              size: 13,
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? AppColors.accent
+                  : AppColors.brandGreenDeep),
           const SizedBox(width: 5),
           Text(label,
-              style: const TextStyle(color: Colors.white70, fontSize: 11)),
+              style: TextStyle(
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? const Color(0xFFB0B0B0)
+                      : AppColors.textSecondary,
+                  fontSize: 11)),
         ],
       ),
     );
