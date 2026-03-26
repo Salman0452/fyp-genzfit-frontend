@@ -103,49 +103,58 @@ class AppConstants {
 
 // Simplified color constants for new screens - Fitstreak Design
 class AppColors {
-  // Background and Surface
-  static const Color background = Color(
-    0xFFF5F5F5,
-  ); // Soft light gray background
+  // ============= BACKGROUND & SURFACE COLORS =============
+  static const Color background = Color(0xFFF5F5F5); // Light gray background
   static const Color surface = Color(0xFFFAFAFA); // Off-white surface
-  static const Color surfaceVariant = Color(0xFFEEEEEE); // Light gray surface
+  static const Color surfaceVariant = Color(0xFFEEEEEE); // Light gray variant
+  static const Color surfaceDim = Color(0xFFE0E0E0); // Darker surface for depth
 
-  // Brand Colors
-  static const Color brandGreen = Color(
-    0xFFD5FF5F,
-  ); // Lime green (primary brand - for dark backgrounds)
-  static const Color brandGreenDeep = Color(
-    0xFF8BDD3C,
-  ); // Deeper green (for white backgrounds - less exhausting)
-  static const Color brandBlue = Color(0xFF9AC0D6); // Light blue (secondary)
+  // ============= PRIMARY BRAND COLORS =============
+  // Green: High-energy primary brand color (lime)
+  static const Color brandGreen =
+      Color(0xFFD5FF5F); // Lime (primary, dark backgrounds)
+  static const Color brandGreenDeep =
+      Color(0xFF8BDD3C); // Deeper green (light backgrounds)
 
-  // Text Colors
+  // Blue: Secondary brand color (light blue)
+  static const Color brandBlue =
+      Color(0xFF9AC0D6); // Light blue (primary secondary)
+  static const Color brandBlueDark =
+      Color(0xFF4E6075); // Blue-gray (darker variant)
+  static const Color brandBlueLight = Color(0xFFB8D9E8); // Lighter blue variant
+
+  // ============= TEXT & TYPOGRAPHY COLORS =============
   static const Color textPrimary = Color(0xFF010101); // Almost black
-  static const Color textSecondary = Color(0xFF9F9F9F); // Gray
+  static const Color textSecondary = Color(0xFF9F9F9F); // Medium gray
   static const Color textTertiary = Color(0xFF595959); // Dark gray
   static const Color textOnBrand = Color(0xFFFFFFFF); // White on brand colors
+  static const Color textHint = Color(0xFFC0C0C0); // Light gray for hints
 
-  // Status Colors (mapped to palette where possible)
-  static const Color error = Color(
-    0xFF595959,
-  ); // Dark gray for errors (from palette)
-  static const Color success = Color(0xFFD5FF5F); // Green (from palette)
-  static const Color warning = Color(
-    0xFF595959,
-  ); // Dark gray for warnings (from palette)
-  static const Color info = Color(0xFF9AC0D6); // Light blue (from palette)
+  // ============= STATUS & SEMANTIC COLORS =============
+  static const Color success =
+      Color(0xFFD5FF5F); // Green success (from palette)
+  static const Color error = Color(0xFFE53935); // Red for errors
+  static const Color warning = Color(0xFFFB8500); // Amber for warnings
+  static const Color info = Color(0xFF9AC0D6); // Light blue for info
 
-  // Secondary Accent Colors (from PRIMARY & SECONDARY palette only)
-  static const Color accent = Color(0xFFD5FF5F); // Green (primary)
-  static const Color accentTeal = Color(0xFF9AC0D6); // Light blue (secondary)
-  static const Color accentCyan = Color(0xFF9AC0D6); // Light blue (secondary)
-  static const Color accentViolet = Color(0xFF4E6075); // Blue-gray (secondary)
-  static const Color accentGray = Color(0xFF9F9F9F); // Gray (secondary)
-  static const Color accentDarkGray = Color(
-    0xFF595959,
-  ); // Dark gray (secondary)
-  static const Color muted = Color(0xFF9F9F9F);
-  static const Color charcoal = Color(0xFF010101);
+  // ============= UTILITY & ACCENT COLORS =============
+  static const Color accent = Color(0xFFD5FF5F); // Primary accent (green)
+  static const Color accentBlue = Color(0xFF9AC0D6); // Blue accent
+  static const Color accentViolet = Color(0xFF4E6075); // Blue-gray accent
+  static const Color muted = Color(0xFF9F9F9F); // Muted/disabled state
+  static const Color charcoal = Color(0xFF010101); // Dark charcoal/black
+
+  // Deprecated aliases (kept for backward compatibility)
+  @deprecated
+  static const Color accentTeal = Color(0xFF9AC0D6); // Use brandBlue instead
+  @deprecated
+  static const Color accentCyan = Color(0xFF9AC0D6); // Use brandBlue instead
+  @deprecated
+  static const Color accentGray =
+      Color(0xFF9F9F9F); // Use textSecondary instead
+  @deprecated
+  static const Color accentDarkGray =
+      Color(0xFF595959); // Use textTertiary instead
 }
 
 class AppSizes {

@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../models/chat_model.dart';
+import '../../models/user_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../services/chat_service.dart';
 import '../shared/loading_widget.dart';
@@ -240,6 +241,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
           ),
         );
       },
+      onLongPress: () => _handleLongPress(context, chat.id, currentUserId),
     );
   }
 
@@ -251,13 +253,105 @@ class _ChatListScreenState extends State<ChatListScreen> {
 
     switch (type) {
       case 'image':
-        return '📷 Image';
+        return 'Image';
       case 'video':
-        return '🎥 Video';
+        return 'Video';
       case 'file':
-        return '📎 File';
+        return 'File';
       default:
         return text ?? 'Message';
+    }
+  }
+
+  Future<void> _handleLongPress(
+      BuildContext context, String chatId, String currentUserId) async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final userRole = authProvider.currentUser?.role ?? UserRole.trainer;
+
+    // Only clients can delete chats
+    if (userRole != UserRole.client) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Only clients can delete chats'),
+          backgroundColor: Theme.of(context).brightness == Brightness.dark
+              ? const Color(0xFFFF5C5C)
+              : const Color(0xFFD32F2F),
+        ),
+      );
+      return;
+    }
+
+    // Show confirmation dialog
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Theme.of(context).brightness == Brightness.dark
+            ? const Color(0xFF2A2A2A)
+            : AppColors.surface,
+        title: Text(
+          'Delete Chat',
+          style: TextStyle(
+            color: Theme.of(context).brightness == Brightness.dark
+                ? const Color(0xFFFFFFFF)
+                : AppColors.textPrimary,
+          ),
+        ),
+        content: Text(
+          'This will permanently delete this chat and all messages. This action cannot be undone.',
+          style: TextStyle(
+            color: Theme.of(context).brightness == Brightness.dark
+                ? const Color(0xFFB0B0B0)
+                : AppColors.textSecondary,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(
+              'Cancel',
+              style: TextStyle(
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? const Color(0xFF7FFA88)
+                    : AppColors.accent,
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text(
+              'Delete',
+              style: TextStyle(color: Color(0xFFFF5C5C)),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && context.mounted) {
+      try {
+        await _chatService.deleteChat(chatId);
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('Chat deleted successfully'),
+              backgroundColor: Theme.of(context).brightness == Brightness.dark
+                  ? const Color(0xFF7FFA88)
+                  : AppColors.accent,
+            ),
+          );
+        }
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Failed to delete chat: $e'),
+              backgroundColor: Theme.of(context).brightness == Brightness.dark
+                  ? const Color(0xFFFF5C5C)
+                  : const Color(0xFFD32F2F),
+            ),
+          );
+        }
+      }
     }
   }
 }

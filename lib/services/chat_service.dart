@@ -258,6 +258,27 @@ class ChatService {
         .delete();
   }
 
+  // Delete entire chat (with all messages)
+  Future<void> deleteChat(String chatId) async {
+    final batch = _firestore.batch();
+
+    // Delete all messages in the chat
+    final messagesSnapshot = await _firestore
+        .collection('chats')
+        .doc(chatId)
+        .collection('messages')
+        .get();
+
+    for (var messageDoc in messagesSnapshot.docs) {
+      batch.delete(messageDoc.reference);
+    }
+
+    // Delete the chat document itself
+    batch.delete(_firestore.collection('chats').doc(chatId));
+
+    await batch.commit();
+  }
+
   // Get total unread messages count for user
   Future<int> getTotalUnreadCount(String userId) async {
     final chatsSnapshot = await _firestore

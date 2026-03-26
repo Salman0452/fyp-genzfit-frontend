@@ -149,6 +149,12 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                 ),
                 onAttachmentPressed: () =>
                     _handleAttachmentPressed(currentUserId),
+                onMessageLongPress: (context, message) =>
+                    _handleMessageLongPress(
+                  context,
+                  message,
+                  currentUserId,
+                ),
                 user: user,
                 theme: DarkChatTheme(
                   backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -167,6 +173,14 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                       Theme.of(context).brightness == Brightness.dark
                           ? const Color(0xFFFFFFFF)
                           : AppColors.textPrimary,
+                  inputPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 35,
+                  ),
+                  inputMargin: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 12,
+                  ),
                   messageBorderRadius: 12,
                   userAvatarNameColors: [
                     Theme.of(context).brightness == Brightness.dark
@@ -406,5 +420,81 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
         backgroundColor: const Color(0xFFE53935),
       ),
     );
+  }
+
+  Future<void> _handleMessageLongPress(
+    BuildContext context,
+    types.Message message,
+    String currentUserId,
+  ) async {
+    // Only allow deletion of messages sent by the current user
+    if (message.author.id != currentUserId) {
+      _showErrorSnackBar('You can only delete your own messages');
+      return;
+    }
+
+    // Show confirmation dialog
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Theme.of(context).brightness == Brightness.dark
+            ? const Color(0xFF2A2A2A)
+            : AppColors.surface,
+        title: Text(
+          'Delete Message',
+          style: TextStyle(
+            color: Theme.of(context).brightness == Brightness.dark
+                ? const Color(0xFFFFFFFF)
+                : AppColors.textPrimary,
+          ),
+        ),
+        content: Text(
+          'Are you sure you want to delete this message?',
+          style: TextStyle(
+            color: Theme.of(context).brightness == Brightness.dark
+                ? const Color(0xFFB0B0B0)
+                : AppColors.textSecondary,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(
+              'Cancel',
+              style: TextStyle(
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? AppColors.brandGreen
+                    : AppColors.accent,
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text(
+              'Delete',
+              style: TextStyle(color: Color(0xFFFF5C5C)),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && context.mounted) {
+      try {
+        await _chatService.deleteMessage(widget.chatId, message.id);
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('Message deleted'),
+              backgroundColor: Theme.of(context).brightness == Brightness.dark
+                  ? AppColors.brandGreen
+                  : AppColors.accent,
+            ),
+          );
+        }
+      } catch (e) {
+        _showErrorSnackBar('Failed to delete message: ${e.toString()}');
+      }
+    }
   }
 }

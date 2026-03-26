@@ -11,24 +11,39 @@ import '../../models/progress_tracking_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../services/progress_service.dart';
 import '../../utils/constants.dart';
-import '../../utils/design_utils.dart';
 import '../client/avatar_viewer_screen.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Fitstreak Design Colors
+// Helper function to get theme-aware colors
 // ─────────────────────────────────────────────────────────────────────────────
-const _kBg = AppColors.background;
-const _kSurface = AppColors.surface;
-const _kCard = Color(0xFFF7F9FB);
-const _kBorder = Color(0xFFE0E0E0);
+
+// Theme-aware color getters
+Color _getBg(BuildContext context) =>
+    Theme.of(context).brightness == Brightness.dark
+        ? Color(0xFF0F0F0F)
+        : AppColors.background;
+
+Color _getSurface(BuildContext context) =>
+    Theme.of(context).brightness == Brightness.dark
+        ? Color(0xFF1A1A1A)
+        : AppColors.surface;
+
+Color _getCard(BuildContext context) =>
+    Theme.of(context).brightness == Brightness.dark
+        ? Color(0xFF242424)
+        : Color(0xFFF7F9FB);
+
+Color _getBorder(BuildContext context) =>
+    Theme.of(context).brightness == Brightness.dark
+        ? Color(0xFF333333)
+        : Color(0xFFE0E0E0);
+
+// Constant theme-independent colors
 const _kBrandGreen = AppColors.brandGreen;
-const _kBrandBlue = AppColors.brandBlue;
-const _kPurple = Color(0xFF6C63FF);
-const _kBlue = Color(0xFF3B82F6);
-const _kGreen = Color(0xFF10B981);
-const _kOrange = Color(0xFFFFA500);
-const _kRed = Color(0xFFE53935);
-const _kGold = Color(0xFFD5FF5F);
+const _kSuccess = AppColors.success;
+const _kWarning = AppColors.warning;
+const _kError = AppColors.error;
+const _kInfo = AppColors.info;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Entry widget
@@ -60,9 +75,9 @@ class _ProgressScreenState extends State<ProgressScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _kBg,
+      backgroundColor: _getBg(context),
       appBar: AppBar(
-        backgroundColor: _kBg,
+        backgroundColor: _getBg(context),
         elevation: 0,
         automaticallyImplyLeading: false,
         title: Text(
@@ -165,16 +180,16 @@ class _BlinkingSkeletonState extends State<_BlinkingSkeleton>
 }
 
 Widget _sectionTitle(String t) => Padding(
-  padding: const EdgeInsets.only(bottom: 12),
-  child: Text(
-    t,
-    style: GoogleFonts.plusJakartaSans(
-      color: AppColors.textPrimary,
-      fontSize: 17,
-      fontWeight: FontWeight.w600,
-    ),
-  ),
-);
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Text(
+        t,
+        style: GoogleFonts.plusJakartaSans(
+          color: AppColors.textPrimary,
+          fontSize: 17,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
 
 // ═════════════════════════════════════════════════════════════════════════════
 // TAB 1 — TODAY
@@ -260,7 +275,7 @@ class _TodayTabState extends State<_TodayTab>
 
     return RefreshIndicator(
       color: _kBrandGreen,
-      backgroundColor: _kSurface,
+      backgroundColor: _getSurface(context),
       onRefresh: _load,
       child: ListView(
         padding: const EdgeInsets.all(16),
@@ -282,17 +297,17 @@ class _TodayTabState extends State<_TodayTab>
   }
 
   Widget _buildSkeleton() => ListView(
-    padding: const EdgeInsets.all(16),
-    children: [
-      _shimmer(height: 140),
-      const SizedBox(height: 20),
-      _shimmer(height: 130),
-      const SizedBox(height: 20),
-      _shimmer(height: 100),
-      const SizedBox(height: 20),
-      _shimmer(height: 80),
-    ],
-  );
+        padding: const EdgeInsets.all(16),
+        children: [
+          _shimmer(height: 140),
+          const SizedBox(height: 20),
+          _shimmer(height: 130),
+          const SizedBox(height: 20),
+          _shimmer(height: 100),
+          const SizedBox(height: 20),
+          _shimmer(height: 80),
+        ],
+      );
 }
 
 // Score card ──────────────────────────────────────────────────────────────────
@@ -301,9 +316,9 @@ class _ScoreCard extends StatelessWidget {
   const _ScoreCard({required this.score});
 
   List<Color> get _gradient {
-    if (score >= 80) return [const Color(0xFF10B981), const Color(0xFF059669)];
-    if (score >= 60) return [const Color(0xFFF59E0B), const Color(0xFFD97706)];
-    return [const Color(0xFFEF4444), const Color(0xFFDC2626)];
+    if (score >= 80) return [_kSuccess, AppColors.brandGreenDeep];
+    if (score >= 60) return [_kWarning, Color(0xFFD97706)];
+    return [_kError, Color(0xFFDC2626)];
   }
 
   @override
@@ -337,8 +352,8 @@ class _ScoreCard extends StatelessWidget {
             score >= 80
                 ? 'Excellent consistency'
                 : score >= 60
-                ? 'Good progress'
-                : 'Let\'s catch up',
+                    ? 'Good progress'
+                    : 'Let\'s catch up',
             style: TextStyle(
               color: Colors.white.withValues(alpha: 0.85),
               fontSize: 13,
@@ -363,28 +378,28 @@ class _NutritionRings extends StatelessWidget {
         'Calories',
         nutrition['calories'] ?? 0,
         targets['calories'] ?? 2000,
-        _kRed,
+        _kError,
         'kcal',
       ),
       _RingItem(
         'Protein',
         nutrition['protein'] ?? 0,
         targets['protein'] ?? 140,
-        _kPurple,
+        AppColors.accentViolet,
         'g',
       ),
       _RingItem(
         'Carbs',
         nutrition['carbs'] ?? 0,
         targets['carbs'] ?? 250,
-        _kBlue,
+        _kInfo,
         'g',
       ),
       _RingItem(
         'Fats',
         nutrition['fats'] ?? 0,
         targets['fats'] ?? 65,
-        _kGreen,
+        _kSuccess,
         'g',
       ),
     ];
@@ -392,9 +407,9 @@ class _NutritionRings extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: _kCard,
+        color: _getCard(context),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _kBorder),
+        border: Border.all(color: _getBorder(context)),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -431,13 +446,13 @@ class _RingWidget extends StatelessWidget {
               CircularProgressIndicator(
                 value: item.ratio,
                 strokeWidth: 8,
-                backgroundColor: _kBorder,
+                backgroundColor: _getBorder(context),
                 valueColor: AlwaysStoppedAnimation(item.color),
               ),
               Text(
                 '${item.current}',
-                style: const TextStyle(
-                  color: Colors.white,
+                style: TextStyle(
+                  color: AppColors.textOnBrand,
                   fontSize: 12,
                   fontWeight: FontWeight.bold,
                 ),
@@ -448,7 +463,7 @@ class _RingWidget extends StatelessWidget {
         const SizedBox(height: 8),
         Text(
           item.label,
-          style: const TextStyle(color: Colors.white, fontSize: 11),
+          style: TextStyle(color: AppColors.textPrimary, fontSize: 11),
         ),
         Text(item.unit, style: TextStyle(color: item.color, fontSize: 10)),
       ],
@@ -464,13 +479,13 @@ class _ExerciseList extends StatelessWidget {
   Color _diffColor(String d) {
     switch (d.toLowerCase()) {
       case 'beginner':
-        return _kGreen;
+        return _kSuccess;
       case 'intermediate':
-        return _kOrange;
+        return _kWarning;
       case 'advanced':
-        return _kRed;
+        return _kError;
       default:
-        return _kBlue;
+        return _kInfo;
     }
   }
 
@@ -480,9 +495,9 @@ class _ExerciseList extends StatelessWidget {
       return Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: _kCard,
+          color: _getCard(context),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: _kBorder),
+          border: Border.all(color: _getBorder(context)),
         ),
         child: const Center(
           child: Text(
@@ -505,10 +520,12 @@ class _ExerciseList extends StatelessWidget {
             width: 130,
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: _kCard,
+              color: _getCard(context),
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
-                color: done ? _kGreen.withValues(alpha: 0.5) : _kBorder,
+                color: done
+                    ? _kSuccess.withValues(alpha: 0.5)
+                    : _getBorder(context),
               ),
             ),
             child: Column(
@@ -519,7 +536,7 @@ class _ExerciseList extends StatelessWidget {
                   children: [
                     Icon(
                       done ? Icons.check_circle : Icons.radio_button_unchecked,
-                      color: done ? _kGreen : AppColors.textSecondary,
+                      color: done ? _kSuccess : AppColors.textSecondary,
                       size: 16,
                     ),
                     Container(
@@ -548,8 +565,8 @@ class _ExerciseList extends StatelessWidget {
                   ex.exerciseName,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: TextStyle(
+                    color: AppColors.textPrimary,
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
                   ),
@@ -586,7 +603,7 @@ class _StreakCard extends StatelessWidget {
             value: '${streak['current'] ?? 0}',
             label: 'Day Streak',
             sub: 'Keep it up!',
-            color: _kOrange,
+            color: _kWarning,
           ),
         ),
         const SizedBox(width: 12),
@@ -596,7 +613,7 @@ class _StreakCard extends StatelessWidget {
             value: '${streak['longest'] ?? 0}',
             label: 'Best Streak',
             sub: 'Personal best',
-            color: _kGold,
+            color: _kBrandGreen,
           ),
         ),
       ],
@@ -623,9 +640,9 @@ class _StatBox extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: _kCard,
+        color: _getCard(context),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _kBorder),
+        border: Border.all(color: _getBorder(context)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -642,7 +659,7 @@ class _StatBox extends StatelessWidget {
           ),
           Text(
             label,
-            style: const TextStyle(color: Colors.white, fontSize: 13),
+            style: TextStyle(color: AppColors.textPrimary, fontSize: 13),
           ),
           const SizedBox(height: 2),
           Text(
@@ -759,8 +776,8 @@ class _WeeklyTabState extends State<_WeeklyTab>
     final netCal = totalCal - totalBurned;
 
     return RefreshIndicator(
-      color: _kPurple,
-      backgroundColor: _kSurface,
+      color: _kBrandGreen,
+      backgroundColor: _getSurface(context),
       onRefresh: _load,
       child: ListView(
         padding: const EdgeInsets.all(16),
@@ -803,17 +820,17 @@ class _WeeklyTabState extends State<_WeeklyTab>
   }
 
   Widget _buildSkeleton() => ListView(
-    padding: const EdgeInsets.all(16),
-    children: [
-      _shimmer(height: 90),
-      const SizedBox(height: 16),
-      _shimmer(height: 200),
-      const SizedBox(height: 16),
-      _shimmer(height: 160),
-      const SizedBox(height: 16),
-      _shimmer(height: 100),
-    ],
-  );
+        padding: const EdgeInsets.all(16),
+        children: [
+          _shimmer(height: 90),
+          const SizedBox(height: 16),
+          _shimmer(height: 200),
+          const SizedBox(height: 16),
+          _shimmer(height: 160),
+          const SizedBox(height: 16),
+          _shimmer(height: 100),
+        ],
+      );
 }
 
 // Overview row ────────────────────────────────────────────────────────────────
@@ -841,7 +858,7 @@ class _WeeklyOverviewRow extends StatelessWidget {
             value: NumberFormat('#,###').format(totalCal),
             unit: 'kcal',
             subtitle: 'this week',
-            color: _kRed,
+            color: _kError,
           ),
         ),
         const SizedBox(width: 8),
@@ -851,7 +868,7 @@ class _WeeklyOverviewRow extends StatelessWidget {
             value: '$mealsDone/$mealsAll',
             unit: '',
             subtitle: '$mealPct% meals',
-            color: _kGreen,
+            color: _kSuccess,
           ),
         ),
         const SizedBox(width: 8),
@@ -861,7 +878,7 @@ class _WeeklyOverviewRow extends StatelessWidget {
             value: '$exDone/$exAll',
             unit: '',
             subtitle: '$exPct% workouts',
-            color: _kPurple,
+            color: AppColors.accentViolet,
           ),
         ),
       ],
@@ -888,9 +905,9 @@ class _OverviewCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: _kCard,
+        color: _getCard(context),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: _kBorder),
+        border: Border.all(color: _getBorder(context)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -930,9 +947,9 @@ class _BarChartSection extends StatelessWidget {
   const _BarChartSection({required this.weeklyData});
 
   Color _barColor(double pct) {
-    if (pct >= 80) return _kGreen;
-    if (pct >= 50) return _kOrange;
-    return _kRed;
+    if (pct >= 80) return _kSuccess;
+    if (pct >= 50) return _kWarning;
+    return _kError;
   }
 
   @override
@@ -960,7 +977,7 @@ class _BarChartSection extends StatelessWidget {
             backDrawRodData: BackgroundBarChartRodData(
               show: true,
               toY: 100,
-              color: _kBorder,
+              color: _getBorder(context),
             ),
           ),
         ],
@@ -982,9 +999,9 @@ class _BarChartSection extends StatelessWidget {
       height: 220,
       padding: const EdgeInsets.fromLTRB(8, 16, 8, 8),
       decoration: BoxDecoration(
-        color: _kCard,
+        color: _getCard(context),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _kBorder),
+        border: Border.all(color: _getBorder(context)),
       ),
       child: BarChart(
         BarChartData(
@@ -995,8 +1012,8 @@ class _BarChartSection extends StatelessWidget {
             show: true,
             drawVerticalLine: false,
             horizontalInterval: 25,
-            getDrawingHorizontalLine:
-                (_) => FlLine(color: _kBorder, strokeWidth: 1),
+            getDrawingHorizontalLine: (_) =>
+                FlLine(color: _getBorder(context), strokeWidth: 1),
           ),
           borderData: FlBorderData(show: false),
           titlesData: FlTitlesData(
@@ -1005,14 +1022,13 @@ class _BarChartSection extends StatelessWidget {
                 showTitles: true,
                 interval: 25,
                 reservedSize: 30,
-                getTitlesWidget:
-                    (v, _) => Text(
-                      '${v.toInt()}',
-                      style: const TextStyle(
-                        color: AppColors.textSecondary,
-                        fontSize: 9,
-                      ),
-                    ),
+                getTitlesWidget: (v, _) => Text(
+                  '${v.toInt()}',
+                  style: const TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 9,
+                  ),
+                ),
               ),
             ),
             rightTitles: const AxisTitles(
@@ -1041,16 +1057,15 @@ class _BarChartSection extends StatelessWidget {
           barTouchData: BarTouchData(
             enabled: true,
             touchTooltipData: BarTouchTooltipData(
-              getTooltipColor: (_) => _kSurface,
-              getTooltipItem:
-                  (group, _, rod, __) => BarTooltipItem(
-                    '${rod.toY.toInt()}%',
-                    const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 12,
-                    ),
-                  ),
+              getTooltipColor: (_) => _getSurface(context),
+              getTooltipItem: (group, _, rod, __) => BarTooltipItem(
+                '${rod.toY.toInt()}%',
+                const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12,
+                ),
+              ),
             ),
           ),
         ),
@@ -1082,9 +1097,9 @@ class _MacroBars extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: _kCard,
+        color: _getCard(context),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _kBorder),
+        border: Border.all(color: _getBorder(context)),
       ),
       child: Column(
         children: [
@@ -1092,19 +1107,19 @@ class _MacroBars extends StatelessWidget {
             'Protein',
             protein,
             weeklyTargets['protein']!,
-            _kPurple,
+            AppColors.accentViolet,
             'g',
           ),
           const SizedBox(height: 14),
-          _MacroBar('Carbs', carbs, weeklyTargets['carbs']!, _kBlue, 'g'),
+          _MacroBar('Carbs', carbs, weeklyTargets['carbs']!, _kInfo, 'g'),
           const SizedBox(height: 14),
-          _MacroBar('Fats', fats, weeklyTargets['fats']!, _kGreen, 'g'),
+          _MacroBar('Fats', fats, weeklyTargets['fats']!, _kSuccess, 'g'),
           const SizedBox(height: 14),
           _MacroBar(
             'Calories',
             calories,
             weeklyTargets['calories']!,
-            _kRed,
+            _kError,
             'kcal',
           ),
         ],
@@ -1136,11 +1151,13 @@ class _MacroBar extends StatelessWidget {
         Expanded(
           child: ClipRRect(
             borderRadius: BorderRadius.circular(4),
-            child: LinearProgressIndicator(
-              value: ratio,
-              minHeight: 8,
-              backgroundColor: _kBorder,
-              valueColor: AlwaysStoppedAnimation(color),
+            child: Builder(
+              builder: (ctx) => LinearProgressIndicator(
+                value: ratio,
+                minHeight: 8,
+                backgroundColor: _getBorder(ctx),
+                valueColor: AlwaysStoppedAnimation(color),
+              ),
             ),
           ),
         ),
@@ -1176,8 +1193,8 @@ class _CalorieBalanceCard extends StatelessWidget {
   Color get _statusColor {
     final isLoss = goal == 'weight_loss' || goal == 'weightLoss';
     final isGain = goal == 'muscle_gain' || goal == 'weightGain';
-    if ((isLoss && net < 0) || (isGain && net > 0)) return _kGreen;
-    return _kOrange;
+    if ((isLoss && net < 0) || (isGain && net > 0)) return _kSuccess;
+    return _kWarning;
   }
 
   @override
@@ -1186,18 +1203,18 @@ class _CalorieBalanceCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: _kCard,
+        color: _getCard(context),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _kBorder),
+        border: Border.all(color: _getBorder(context)),
       ),
       child: Column(
         children: [
           _balanceRow('Consumed', '${fmt.format(consumed)} kcal', Colors.white),
           const SizedBox(height: 8),
-          _balanceRow('Burned', '${fmt.format(burned)} kcal', _kGreen),
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: 8),
-            child: Divider(color: _kBorder),
+          _balanceRow('Burned', '${fmt.format(burned)} kcal', _kSuccess),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Divider(color: _getBorder(context)),
           ),
           _balanceRow(
             'Net',
@@ -1227,22 +1244,23 @@ class _CalorieBalanceCard extends StatelessWidget {
   }
 
   Widget _balanceRow(String label, String value, Color valueColor) => Row(
-    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-    children: [
-      Text(
-        label,
-        style: const TextStyle(color: AppColors.textSecondary, fontSize: 14),
-      ),
-      Text(
-        value,
-        style: TextStyle(
-          color: valueColor,
-          fontWeight: FontWeight.w600,
-          fontSize: 14,
-        ),
-      ),
-    ],
-  );
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            label,
+            style:
+                const TextStyle(color: AppColors.textSecondary, fontSize: 14),
+          ),
+          Text(
+            value,
+            style: TextStyle(
+              color: valueColor,
+              fontWeight: FontWeight.w600,
+              fontSize: 14,
+            ),
+          ),
+        ],
+      );
 }
 
 // ═════════════════════════════════════════════════════════════════════════════
@@ -1374,8 +1392,8 @@ class _InsightsTabState extends State<_InsightsTab>
     final analysis = _analysis?['analysis'] as Map<String, dynamic>? ?? {};
 
     return RefreshIndicator(
-      color: _kPurple,
-      backgroundColor: _kSurface,
+      color: _kBrandGreen,
+      backgroundColor: _getSurface(context),
       onRefresh: () => _loadWithCache(forceRefresh: true),
       child: ListView(
         padding: const EdgeInsets.all(16),
@@ -1396,9 +1414,10 @@ class _InsightsTabState extends State<_InsightsTab>
                   ),
                   GestureDetector(
                     onTap: () => _loadWithCache(forceRefresh: true),
-                    child: const Text(
+                    child: Text(
                       'Refresh ↺',
-                      style: TextStyle(color: _kPurple, fontSize: 12),
+                      style: TextStyle(
+                          color: AppColors.accentViolet, fontSize: 12),
                     ),
                   ),
                 ],
@@ -1436,59 +1455,59 @@ class _InsightsTabState extends State<_InsightsTab>
   }
 
   Widget _buildSkeleton() => ListView(
-    padding: const EdgeInsets.all(16),
-    children: [
-      _shimmer(height: 140),
-      const SizedBox(height: 16),
-      _shimmer(height: 160),
-      const SizedBox(height: 16),
-      _shimmer(height: 160),
-      const SizedBox(height: 16),
-      _shimmer(height: 200),
-      const SizedBox(height: 16),
-      _shimmer(height: 160),
-    ],
-  );
+        padding: const EdgeInsets.all(16),
+        children: [
+          _shimmer(height: 140),
+          const SizedBox(height: 16),
+          _shimmer(height: 160),
+          const SizedBox(height: 16),
+          _shimmer(height: 160),
+          const SizedBox(height: 16),
+          _shimmer(height: 200),
+          const SizedBox(height: 16),
+          _shimmer(height: 160),
+        ],
+      );
 
   Widget _buildError() => Center(
-    child: Padding(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(Icons.error_outline, color: _kRed, size: 48),
-          const SizedBox(height: 12),
-          const Text(
-            'Could not load AI insights',
-            style: TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-              fontSize: 16,
-            ),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.error_outline, color: AppColors.error, size: 48),
+              const SizedBox(height: 12),
+              const Text(
+                'Could not load AI insights',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                _error ?? '',
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: 12,
+                ),
+              ),
+              const SizedBox(height: 20),
+              ElevatedButton.icon(
+                onPressed: () => _loadWithCache(forceRefresh: true),
+                icon: const Icon(Icons.refresh),
+                label: const Text('Try Again'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.accentViolet,
+                  foregroundColor: Colors.white,
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 6),
-          Text(
-            _error ?? '',
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: AppColors.textSecondary,
-              fontSize: 12,
-            ),
-          ),
-          const SizedBox(height: 20),
-          ElevatedButton.icon(
-            onPressed: () => _loadWithCache(forceRefresh: true),
-            icon: const Icon(Icons.refresh),
-            label: const Text('Try Again'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: _kPurple,
-              foregroundColor: Colors.white,
-            ),
-          ),
-        ],
-      ),
-    ),
-  );
+        ),
+      );
 }
 
 // AI Score card ───────────────────────────────────────────────────────────────
@@ -1499,15 +1518,15 @@ class _AiScoreCard extends StatelessWidget {
   Color _gradeColor(String grade) {
     switch (grade.toUpperCase()) {
       case 'A+':
-        return _kGold;
+        return _kBrandGreen;
       case 'A':
-        return _kGreen;
+        return _kSuccess;
       case 'B':
-        return _kBlue;
+        return _kInfo;
       case 'C':
-        return _kOrange;
+        return _kWarning;
       default:
-        return _kRed;
+        return _kError;
     }
   }
 
@@ -1521,7 +1540,7 @@ class _AiScoreCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: _kCard,
+        color: _getCard(context),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: color.withValues(alpha: 0.4), width: 1.5),
       ),
@@ -1610,11 +1629,11 @@ class _NutritionInsightCard extends StatelessWidget {
             children: [
               _StatusChip(
                 'Protein: $proteinStatus',
-                proteinStatus == 'adequate' ? _kGreen : _kOrange,
+                proteinStatus == 'adequate' ? _kSuccess : _kWarning,
               ),
               _StatusChip(
                 'Calories: $calStatus',
-                calStatus == 'deficit' ? _kBlue : _kOrange,
+                calStatus == 'deficit' ? _kInfo : _kWarning,
               ),
             ],
           ),
@@ -1624,13 +1643,13 @@ class _NutritionInsightCard extends StatelessWidget {
               const Icon(
                 Icons.local_fire_department,
                 size: 16,
-                color: _kOrange,
+                color: _kWarning,
               ),
               const SizedBox(width: 6),
               Text(
                 '${fatChange >= 0 ? '+' : ''}${fatChange.toStringAsFixed(2)} kg fat this week',
                 style: TextStyle(
-                  color: fatChange <= 0 ? _kGreen : _kRed,
+                  color: fatChange <= 0 ? _kSuccess : _kError,
                   fontWeight: FontWeight.w600,
                   fontSize: 13,
                 ),
@@ -1677,11 +1696,11 @@ class _ExerciseInsightCard extends StatelessWidget {
             children: [
               _StatusChip(
                 'Intensity: $intensity',
-                intensity == 'good' ? _kGreen : _kOrange,
+                intensity == 'good' ? _kSuccess : _kWarning,
               ),
               _StatusChip(
                 muscleImpact,
-                muscleImpact.contains('gain') ? _kGreen : _kBlue,
+                muscleImpact.contains('gain') ? _kSuccess : _kInfo,
               ),
             ],
           ),
@@ -1708,9 +1727,9 @@ class _BodyChangesCard extends StatelessWidget {
     final note = (b['note'] as String?) ?? '';
 
     final confColor = switch (confidence) {
-      'high' => _kGreen,
-      'medium' => _kOrange,
-      _ => _kRed,
+      'high' => _kSuccess,
+      'medium' => _kWarning,
+      _ => _kError,
     };
 
     return _InsightCard(
@@ -1790,8 +1809,9 @@ class _ChangeRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isPositive = value > 0;
-    final color =
-        isPositive ? _kGreen : (value < 0 ? _kRed : AppColors.textSecondary);
+    final color = isPositive
+        ? _kSuccess
+        : (value < 0 ? _kError : AppColors.textSecondary);
     final arrow = isPositive ? '↑' : (value < 0 ? '↓' : '→');
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 5),
@@ -1841,7 +1861,7 @@ class _NextWeekFocusCard extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                border: Border.all(color: _kBorder),
+                border: Border.all(color: _getBorder(context)),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Row(
@@ -1851,7 +1871,7 @@ class _NextWeekFocusCard extends StatelessWidget {
                     width: 24,
                     height: 24,
                     decoration: BoxDecoration(
-                      color: _kPurple,
+                      color: AppColors.accentViolet,
                       shape: BoxShape.circle,
                     ),
                     child: Center(
@@ -1898,14 +1918,15 @@ class _AvatarUpdateCard extends StatelessWidget {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            _kPurple.withValues(alpha: 0.2),
-            _kBlue.withValues(alpha: 0.2),
+            AppColors.accentViolet.withValues(alpha: 0.2),
+            _kInfo.withValues(alpha: 0.2),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _kPurple.withValues(alpha: 0.5)),
+        border:
+            Border.all(color: AppColors.accentViolet.withValues(alpha: 0.5)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1935,15 +1956,14 @@ class _AvatarUpdateCard extends StatelessWidget {
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
-              onPressed:
-                  () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const AvatarViewerScreen(),
-                    ),
-                  ),
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const AvatarViewerScreen(),
+                ),
+              ),
               style: ElevatedButton.styleFrom(
-                backgroundColor: _kPurple,
+                backgroundColor: AppColors.accentViolet,
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
@@ -1970,9 +1990,9 @@ class _InsightCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: _kCard,
+        color: _getCard(context),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _kBorder),
+        border: Border.all(color: _getBorder(context)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -2040,9 +2060,10 @@ class _TipBox extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: _kPurple.withValues(alpha: 0.08),
+        color: AppColors.accentViolet.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: _kPurple.withValues(alpha: 0.3)),
+        border:
+            Border.all(color: AppColors.accentViolet.withValues(alpha: 0.3)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,

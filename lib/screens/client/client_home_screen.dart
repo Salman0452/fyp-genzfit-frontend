@@ -744,7 +744,9 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: AppColors.charcoal,
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? AppColors.charcoal
+                  : AppColors.surfaceVariant,
               borderRadius: BorderRadius.circular(8),
             ),
             child: Row(

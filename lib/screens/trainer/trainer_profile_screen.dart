@@ -11,6 +11,7 @@ import 'package:genzfit/services/firestore_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloudinary_public/cloudinary_public.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:genzfit/screens/trainer/trainer_settings_screen.dart';
 
 class TrainerProfileScreen extends StatefulWidget {
   const TrainerProfileScreen({super.key});
@@ -322,6 +323,18 @@ class _TrainerProfileScreenState extends State<TrainerProfileScreen> {
             ? const Color(0xFF1A1A1A)
             : AppColors.surface,
         actions: [
+          IconButton(
+            icon: const Icon(Icons.settings),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const TrainerSettingsScreen(),
+                ),
+              );
+            },
+            tooltip: 'Settings',
+          ),
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: _showLogoutDialog,

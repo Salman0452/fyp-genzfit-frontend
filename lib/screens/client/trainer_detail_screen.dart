@@ -3,11 +3,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:genzfit/utils/constants.dart';
 import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import '../../models/trainer_model.dart';
 import '../../models/user_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../services/chat_service.dart';
-import '../../services/session_service.dart';
 import '../../services/hiring_service.dart';
 import '../shared/loading_widget.dart';
 import '../chat/chat_detail_screen.dart';
@@ -28,7 +26,6 @@ class TrainerDetailScreen extends StatefulWidget {
 
 class _TrainerDetailScreenState extends State<TrainerDetailScreen> {
   final ChatService _chatService = ChatService();
-  final SessionService _sessionService = SessionService();
   final HiringService _hiringService = HiringService();
   final TextEditingController _notesController = TextEditingController();
   bool _isLoading = false;
@@ -139,11 +136,11 @@ class _TrainerDetailScreenState extends State<TrainerDetailScreen> {
                     )
                   else
                     Container(
-                      color: Colors.grey[850],
+                      color: AppColors.charcoal,
                       child: Icon(
                         Icons.person,
                         size: 100,
-                        color: Colors.grey[700],
+                        color: AppColors.textTertiary,
                       ),
                     ),
                   Container(
@@ -168,7 +165,7 @@ class _TrainerDetailScreenState extends State<TrainerDetailScreen> {
                         Text(
                           name,
                           style: const TextStyle(
-                            color: Colors.white,
+                            color: AppColors.textOnBrand,
                             fontSize: 28,
                             fontWeight: FontWeight.bold,
                           ),
@@ -176,22 +173,24 @@ class _TrainerDetailScreenState extends State<TrainerDetailScreen> {
                         const SizedBox(height: 8),
                         Row(
                           children: [
-                            Icon(Icons.star, color: Colors.amber, size: 20),
+                            Icon(Icons.star,
+                                color: AppColors.brandGreen, size: 20),
                             const SizedBox(width: 4),
                             Text(
                               rating.toStringAsFixed(1),
                               style: const TextStyle(
-                                color: Colors.white,
+                                color: AppColors.textOnBrand,
                                 fontSize: 16,
                               ),
                             ),
                             const SizedBox(width: 16),
-                            Icon(Icons.people, color: Colors.blue, size: 20),
+                            Icon(Icons.people,
+                                color: AppColors.brandBlue, size: 20),
                             const SizedBox(width: 4),
                             Text(
                               '$clients clients',
                               style: const TextStyle(
-                                color: Colors.white,
+                                color: AppColors.textOnBrand,
                                 fontSize: 16,
                               ),
                             ),
@@ -215,16 +214,16 @@ class _TrainerDetailScreenState extends State<TrainerDetailScreen> {
                     width: double.infinity,
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
-                      color: Colors.blue.withOpacity(0.1),
+                      color: AppColors.brandBlue.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: Colors.blue, width: 2),
+                      border: Border.all(color: AppColors.brandBlue, width: 2),
                     ),
                     child: Column(
                       children: [
                         Text(
                           '\$${hourlyRate.toStringAsFixed(0)}',
                           style: const TextStyle(
-                            color: Colors.blue,
+                            color: AppColors.brandBlue,
                             fontSize: 36,
                             fontWeight: FontWeight.bold,
                           ),
@@ -232,7 +231,7 @@ class _TrainerDetailScreenState extends State<TrainerDetailScreen> {
                         Text(
                           'per hour',
                           style: TextStyle(
-                            color: Colors.grey[400],
+                            color: AppColors.textSecondary,
                             fontSize: 16,
                           ),
                         ),
@@ -246,7 +245,7 @@ class _TrainerDetailScreenState extends State<TrainerDetailScreen> {
                     const Text(
                       'About',
                       style: TextStyle(
-                        color: Colors.white,
+                        color: AppColors.textPrimary,
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
                       ),
@@ -255,7 +254,7 @@ class _TrainerDetailScreenState extends State<TrainerDetailScreen> {
                     Text(
                       bio,
                       style: TextStyle(
-                        color: Colors.grey[400],
+                        color: AppColors.textSecondary,
                         fontSize: 16,
                         height: 1.5,
                       ),
@@ -268,7 +267,7 @@ class _TrainerDetailScreenState extends State<TrainerDetailScreen> {
                     const Text(
                       'Expertise',
                       style: TextStyle(
-                        color: Colors.white,
+                        color: AppColors.textPrimary,
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
                       ),
@@ -284,14 +283,15 @@ class _TrainerDetailScreenState extends State<TrainerDetailScreen> {
                             vertical: 8,
                           ),
                           decoration: BoxDecoration(
-                            color: Colors.blue.withOpacity(0.2),
+                            color: AppColors.brandBlue.withOpacity(0.2),
                             borderRadius: BorderRadius.circular(20),
-                            border: Border.all(color: Colors.blue, width: 1),
+                            border: Border.all(
+                                color: AppColors.brandBlue, width: 1),
                           ),
                           child: Text(
                             exp,
                             style: const TextStyle(
-                              color: Colors.blue,
+                              color: AppColors.brandBlue,
                               fontSize: 14,
                               fontWeight: FontWeight.w500,
                             ),
@@ -307,32 +307,62 @@ class _TrainerDetailScreenState extends State<TrainerDetailScreen> {
                     const Text(
                       'Certifications',
                       style: TextStyle(
-                        color: Colors.white,
+                        color: AppColors.textPrimary,
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                     const SizedBox(height: 12),
-                    ...certifications.map((cert) {
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 8),
-                        child: Row(
-                          children: [
-                            Icon(Icons.verified, color: Colors.green, size: 20),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                cert,
-                                style: TextStyle(
-                                  color: Colors.grey[300],
-                                  fontSize: 16,
+                    SizedBox(
+                      height: 140,
+                      child: ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: certifications.length,
+                        itemBuilder: (context, index) {
+                          return Container(
+                            width: 150,
+                            margin: const EdgeInsets.only(right: 12),
+                            decoration: BoxDecoration(
+                              color: AppColors.surfaceVariant,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                  color: AppColors.brandBlue, width: 1),
+                            ),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(12),
+                              child: CachedNetworkImage(
+                                imageUrl: certifications[index],
+                                fit: BoxFit.cover,
+                                width: double.infinity,
+                                height: double.infinity,
+                                errorWidget: (context, url, error) => Padding(
+                                  padding: const EdgeInsets.all(16),
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        Icons.verified,
+                                        color: AppColors.brandBlue,
+                                        size: 32,
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        'Certificate',
+                                        style: TextStyle(
+                                          color: AppColors.textSecondary,
+                                          fontSize: 12,
+                                        ),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
                             ),
-                          ],
-                        ),
-                      );
-                    }),
+                          );
+                        },
+                      ),
+                    ),
                     const SizedBox(height: 24),
                   ],
 
@@ -341,7 +371,7 @@ class _TrainerDetailScreenState extends State<TrainerDetailScreen> {
                     const Text(
                       'Training Videos',
                       style: TextStyle(
-                        color: Colors.white,
+                        color: AppColors.textPrimary,
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
                       ),
@@ -357,7 +387,7 @@ class _TrainerDetailScreenState extends State<TrainerDetailScreen> {
                             width: 200,
                             margin: const EdgeInsets.only(right: 12),
                             decoration: BoxDecoration(
-                              color: Colors.grey[850],
+                              color: AppColors.charcoal,
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Stack(
@@ -372,7 +402,7 @@ class _TrainerDetailScreenState extends State<TrainerDetailScreen> {
                                     height: double.infinity,
                                     errorWidget: (context, url, error) => Icon(
                                         Icons.video_library,
-                                        color: Colors.grey[600],
+                                        color: AppColors.textSecondary,
                                         size: 40),
                                   ),
                                 ),
@@ -384,7 +414,7 @@ class _TrainerDetailScreenState extends State<TrainerDetailScreen> {
                                   padding: const EdgeInsets.all(12),
                                   child: const Icon(
                                     Icons.play_arrow,
-                                    color: Colors.white,
+                                    color: AppColors.textOnBrand,
                                     size: 32,
                                   ),
                                 ),
@@ -432,8 +462,8 @@ class _TrainerDetailScreenState extends State<TrainerDetailScreen> {
               child: OutlinedButton(
                 onPressed: _isLoading ? null : _handleMessageTrainer,
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.blue,
-                  side: const BorderSide(color: Colors.blue, width: 2),
+                  foregroundColor: AppColors.brandBlue,
+                  side: const BorderSide(color: AppColors.brandBlue, width: 2),
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -453,8 +483,8 @@ class _TrainerDetailScreenState extends State<TrainerDetailScreen> {
                     ? null
                     : () => _handleHireTrainer(hourlyRate),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue,
-                  foregroundColor: Colors.white,
+                  backgroundColor: AppColors.brandBlue,
+                  foregroundColor: AppColors.textOnBrand,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -543,18 +573,18 @@ class _TrainerDetailScreenState extends State<TrainerDetailScreen> {
           children: [
             Text(
               'Rate: \$${hourlyRate.toStringAsFixed(0)}/hour',
-              style: TextStyle(color: Colors.grey[400]),
+              style: TextStyle(color: AppColors.textSecondary),
             ),
             const SizedBox(height: 16),
             TextField(
               controller: _notesController,
-              style: const TextStyle(color: Colors.white),
+              style: const TextStyle(color: AppColors.textPrimary),
               maxLines: 3,
               decoration: InputDecoration(
                 hintText: 'Add notes (optional)',
-                hintStyle: TextStyle(color: Colors.grey[600]),
+                hintStyle: TextStyle(color: AppColors.textSecondary),
                 filled: true,
-                fillColor: Colors.grey[850],
+                fillColor: AppColors.surfaceVariant,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
                   borderSide: BorderSide.none,
@@ -574,7 +604,7 @@ class _TrainerDetailScreenState extends State<TrainerDetailScreen> {
               _submitHireRequest(hourlyRate);
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.blue,
+              backgroundColor: AppColors.brandBlue,
             ),
             child: const Text('Send Request'),
           ),
@@ -607,7 +637,7 @@ class _TrainerDetailScreenState extends State<TrainerDetailScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Request sent successfully'),
-              backgroundColor: Colors.green,
+              backgroundColor: AppColors.success,
             ),
           );
         }
@@ -625,7 +655,7 @@ class _TrainerDetailScreenState extends State<TrainerDetailScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: Colors.red,
+        backgroundColor: AppColors.error,
       ),
     );
   }

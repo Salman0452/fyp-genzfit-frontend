@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:genzfit/utils/constants.dart';
-import '../../models/trainer_model.dart';
-import '../../models/user_model.dart';
 import '../shared/loading_widget.dart';
 import 'trainer_detail_screen.dart';
 
@@ -94,7 +92,7 @@ class _TrainerMarketplaceScreenState extends State<TrainerMarketplaceScreen> {
               filled: true,
               fillColor: Theme.of(context).brightness == Brightness.dark
                   ? const Color(0xFF1A1A1A)
-                  : AppColors.charcoal,
+                  : AppColors.surfaceVariant,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide.none,
@@ -117,16 +115,28 @@ class _TrainerMarketplaceScreenState extends State<TrainerMarketplaceScreen> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12),
                   decoration: BoxDecoration(
-                    color: Colors.grey[850],
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? AppColors.charcoal
+                        : AppColors.surfaceVariant,
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: DropdownButton<String>(
                     value: _selectedExpertise,
                     isExpanded: true,
-                    dropdownColor: Colors.grey[850],
-                    style: const TextStyle(color: Colors.white),
+                    dropdownColor:
+                        Theme.of(context).brightness == Brightness.dark
+                            ? AppColors.charcoal
+                            : AppColors.surfaceVariant,
+                    style: TextStyle(
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? AppColors.textOnBrand
+                          : AppColors.textPrimary,
+                    ),
                     underline: const SizedBox(),
-                    icon: Icon(Icons.arrow_drop_down, color: Colors.grey[400]),
+                    icon: Icon(
+                      Icons.arrow_drop_down,
+                      color: AppColors.textSecondary,
+                    ),
                     items: _expertiseOptions.map((expertise) {
                       return DropdownMenuItem(
                         value: expertise,
@@ -144,15 +154,28 @@ class _TrainerMarketplaceScreenState extends State<TrainerMarketplaceScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12),
                 decoration: BoxDecoration(
-                  color: Colors.grey[850],
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? AppColors.charcoal
+                      : AppColors.surfaceVariant,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: DropdownButton<String>(
                   value: _sortBy,
-                  dropdownColor: Colors.grey[850],
-                  style: const TextStyle(color: Colors.white),
+                  dropdownColor: Theme.of(context).brightness == Brightness.dark
+                      ? AppColors.charcoal
+                      : AppColors.surfaceVariant,
+                  style: TextStyle(
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? AppColors.textOnBrand
+                        : AppColors.textPrimary,
+                  ),
                   underline: const SizedBox(),
-                  icon: Icon(Icons.sort, color: Colors.grey[400]),
+                  icon: Icon(
+                    Icons.sort,
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? AppColors.textSecondary
+                        : AppColors.textSecondary,
+                  ),
                   items: const [
                     DropdownMenuItem(value: 'rating', child: Text('Rating')),
                     DropdownMenuItem(value: 'price', child: Text('Price')),
@@ -186,7 +209,7 @@ class _TrainerMarketplaceScreenState extends State<TrainerMarketplaceScreen> {
           return Center(
             child: Text(
               'Error loading trainers',
-              style: TextStyle(color: Colors.grey[400]),
+              style: TextStyle(color: AppColors.textSecondary),
             ),
           );
         }
@@ -201,11 +224,18 @@ class _TrainerMarketplaceScreenState extends State<TrainerMarketplaceScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.person_search, size: 64, color: Colors.grey[700]),
+                Icon(
+                  Icons.person_search,
+                  size: 64,
+                  color: AppColors.textSecondary,
+                ),
                 const SizedBox(height: 16),
                 Text(
                   'No trainers found',
-                  style: TextStyle(color: Colors.grey[400], fontSize: 18),
+                  style: TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 18,
+                  ),
                 ),
               ],
             ),
@@ -222,13 +252,18 @@ class _TrainerMarketplaceScreenState extends State<TrainerMarketplaceScreen> {
                   .doc(filteredTrainers[index]['userId'])
                   .get(),
               builder: (context, userSnapshot) {
-                if (!userSnapshot.hasData) {
+                if (!userSnapshot.hasData ||
+                    userSnapshot.data?.data() == null) {
                   return const SizedBox.shrink();
                 }
 
                 final trainerData = filteredTrainers[index];
                 final userData =
-                    userSnapshot.data!.data() as Map<String, dynamic>;
+                    userSnapshot.data!.data() as Map<String, dynamic>?;
+
+                if (userData == null) {
+                  return const SizedBox.shrink();
+                }
 
                 return _buildTrainerCard(trainerData, userData);
               },
@@ -320,7 +355,7 @@ class _TrainerMarketplaceScreenState extends State<TrainerMarketplaceScreen> {
                 children: [
                   CircleAvatar(
                     radius: 32,
-                    backgroundColor: Colors.grey[800],
+                    backgroundColor: AppColors.textSecondary,
                     backgroundImage: avatarUrl.isNotEmpty
                         ? CachedNetworkImageProvider(avatarUrl)
                         : null,
@@ -328,7 +363,7 @@ class _TrainerMarketplaceScreenState extends State<TrainerMarketplaceScreen> {
                         ? Text(
                             name[0].toUpperCase(),
                             style: const TextStyle(
-                              color: Colors.white,
+                              color: AppColors.textOnBrand,
                               fontSize: 24,
                               fontWeight: FontWeight.bold,
                             ),
@@ -342,8 +377,11 @@ class _TrainerMarketplaceScreenState extends State<TrainerMarketplaceScreen> {
                       children: [
                         Text(
                           name,
-                          style: const TextStyle(
-                            color: Colors.white,
+                          style: TextStyle(
+                            color:
+                                Theme.of(context).brightness == Brightness.dark
+                                    ? AppColors.textOnBrand
+                                    : AppColors.textPrimary,
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
                           ),
@@ -351,22 +389,30 @@ class _TrainerMarketplaceScreenState extends State<TrainerMarketplaceScreen> {
                         const SizedBox(height: 4),
                         Row(
                           children: [
-                            Icon(Icons.star, color: Colors.amber, size: 16),
+                            Icon(
+                              Icons.star,
+                              color: AppColors.brandGreen,
+                              size: 16,
+                            ),
                             const SizedBox(width: 4),
                             Text(
                               rating.toStringAsFixed(1),
                               style: TextStyle(
-                                color: Colors.grey[400],
+                                color: AppColors.textSecondary,
                                 fontSize: 14,
                               ),
                             ),
                             const SizedBox(width: 12),
-                            Icon(Icons.people, color: Colors.blue, size: 16),
+                            Icon(
+                              Icons.people,
+                              color: AppColors.brandBlue,
+                              size: 16,
+                            ),
                             const SizedBox(width: 4),
                             Text(
                               '$clients clients',
                               style: TextStyle(
-                                color: Colors.grey[400],
+                                color: AppColors.textSecondary,
                                 fontSize: 14,
                               ),
                             ),
@@ -381,7 +427,7 @@ class _TrainerMarketplaceScreenState extends State<TrainerMarketplaceScreen> {
                       Text(
                         '\$${hourlyRate.toStringAsFixed(0)}',
                         style: const TextStyle(
-                          color: Colors.blue,
+                          color: AppColors.brandBlue,
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
                         ),
@@ -389,7 +435,7 @@ class _TrainerMarketplaceScreenState extends State<TrainerMarketplaceScreen> {
                       Text(
                         'per hour',
                         style: TextStyle(
-                          color: Colors.grey[500],
+                          color: AppColors.textSecondary,
                           fontSize: 12,
                         ),
                       ),
@@ -403,7 +449,7 @@ class _TrainerMarketplaceScreenState extends State<TrainerMarketplaceScreen> {
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
-                  color: Colors.grey[400],
+                  color: AppColors.textSecondary,
                   fontSize: 14,
                 ),
               ),
@@ -419,14 +465,17 @@ class _TrainerMarketplaceScreenState extends State<TrainerMarketplaceScreen> {
                         vertical: 6,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.blue.withOpacity(0.2),
+                        color: AppColors.brandBlue.withOpacity(0.15),
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: Colors.blue, width: 1),
+                        border: Border.all(
+                          color: AppColors.brandBlue,
+                          width: 1,
+                        ),
                       ),
                       child: Text(
                         exp,
                         style: const TextStyle(
-                          color: Colors.blue,
+                          color: AppColors.brandBlue,
                           fontSize: 12,
                           fontWeight: FontWeight.w500,
                         ),

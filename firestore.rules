@@ -89,7 +89,6 @@ service cloud.firestore {
       // Only admins can delete trainer profiles
       allow delete: if isAdmin();
     }
-    
     // Chats collection
     match /chats/{chatId} {
       // Users can read chats they are part of
@@ -100,23 +99,24 @@ service cloud.firestore {
       allow create: if isSignedIn() && 
         request.resource.data.participants.hasAny([request.auth.uid]);
       
-      // Users can update chats they are part of
+      // Users can update chats they are part of (including sending messages)
       allow update: if isSignedIn() && 
         resource.data.participants.hasAny([request.auth.uid]);
       
       // Messages subcollection
       match /messages/{messageId} {
-        allow read: if isSignedIn() && 
-          get(/databases/$(database)/documents/chats/$(chatId)).data.participants.hasAny([request.auth.uid]);
+        // Allow message reads if user is authenticated
+        allow read: if isSignedIn();
         
+        // Allow message creation if user is authenticated and is the sender
         allow create: if isSignedIn() && 
-          get(/databases/$(database)/documents/chats/$(chatId)).data.participants.hasAny([request.auth.uid]) &&
           request.resource.data.senderId == request.auth.uid;
         
-        allow update, delete: if isOwner(resource.data.senderId);
+        // Allow updates/deletes only by the sender
+        allow update, delete: if isSignedIn() && 
+          resource.data.senderId == request.auth.uid;
       }
     }
-    
     // Sessions collection
     match /sessions/{sessionId} {
       // Users can read sessions they are part of
