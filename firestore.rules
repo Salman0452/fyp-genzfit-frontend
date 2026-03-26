@@ -235,5 +235,80 @@ service cloud.firestore {
       // Only admins can update or delete reports
       allow update, delete: if isAdmin();
     }
+    
+    // Transactions collection (payment records)
+    match /transactions/{transactionId} {
+      // Clients can read their own transactions
+      allow read: if isClient() && resource.data.clientId == request.auth.uid;
+      
+      // Trainers can read transactions where they are the recipient
+      allow read: if isTrainer() && resource.data.trainerId == request.auth.uid;
+      
+      // Admins can read all transactions
+      allow read: if isAdmin();
+      
+      // Clients can create transactions (initiate payment)
+      allow create: if isClient() && 
+        request.resource.data.clientId == request.auth.uid;
+      
+      // Clients can update their transactions (add proof image)
+      allow update: if isClient() && resource.data.clientId == request.auth.uid &&
+        // Can only update clientPaymentProofUrl and paymentMethod before verification
+        request.resource.data.status == resource.data.status;
+      
+      // Only admins can verify/reject payments
+      allow update: if isAdmin() && 
+        (request.resource.data.status == 'verified' || 
+         request.resource.data.status == 'failed' ||
+         request.resource.data.status == 'completed');
+    }
+    
+    // Bank details collection (under trainers subcollection)
+    match /trainers/{trainerId}/bank_details/{bankDetailsId} {
+      // Trainers can read their own bank details
+      allow read: if isOwner(trainerId);
+      
+      // Admins can read all bank details for verification
+      allow read: if isAdmin();
+      
+      // Trainers can create and update their own bank details
+      allow create, update: if isOwner(trainerId);
+      
+      // Only admins can verify bank details
+      allow update: if isAdmin();
+      
+      // Trainers can delete their own unverified bank details
+      allow delete: if isOwner(trainerId) && 
+        resource.data.verificationStatus != 'verified';
+    }
+    
+    // Payouts collection
+    match /payouts/{payoutId} {
+      // Trainers can read their own payout requests
+      allow read: if isTrainer() && resource.data.trainerId == request.auth.uid;
+      
+      // Admins can read all payout requests
+      allow read: if isAdmin();
+      
+      // Trainers can create payout requests
+      allow create: if isTrainer() && 
+        request.resource.data.trainerId == request.auth.uid;
+      
+      // Only admins can approve/process payouts
+      allow update: if isAdmin() && 
+        (request.resource.data.status == 'approved' || 
+         request.resource.data.status == 'processing' ||
+         request.resource.data.status == 'completed' ||
+         request.resource.data.status == 'failed');
+    }
+    
+    // Platform settings (for payment configuration)
+    match /platform_settings/{document=**} {
+      // Anyone can read payment settings
+      allow read: if true;
+      
+      // Only admins can update payment settings
+      allow write: if isAdmin();
+    }
   }
 }

@@ -9,6 +9,7 @@ import '../../services/chat_service.dart';
 import '../../services/hiring_service.dart';
 import '../shared/loading_widget.dart';
 import '../chat/chat_detail_screen.dart';
+import 'payment_checkout_screen.dart';
 
 class TrainerDetailScreen extends StatefulWidget {
   final String trainerId;
@@ -174,7 +175,11 @@ class _TrainerDetailScreenState extends State<TrainerDetailScreen> {
                         Row(
                           children: [
                             Icon(Icons.star,
-                                color: AppColors.brandGreen, size: 20),
+                                color: Theme.of(context).brightness ==
+                                        Brightness.dark
+                                    ? AppColors.brandGreen
+                                    : AppColors.brandGreenDeep,
+                                size: 20),
                             const SizedBox(width: 4),
                             Text(
                               rating.toStringAsFixed(1),
@@ -554,98 +559,102 @@ class _TrainerDetailScreenState extends State<TrainerDetailScreen> {
   }
 
   Future<void> _handleHireTrainer(double hourlyRate) async {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: Theme.of(context).brightness == Brightness.dark
-            ? const Color(0xFF1A1A1A)
-            : AppColors.surface,
-        title: Text(
-          'Hire Trainer',
-          style: TextStyle(
-              color: Theme.of(context).brightness == Brightness.dark
-                  ? const Color(0xFFFFFFFF)
-                  : AppColors.textPrimary),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Rate: \$${hourlyRate.toStringAsFixed(0)}/hour',
-              style: TextStyle(color: AppColors.textSecondary),
+    try {
+      // Get trainer details
+      final trainerDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(widget.userId)
+          .get();
+
+      if (!trainerDoc.exists) {
+        _showErrorSnackBar('Trainer not found');
+        return;
+      }
+
+      final trainerUser = UserModel.fromMap({
+        'id': trainerDoc.id,
+        ...trainerDoc.data()!,
+      });
+
+      // Generate session ID for payment tracking
+      final sessionId =
+          FirebaseFirestore.instance.collection('sessions').doc().id;
+
+      if (mounted) {
+        // Navigate to payment checkout screen
+        final transactionId = await Navigator.push<String>(
+          context,
+          MaterialPageRoute(
+            builder: (context) => PaymentCheckoutScreen(
+              trainer: trainerUser,
+              sessionAmount: hourlyRate,
+              sessionId: sessionId,
             ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _notesController,
-              style: const TextStyle(color: AppColors.textPrimary),
-              maxLines: 3,
-              decoration: InputDecoration(
-                hintText: 'Add notes (optional)',
-                hintStyle: TextStyle(color: AppColors.textSecondary),
-                filled: true,
-                fillColor: AppColors.surfaceVariant,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide.none,
-                ),
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
           ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              _submitHireRequest(hourlyRate);
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.brandBlue,
-            ),
-            child: const Text('Send Request'),
-          ),
-        ],
-      ),
-    );
+        );
+
+        // If payment was submitted, create the session
+        if (transactionId != null && mounted) {
+          await _createSessionAfterPayment(
+            sessionId,
+            transactionId,
+            hourlyRate,
+          );
+        }
+      }
+    } catch (e) {
+      _showErrorSnackBar('Failed to process hire request: $e');
+    }
   }
 
-  Future<void> _submitHireRequest(double hourlyRate) async {
+  Future<void> _createSessionAfterPayment(
+    String sessionId,
+    String transactionId,
+    double amount,
+  ) async {
     setState(() => _isLoading = true);
 
     try {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       final currentUserId = authProvider.user?.uid ?? '';
 
-      final sessionId = await _hiringService.createHiringRequest(
-        clientId: currentUserId,
-        trainerId: widget.userId,
-        amount: hourlyRate,
-        notes: _notesController.text.trim().isNotEmpty
+      // Create session with payment info
+      await FirebaseFirestore.instance
+          .collection('sessions')
+          .doc(sessionId)
+          .set({
+        'clientId': currentUserId,
+        'trainerId': widget.userId,
+        'status': 'requested', // Still needs trainer approval
+        'amount': amount,
+        'paymentStatus':
+            'pending_verification', // Payment awaiting admin verification
+        'transactionId': transactionId,
+        'notes': _notesController.text.trim().isNotEmpty
             ? _notesController.text.trim()
             : null,
-      );
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
 
-      if (sessionId != null) {
-        _notesController.clear();
-        await _checkSessionStatus();
+      _notesController.clear();
+      await _checkSessionStatus();
 
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Request sent successfully'),
-              backgroundColor: AppColors.success,
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text(
+              'Payment submitted! Awaiting admin verification and trainer approval.',
             ),
-          );
-        }
-      } else {
-        _showErrorSnackBar('Failed to send request');
+            backgroundColor: Theme.of(context).brightness == Brightness.dark
+                ? AppColors.brandGreen
+                : AppColors.brandGreenDeep,
+            duration: const Duration(seconds: 3),
+          ),
+        );
       }
     } catch (e) {
-      _showErrorSnackBar('Failed to send request');
+      _showErrorSnackBar('Failed to create session: $e');
     } finally {
       setState(() => _isLoading = false);
     }

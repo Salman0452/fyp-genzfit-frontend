@@ -25,14 +25,18 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
   bool _autoApprovalEnabled = false;
   bool _maintenanceMode = false;
 
-  // Payment Settings
-  String _paymentGateway = 'stripe';
+  // Payment Settings - Bank Details
+  final TextEditingController _bankNameController = TextEditingController();
+  final TextEditingController _accountHolderController =
+      TextEditingController();
+  final TextEditingController _ibanController = TextEditingController();
+  final TextEditingController _accountNumberController =
+      TextEditingController();
   bool _refundsEnabled = true;
   int _refundWindowDays = 7;
 
   bool _isLoading = true;
   bool _isSaving = false;
-
   @override
   void initState() {
     super.initState();
@@ -42,6 +46,10 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
   @override
   void dispose() {
     _commissionController.dispose();
+    _bankNameController.dispose();
+    _accountHolderController.dispose();
+    _ibanController.dispose();
+    _accountNumberController.dispose();
     super.dispose();
   }
 
@@ -89,7 +97,12 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
       if (paymentDoc.exists) {
         final data = paymentDoc.data()!;
         setState(() {
-          _paymentGateway = data['gateway'] as String? ?? 'stripe';
+          _bankNameController.text = data['bankName'] as String? ?? '';
+          _accountHolderController.text =
+              data['accountHolder'] as String? ?? '';
+          _ibanController.text = data['iban'] as String? ?? '';
+          _accountNumberController.text =
+              data['accountNumber'] as String? ?? '';
           _refundsEnabled = data['refundsEnabled'] as bool? ?? true;
           _refundWindowDays = data['refundWindowDays'] as int? ?? 7;
         });
@@ -125,7 +138,10 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
 
       // Save payment settings
       await _firestore.collection('platform_settings').doc('payment').set({
-        'gateway': _paymentGateway,
+        'bankName': _bankNameController.text,
+        'accountHolder': _accountHolderController.text,
+        'iban': _ibanController.text,
+        'accountNumber': _accountNumberController.text,
         'refundsEnabled': _refundsEnabled,
         'refundWindowDays': _refundWindowDays,
         'updatedAt': FieldValue.serverTimestamp(),
@@ -598,7 +614,7 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
           ),
           const SizedBox(height: 24),
           Text(
-            'Payment Gateway',
+            'Bank Account Details',
             style: GoogleFonts.inter(
               fontSize: 14,
               color: (Theme.of(context).brightness == Brightness.dark
@@ -609,14 +625,20 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
             ),
           ),
           const SizedBox(height: 12),
-          DropdownButtonFormField<String>(
-            value: _paymentGateway,
-            dropdownColor: Theme.of(context).scaffoldBackgroundColor,
+          TextField(
+            controller: _bankNameController,
             style: TextStyle(
                 color: Theme.of(context).brightness == Brightness.dark
                     ? const Color(0xFFFFFFFF)
                     : AppColors.textPrimary),
             decoration: InputDecoration(
+              labelText: 'Bank Name',
+              labelStyle: TextStyle(
+                color: (Theme.of(context).brightness == Brightness.dark
+                        ? const Color(0xFFFFFFFF)
+                        : AppColors.textPrimary)
+                    .withOpacity(0.6),
+              ),
               filled: true,
               fillColor: Theme.of(context).scaffoldBackgroundColor,
               border: OutlineInputBorder(
@@ -635,25 +657,108 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
                         .withOpacity(0.2)),
               ),
             ),
-            items: [
-              DropdownMenuItem(
-                value: 'stripe',
-                child: Text('Stripe', style: GoogleFonts.inter()),
+          ),
+          const SizedBox(height: 16),
+          TextField(
+            controller: _accountHolderController,
+            style: TextStyle(
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? const Color(0xFFFFFFFF)
+                    : AppColors.textPrimary),
+            decoration: InputDecoration(
+              labelText: 'Account Holder Name',
+              labelStyle: TextStyle(
+                color: (Theme.of(context).brightness == Brightness.dark
+                        ? const Color(0xFFFFFFFF)
+                        : AppColors.textPrimary)
+                    .withOpacity(0.6),
               ),
-              DropdownMenuItem(
-                value: 'paypal',
-                child: Text('PayPal', style: GoogleFonts.inter()),
+              filled: true,
+              fillColor: Theme.of(context).scaffoldBackgroundColor,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide(
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? AppColors.brandGreen
+                        : AppColors.brandGreenDeep),
               ),
-              DropdownMenuItem(
-                value: 'razorpay',
-                child: Text('Razorpay', style: GoogleFonts.inter()),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide(
+                    color: (Theme.of(context).brightness == Brightness.dark
+                            ? const Color(0xFFFFFFFF)
+                            : AppColors.textPrimary)
+                        .withOpacity(0.2)),
               ),
-            ],
-            onChanged: (value) {
-              if (value != null) {
-                setState(() => _paymentGateway = value);
-              }
-            },
+            ),
+          ),
+          const SizedBox(height: 16),
+          TextField(
+            controller: _ibanController,
+            style: TextStyle(
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? const Color(0xFFFFFFFF)
+                    : AppColors.textPrimary),
+            decoration: InputDecoration(
+              labelText: 'IBAN (Optional)',
+              labelStyle: TextStyle(
+                color: (Theme.of(context).brightness == Brightness.dark
+                        ? const Color(0xFFFFFFFF)
+                        : AppColors.textPrimary)
+                    .withOpacity(0.6),
+              ),
+              filled: true,
+              fillColor: Theme.of(context).scaffoldBackgroundColor,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide(
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? AppColors.brandGreen
+                        : AppColors.brandGreenDeep),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide(
+                    color: (Theme.of(context).brightness == Brightness.dark
+                            ? const Color(0xFFFFFFFF)
+                            : AppColors.textPrimary)
+                        .withOpacity(0.2)),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          TextField(
+            controller: _accountNumberController,
+            style: TextStyle(
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? const Color(0xFFFFFFFF)
+                    : AppColors.textPrimary),
+            decoration: InputDecoration(
+              labelText: 'Account Number',
+              labelStyle: TextStyle(
+                color: (Theme.of(context).brightness == Brightness.dark
+                        ? const Color(0xFFFFFFFF)
+                        : AppColors.textPrimary)
+                    .withOpacity(0.6),
+              ),
+              filled: true,
+              fillColor: Theme.of(context).scaffoldBackgroundColor,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide(
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? AppColors.brandGreen
+                        : AppColors.brandGreenDeep),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide(
+                    color: (Theme.of(context).brightness == Brightness.dark
+                            ? const Color(0xFFFFFFFF)
+                            : AppColors.textPrimary)
+                        .withOpacity(0.2)),
+              ),
+            ),
           ),
           const SizedBox(height: 24),
           _buildToggleItem(

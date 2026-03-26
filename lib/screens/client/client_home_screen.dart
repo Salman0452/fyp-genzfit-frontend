@@ -949,7 +949,10 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                                 style: GoogleFonts.plusJakartaSans(
                                   fontSize: 20,
                                   fontWeight: FontWeight.w700,
-                                  color: Colors.white,
+                                  color: Theme.of(context).brightness ==
+                                          Brightness.dark
+                                      ? Colors.white
+                                      : AppColors.textPrimary,
                                 ),
                               ),
                               const SizedBox(height: 6),
@@ -959,7 +962,10 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                                 style: GoogleFonts.plusJakartaSans(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w400,
-                                  color: Colors.white.withOpacity(0.9),
+                                  color: Theme.of(context).brightness ==
+                                          Brightness.dark
+                                      ? Colors.white.withOpacity(0.9)
+                                      : AppColors.textSecondary,
                                   height: 1.4,
                                 ),
                                 maxLines: 2,
