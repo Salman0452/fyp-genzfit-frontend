@@ -18,6 +18,7 @@ class _TrainerMarketplaceScreenState extends State<TrainerMarketplaceScreen> {
   String _searchQuery = '';
   String _selectedExpertise = 'All';
   String _sortBy = 'rating'; // rating, price, clients
+  bool _showOnlyVerified = false;
 
   final List<String> _expertiseOptions = [
     'All',
@@ -39,75 +40,162 @@ class _TrainerMarketplaceScreenState extends State<TrainerMarketplaceScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final accentColor =
+        isDarkMode ? AppColors.brandGreen : AppColors.brandGreenDeep;
+
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
-        title: Text(
-          'Find Trainers',
-          style: TextStyle(
-            color: Theme.of(context).brightness == Brightness.dark
-                ? const Color(0xFFFFFFFF)
-                : AppColors.textPrimary,
-            fontWeight: FontWeight.bold,
-          ),
+        backgroundColor:
+            isDarkMode ? const Color(0xFF1A1A1A) : AppColors.surface,
+        elevation: 0,
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Find Trainers',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: isDarkMode
+                    ? const Color(0xFFFFFFFF)
+                    : AppColors.textPrimary,
+                letterSpacing: -0.3,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Book your ideal fitness trainer',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w400,
+                color: isDarkMode
+                    ? const Color(0xFFB0B0B0)
+                    : AppColors.textSecondary,
+              ),
+            ),
+          ],
         ),
         iconTheme: IconThemeData(
-            color: Theme.of(context).brightness == Brightness.dark
-                ? const Color(0xFFFFFFFF)
-                : AppColors.textPrimary),
+          color: accentColor,
+          size: 20,
+        ),
       ),
       body: Column(
         children: [
-          _buildSearchAndFilters(),
+          _buildSearchAndFilters(isDarkMode, accentColor),
           Expanded(child: _buildTrainerList()),
         ],
       ),
     );
   }
 
-  Widget _buildSearchAndFilters() {
+  Widget _buildSearchAndFilters(bool isDarkMode, Color accentColor) {
     return Container(
-      color: Theme.of(context).appBarTheme.backgroundColor,
+      color: isDarkMode ? const Color(0xFF1A1A1A) : AppColors.surface,
       padding: const EdgeInsets.all(16),
       child: Column(
         children: [
-          // Search bar
-          TextField(
-            controller: _searchController,
-            style: TextStyle(
-                color: Theme.of(context).brightness == Brightness.dark
-                    ? const Color(0xFFFFFFFF)
-                    : AppColors.textPrimary),
-            decoration: InputDecoration(
-              hintText: 'Search trainers...',
-              hintStyle: TextStyle(
-                  color: Theme.of(context).brightness == Brightness.dark
-                      ? const Color(0xFFB0B0B0)
-                      : AppColors.textSecondary),
-              prefixIcon: Icon(Icons.search,
-                  color: Theme.of(context).brightness == Brightness.dark
-                      ? const Color(0xFFB0B0B0)
-                      : AppColors.textSecondary),
-              filled: true,
-              fillColor: Theme.of(context).brightness == Brightness.dark
-                  ? const Color(0xFF1A1A1A)
-                  : AppColors.surfaceVariant,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide.none,
-              ),
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 12,
-              ),
+          // Modern search bar
+          Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(AppSizes.borderRadius),
+              boxShadow: [
+                BoxShadow(
+                  color: isDarkMode
+                      ? Colors.black.withOpacity(0.2)
+                      : Colors.black.withOpacity(0.04),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
             ),
-            onChanged: (value) {
-              setState(() => _searchQuery = value.toLowerCase());
-            },
+            child: TextField(
+              controller: _searchController,
+              style: TextStyle(
+                color: isDarkMode
+                    ? const Color(0xFFFFFFFF)
+                    : AppColors.textPrimary,
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+              ),
+              decoration: InputDecoration(
+                hintText: 'Search trainers by name or expertise...',
+                hintStyle: TextStyle(
+                  color: isDarkMode
+                      ? const Color(0xFFB0B0B0)
+                      : AppColors.textSecondary,
+                  fontSize: 14,
+                ),
+                prefixIcon: Icon(
+                  Icons.search_rounded,
+                  color: accentColor,
+                  size: 18,
+                ),
+                filled: true,
+                fillColor:
+                    isDarkMode ? const Color(0xFF262626) : AppColors.surface,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AppSizes.borderRadius),
+                  borderSide: BorderSide(
+                    color: accentColor.withOpacity(0.1),
+                    width: 1.5,
+                  ),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AppSizes.borderRadius),
+                  borderSide: BorderSide(
+                    color: accentColor.withOpacity(0.1),
+                    width: 1.5,
+                  ),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AppSizes.borderRadius),
+                  borderSide: BorderSide(
+                    color: accentColor,
+                    width: 1.5,
+                  ),
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
+              ),
+              onChanged: (value) {
+                setState(() => _searchQuery = value.toLowerCase());
+              },
+            ),
+          ),
+          const SizedBox(height: 14),
+          // Verified filter chip
+          Row(
+            children: [
+              FilterChip(
+                label: const Text('Verified Only'),
+                selected: _showOnlyVerified,
+                onSelected: (selected) {
+                  setState(() => _showOnlyVerified = selected);
+                },
+                backgroundColor:
+                    isDarkMode ? const Color(0xFF262626) : AppColors.surface,
+                selectedColor: accentColor.withOpacity(0.2),
+                labelStyle: TextStyle(
+                  color: _showOnlyVerified ? accentColor : null,
+                  fontWeight:
+                      _showOnlyVerified ? FontWeight.w600 : FontWeight.normal,
+                ),
+                side: BorderSide(
+                  color: _showOnlyVerified
+                      ? accentColor
+                      : accentColor.withOpacity(0.2),
+                ),
+              ),
+              const SizedBox(width: 10),
+            ],
           ),
           const SizedBox(height: 12),
-          // Filters
+          // Filters row
           Row(
             children: [
               // Expertise filter
@@ -115,32 +203,59 @@ class _TrainerMarketplaceScreenState extends State<TrainerMarketplaceScreen> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12),
                   decoration: BoxDecoration(
-                    color: Theme.of(context).brightness == Brightness.dark
-                        ? AppColors.charcoal
-                        : AppColors.surfaceVariant,
-                    borderRadius: BorderRadius.circular(8),
+                    color: isDarkMode
+                        ? const Color(0xFF262626)
+                        : AppColors.surface,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: accentColor.withOpacity(0.1),
+                      width: 1.5,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: isDarkMode
+                            ? Colors.black.withOpacity(0.15)
+                            : Colors.black.withOpacity(0.03),
+                        blurRadius: 6,
+                        offset: const Offset(0, 1),
+                      ),
+                    ],
                   ),
                   child: DropdownButton<String>(
                     value: _selectedExpertise,
                     isExpanded: true,
-                    dropdownColor:
-                        Theme.of(context).brightness == Brightness.dark
-                            ? AppColors.charcoal
-                            : AppColors.surfaceVariant,
+                    dropdownColor: isDarkMode
+                        ? const Color(0xFF262626)
+                        : AppColors.surface,
                     style: TextStyle(
-                      color: Theme.of(context).brightness == Brightness.dark
-                          ? AppColors.textOnBrand
+                      color: isDarkMode
+                          ? const Color(0xFFFFFFFF)
                           : AppColors.textPrimary,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
                     ),
                     underline: const SizedBox(),
                     icon: Icon(
-                      Icons.arrow_drop_down,
-                      color: AppColors.textSecondary,
+                      Icons.expand_more_rounded,
+                      color: accentColor,
+                      size: 18,
                     ),
                     items: _expertiseOptions.map((expertise) {
                       return DropdownMenuItem(
                         value: expertise,
-                        child: Text(expertise),
+                        child: Row(
+                          children: [
+                            Icon(
+                              expertise == 'All'
+                                  ? Icons.apps_rounded
+                                  : Icons.check_circle_rounded,
+                              size: 14,
+                              color: accentColor.withOpacity(0.6),
+                            ),
+                            const SizedBox(width: 8),
+                            Text(expertise),
+                          ],
+                        ),
                       );
                     }).toList(),
                     onChanged: (value) {
@@ -149,37 +264,76 @@ class _TrainerMarketplaceScreenState extends State<TrainerMarketplaceScreen> {
                   ),
                 ),
               ),
-              const SizedBox(width: 12),
-              // Sort by
+              const SizedBox(width: 10),
+              // Sort by filter
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).brightness == Brightness.dark
-                      ? AppColors.charcoal
-                      : AppColors.surfaceVariant,
-                  borderRadius: BorderRadius.circular(8),
+                  color:
+                      isDarkMode ? const Color(0xFF262626) : AppColors.surface,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: accentColor.withOpacity(0.1),
+                    width: 1.5,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: isDarkMode
+                          ? Colors.black.withOpacity(0.15)
+                          : Colors.black.withOpacity(0.03),
+                      blurRadius: 6,
+                      offset: const Offset(0, 1),
+                    ),
+                  ],
                 ),
                 child: DropdownButton<String>(
                   value: _sortBy,
-                  dropdownColor: Theme.of(context).brightness == Brightness.dark
-                      ? AppColors.charcoal
-                      : AppColors.surfaceVariant,
+                  dropdownColor:
+                      isDarkMode ? const Color(0xFF262626) : AppColors.surface,
                   style: TextStyle(
-                    color: Theme.of(context).brightness == Brightness.dark
-                        ? AppColors.textOnBrand
+                    color: isDarkMode
+                        ? const Color(0xFFFFFFFF)
                         : AppColors.textPrimary,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
                   ),
                   underline: const SizedBox(),
                   icon: Icon(
-                    Icons.sort,
-                    color: Theme.of(context).brightness == Brightness.dark
-                        ? AppColors.textSecondary
-                        : AppColors.textSecondary,
+                    Icons.expand_more_rounded,
+                    color: accentColor,
+                    size: 18,
                   ),
                   items: const [
-                    DropdownMenuItem(value: 'rating', child: Text('Rating')),
-                    DropdownMenuItem(value: 'price', child: Text('Price')),
-                    DropdownMenuItem(value: 'clients', child: Text('Clients')),
+                    DropdownMenuItem(
+                      value: 'rating',
+                      child: Row(
+                        children: [
+                          Icon(Icons.star_rounded, size: 14),
+                          SizedBox(width: 8),
+                          Text('Rating'),
+                        ],
+                      ),
+                    ),
+                    DropdownMenuItem(
+                      value: 'price',
+                      child: Row(
+                        children: [
+                          Icon(Icons.trending_down_rounded, size: 14),
+                          SizedBox(width: 8),
+                          Text('Price'),
+                        ],
+                      ),
+                    ),
+                    DropdownMenuItem(
+                      value: 'clients',
+                      child: Row(
+                        children: [
+                          Icon(Icons.people_rounded, size: 14),
+                          SizedBox(width: 8),
+                          Text('Clients'),
+                        ],
+                      ),
+                    ),
                   ],
                   onChanged: (value) {
                     setState(() => _sortBy = value!);
@@ -265,7 +419,19 @@ class _TrainerMarketplaceScreenState extends State<TrainerMarketplaceScreen> {
                   return const SizedBox.shrink();
                 }
 
-                return _buildTrainerCard(trainerData, userData);
+                // Add verified status from userData to trainerData for filtering
+                final trainerDataWithVerified = {
+                  ...trainerData,
+                  'verified': userData['verified'] ?? false,
+                };
+
+                // Check if should be displayed based on verified filter
+                if (_showOnlyVerified &&
+                    trainerDataWithVerified['verified'] != true) {
+                  return const SizedBox.shrink();
+                }
+
+                return _buildTrainerCard(trainerDataWithVerified, userData);
               },
             );
           },
@@ -319,6 +485,10 @@ class _TrainerMarketplaceScreenState extends State<TrainerMarketplaceScreen> {
     Map<String, dynamic> trainerData,
     Map<String, dynamic> userData,
   ) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final accentColor =
+        isDarkMode ? AppColors.brandGreen : AppColors.brandGreenDeep;
+
     final name = userData['name'] ?? 'Trainer';
     final avatarUrl = userData['avatarUrl'] ?? '';
     final bio = trainerData['bio'] ?? 'No bio available';
@@ -327,12 +497,25 @@ class _TrainerMarketplaceScreenState extends State<TrainerMarketplaceScreen> {
     final clients = trainerData['clients'] ?? 0;
     final expertise = List<String>.from(trainerData['expertise'] ?? []);
 
-    return Card(
-      color: Theme.of(context).brightness == Brightness.dark
-          ? const Color(0xFF1A1A1A)
-          : AppColors.surface,
+    return Container(
       margin: const EdgeInsets.only(bottom: 16),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      decoration: BoxDecoration(
+        color: isDarkMode ? const Color(0xFF262626) : AppColors.surface,
+        borderRadius: BorderRadius.circular(AppSizes.borderRadius),
+        border: Border.all(
+          color: accentColor.withOpacity(0.1),
+          width: 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: isDarkMode
+                ? Colors.black.withOpacity(0.25)
+                : Colors.black.withOpacity(0.06),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
       child: InkWell(
         onTap: () {
           Navigator.push(
@@ -345,75 +528,154 @@ class _TrainerMarketplaceScreenState extends State<TrainerMarketplaceScreen> {
             ),
           );
         },
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppSizes.borderRadius),
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Header with trainer info and price
               Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  CircleAvatar(
-                    radius: 32,
-                    backgroundColor: AppColors.textSecondary,
-                    backgroundImage: avatarUrl.isNotEmpty
-                        ? CachedNetworkImageProvider(avatarUrl)
-                        : null,
-                    child: avatarUrl.isEmpty
-                        ? Text(
-                            name[0].toUpperCase(),
-                            style: const TextStyle(
-                              color: AppColors.textOnBrand,
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
+                  // Avatar
+                  Container(
+                    width: 56,
+                    height: 56,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: accentColor.withOpacity(0.2),
+                        width: 2,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: accentColor.withOpacity(0.15),
+                          blurRadius: 6,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(28),
+                      child: avatarUrl.isNotEmpty
+                          ? CachedNetworkImage(
+                              imageUrl: avatarUrl,
+                              fit: BoxFit.cover,
+                              errorWidget: (context, url, error) => Container(
+                                color: accentColor.withOpacity(0.1),
+                                child: Icon(
+                                  Icons.person_rounded,
+                                  color: accentColor,
+                                  size: 28,
+                                ),
+                              ),
+                            )
+                          : Container(
+                              color: accentColor.withOpacity(0.1),
+                              child: Center(
+                                child: Text(
+                                  name[0].toUpperCase(),
+                                  style: TextStyle(
+                                    color: accentColor,
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ),
                             ),
-                          )
-                        : null,
+                    ),
                   ),
-                  const SizedBox(width: 16),
+                  const SizedBox(width: 14),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          name,
-                          style: TextStyle(
-                            color:
-                                Theme.of(context).brightness == Brightness.dark
-                                    ? AppColors.textOnBrand
-                                    : AppColors.textPrimary,
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                name,
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w700,
+                                  color: isDarkMode
+                                      ? const Color(0xFFFFFFFF)
+                                      : AppColors.textPrimary,
+                                  letterSpacing: -0.2,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            if (trainerData['verified'] == true) ...[
+                              const SizedBox(width: 6),
+                              Container(
+                                width: 18,
+                                height: 18,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: isDarkMode
+                                      ? AppColors.brandGreen
+                                      : AppColors.brandGreenDeep,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: isDarkMode
+                                          ? AppColors.brandGreen
+                                          : AppColors.brandGreenDeep,
+                                      blurRadius: 6,
+                                      offset: const Offset(0, 1),
+                                    ),
+                                  ],
+                                ),
+                                child: const Icon(
+                                  Icons.check_rounded,
+                                  color: Colors.white,
+                                  size: 11,
+                                ),
+                              ),
+                            ],
+                          ],
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 6),
                         Row(
                           children: [
                             Icon(
-                              Icons.star,
-                              color: AppColors.brandGreen,
-                              size: 16,
+                              Icons.star_rounded,
+                              color: accentColor,
+                              size: 14,
                             ),
                             const SizedBox(width: 4),
                             Text(
                               rating.toStringAsFixed(1),
                               style: TextStyle(
-                                color: AppColors.textSecondary,
-                                fontSize: 14,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: isDarkMode
+                                    ? const Color(0xFFFFFFFF)
+                                    : AppColors.textPrimary,
                               ),
                             ),
-                            const SizedBox(width: 12),
+                            const SizedBox(width: 10),
+                            Container(
+                              width: 1,
+                              height: 14,
+                              color: accentColor.withOpacity(0.2),
+                            ),
+                            const SizedBox(width: 10),
                             Icon(
-                              Icons.people,
+                              Icons.people_rounded,
                               color: AppColors.brandBlue,
-                              size: 16,
+                              size: 14,
                             ),
                             const SizedBox(width: 4),
                             Text(
-                              '$clients clients',
+                              '$clients',
                               style: TextStyle(
-                                color: AppColors.textSecondary,
-                                fontSize: 14,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: isDarkMode
+                                    ? const Color(0xFFB0B0B0)
+                                    : AppColors.textSecondary,
                               ),
                             ),
                           ],
@@ -421,38 +683,66 @@ class _TrainerMarketplaceScreenState extends State<TrainerMarketplaceScreen> {
                       ],
                     ),
                   ),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Text(
-                        '\$${hourlyRate.toStringAsFixed(0)}',
-                        style: const TextStyle(
-                          color: AppColors.brandBlue,
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
+                  // Price badge
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: accentColor.withOpacity(0.12),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: accentColor.withOpacity(0.2),
+                        width: 1,
                       ),
-                      Text(
-                        'per hour',
-                        style: TextStyle(
-                          color: AppColors.textSecondary,
-                          fontSize: 12,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          'PKR ${hourlyRate.toStringAsFixed(0)}',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: accentColor,
+                            letterSpacing: -0.2,
+                          ),
                         ),
-                      ),
-                    ],
+                        const SizedBox(height: 2),
+                        Text(
+                          'per hour',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w500,
+                            color: isDarkMode
+                                ? const Color(0xFFB0B0B0)
+                                : AppColors.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 14),
+
+              // Bio section
               Text(
                 bio,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
-                  color: AppColors.textSecondary,
-                  fontSize: 14,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                  color: isDarkMode
+                      ? const Color(0xFFC0C0C0)
+                      : AppColors.textSecondary,
+                  height: 1.4,
                 ),
               ),
+
+              // Expertise badges
               if (expertise.isNotEmpty) ...[
                 const SizedBox(height: 12),
                 Wrap(
@@ -461,24 +751,36 @@ class _TrainerMarketplaceScreenState extends State<TrainerMarketplaceScreen> {
                   children: expertise.take(3).map((exp) {
                     return Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
+                        horizontal: 11,
                         vertical: 6,
                       ),
                       decoration: BoxDecoration(
-                        color: AppColors.brandBlue.withOpacity(0.15),
-                        borderRadius: BorderRadius.circular(16),
+                        color: AppColors.brandBlue.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(6),
                         border: Border.all(
-                          color: AppColors.brandBlue,
+                          color: AppColors.brandBlue.withOpacity(0.25),
                           width: 1,
                         ),
                       ),
-                      child: Text(
-                        exp,
-                        style: const TextStyle(
-                          color: AppColors.brandBlue,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                        ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.done_rounded,
+                            color: AppColors.brandBlue,
+                            size: 14,
+                          ),
+                          const SizedBox(width: 3),
+                          Text(
+                            exp,
+                            style: const TextStyle(
+                              color: AppColors.brandBlue,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: -0.1,
+                            ),
+                          ),
+                        ],
                       ),
                     );
                   }).toList(),

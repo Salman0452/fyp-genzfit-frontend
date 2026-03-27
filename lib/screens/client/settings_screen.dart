@@ -10,12 +10,12 @@ import 'package:genzfit/screens/common/privacy_policy_screen.dart';
 import 'package:genzfit/screens/common/terms_of_service_screen.dart';
 import 'package:genzfit/screens/common/help_support_screen.dart';
 import 'package:genzfit/screens/common/language_selection_screen.dart';
-import 'package:genzfit/screens/settings/edit_preferences_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
 
   Future<void> _showLogoutDialog(BuildContext context) async {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final confirmed = await showDialog<bool>(
       context: context,
       barrierColor: Colors.black.withOpacity(0.5),
@@ -23,30 +23,40 @@ class SettingsScreen extends StatelessWidget {
         backgroundColor: Colors.transparent,
         child: Container(
           decoration: BoxDecoration(
-            color: Theme.of(context).brightness == Brightness.dark
-                ? const Color(0xFF1A1A1A)
-                : AppColors.surface,
+            color: isDarkMode ? const Color(0xFF1A1A1A) : AppColors.surface,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: Theme.of(context).brightness == Brightness.dark
+              color: isDarkMode
                   ? AppColors.error.withOpacity(0.3)
-                  : AppColors.error.withOpacity(0.2),
-              width: 1,
+                  : AppColors.error.withOpacity(0.15),
+              width: 1.5,
             ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(isDarkMode ? 0.3 : 0.08),
+                blurRadius: 16,
+                offset: const Offset(0, 8),
+              ),
+            ],
           ),
           padding: const EdgeInsets.all(24),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header with icon
+              // Header with icon badge
               Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(12),
+                    width: 48,
+                    height: 48,
                     decoration: BoxDecoration(
-                      color: AppColors.error.withOpacity(0.2),
+                      color: AppColors.error.withOpacity(0.15),
                       borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: AppColors.error.withOpacity(0.3),
+                        width: 1.5,
+                      ),
                     ),
                     child: Icon(
                       Icons.logout,
@@ -60,10 +70,11 @@ class SettingsScreen extends StatelessWidget {
                       'Logout',
                       style: TextStyle(
                         fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Theme.of(context).brightness == Brightness.dark
+                        fontWeight: FontWeight.w800,
+                        color: isDarkMode
                             ? const Color(0xFFFFFFFF)
                             : AppColors.textPrimary,
+                        letterSpacing: -0.3,
                       ),
                     ),
                   ),
@@ -75,10 +86,11 @@ class SettingsScreen extends StatelessWidget {
                 'Are you sure you want to logout from your account?',
                 style: TextStyle(
                   fontSize: 14,
-                  color: Theme.of(context).brightness == Brightness.dark
+                  color: isDarkMode
                       ? const Color(0xFFB0B0B0)
                       : AppColors.textSecondary,
                   height: 1.5,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
               const SizedBox(height: 24),
@@ -86,28 +98,29 @@ class SettingsScreen extends StatelessWidget {
               Row(
                 children: [
                   Expanded(
-                    child: ElevatedButton(
+                    child: OutlinedButton(
                       onPressed: () => Navigator.pop(context, false),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor:
-                            Theme.of(context).brightness == Brightness.dark
-                                ? const Color(0xFF2A2A2A)
-                                : const Color(0xFFEEEEEE),
-                        foregroundColor:
-                            Theme.of(context).brightness == Brightness.dark
-                                ? const Color(0xFFFFFFFF)
-                                : AppColors.textPrimary,
+                      style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                        side: BorderSide(
+                          color: isDarkMode
+                              ? const Color(0xFF404040)
+                              : const Color(0xFFE8E8E8),
+                          width: 1.5,
                         ),
-                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius:
+                              BorderRadius.circular(AppSizes.borderRadius),
+                        ),
                       ),
-                      child: const Text(
+                      child: Text(
                         'Cancel',
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
+                          color: isDarkMode
+                              ? const Color(0xFFFFFFFF)
+                              : AppColors.textPrimary,
                         ),
                       ),
                     ),
@@ -121,7 +134,8 @@ class SettingsScreen extends StatelessWidget {
                         foregroundColor: const Color(0xFFFFFFFF),
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius:
+                              BorderRadius.circular(AppSizes.borderRadius),
                         ),
                         elevation: 0,
                       ),
@@ -152,6 +166,7 @@ class SettingsScreen extends StatelessWidget {
   }
 
   Future<void> _showAboutDialog(BuildContext context) async {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     await showDialog<void>(
       context: context,
       barrierColor: Colors.black.withOpacity(0.5),
@@ -159,39 +174,56 @@ class SettingsScreen extends StatelessWidget {
         backgroundColor: Colors.transparent,
         child: Container(
           decoration: BoxDecoration(
-            color: Theme.of(context).brightness == Brightness.dark
-                ? const Color(0xFF1A1A1A)
-                : AppColors.surface,
+            color: isDarkMode ? const Color(0xFF1A1A1A) : AppColors.surface,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: Theme.of(context).brightness == Brightness.dark
-                  ? AppColors.accent.withOpacity(0.3)
-                  : AppColors.brandGreenDeep.withOpacity(0.2),
-              width: 1,
+              color: isDarkMode
+                  ? (isDarkMode
+                          ? AppColors.brandGreen
+                          : AppColors.brandGreenDeep)
+                      .withOpacity(0.3)
+                  : AppColors.brandGreenDeep.withOpacity(0.15),
+              width: 1.5,
             ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(isDarkMode ? 0.3 : 0.08),
+                blurRadius: 16,
+                offset: const Offset(0, 8),
+              ),
+            ],
           ),
           padding: const EdgeInsets.all(24),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header with icon
+              // Header with icon badge
               Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(12),
+                    width: 48,
+                    height: 48,
                     decoration: BoxDecoration(
-                      color: Theme.of(context).brightness == Brightness.dark
-                          ? AppColors.accent.withOpacity(0.2)
-                          : AppColors.brandGreenDeep.withOpacity(0.2),
+                      color: (isDarkMode
+                              ? AppColors.brandGreen
+                              : AppColors.brandGreenDeep)
+                          .withOpacity(0.15),
                       borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: (isDarkMode
+                                ? AppColors.brandGreen
+                                : AppColors.brandGreenDeep)
+                            .withOpacity(0.3),
+                        width: 1.5,
+                      ),
                     ),
                     child: Icon(
                       Icons.fitness_center,
-                      color: Theme.of(context).brightness == Brightness.dark
-                          ? AppColors.accent
+                      color: isDarkMode
+                          ? AppColors.brandGreen
                           : AppColors.brandGreenDeep,
-                      size: 28,
+                      size: 24,
                     ),
                   ),
                   const SizedBox(width: 16),
@@ -203,21 +235,21 @@ class SettingsScreen extends StatelessWidget {
                           'GenZFit',
                           style: TextStyle(
                             fontSize: 22,
-                            fontWeight: FontWeight.bold,
-                            color:
-                                Theme.of(context).brightness == Brightness.dark
-                                    ? const Color(0xFFFFFFFF)
-                                    : AppColors.textPrimary,
+                            fontWeight: FontWeight.w800,
+                            color: isDarkMode
+                                ? const Color(0xFFFFFFFF)
+                                : AppColors.textPrimary,
+                            letterSpacing: -0.3,
                           ),
                         ),
                         Text(
                           'v1.0.0',
                           style: TextStyle(
                             fontSize: 12,
-                            color:
-                                Theme.of(context).brightness == Brightness.dark
-                                    ? const Color(0xFFB0B0B0)
-                                    : AppColors.textSecondary,
+                            color: isDarkMode
+                                ? const Color(0xFF808080)
+                                : AppColors.textSecondary,
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
                       ],
@@ -231,10 +263,11 @@ class SettingsScreen extends StatelessWidget {
                 'GenZFit is your AI-powered fitness companion. Track your progress, get personalized recommendations, and achieve your fitness goals with expert guidance.',
                 style: TextStyle(
                   fontSize: 14,
-                  color: Theme.of(context).brightness == Brightness.dark
+                  color: isDarkMode
                       ? const Color(0xFFB0B0B0)
                       : AppColors.textSecondary,
                   height: 1.6,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
               const SizedBox(height: 24),
@@ -244,17 +277,14 @@ class SettingsScreen extends StatelessWidget {
                 child: ElevatedButton(
                   onPressed: () => Navigator.pop(context),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor:
-                        Theme.of(context).brightness == Brightness.dark
-                            ? AppColors.accent
-                            : AppColors.brandGreenDeep,
-                    foregroundColor:
-                        Theme.of(context).brightness == Brightness.dark
-                            ? const Color(0xFF010101)
-                            : const Color(0xFFFFFFFF),
+                    backgroundColor: isDarkMode
+                        ? AppColors.brandGreen
+                        : AppColors.brandGreenDeep,
+                    foregroundColor: AppColors.textPrimary,
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius:
+                          BorderRadius.circular(AppSizes.borderRadius),
                     ),
                     elevation: 0,
                   ),
@@ -276,11 +306,42 @@ class SettingsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('Settings'),
-        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
+        elevation: 0,
+        backgroundColor:
+            isDarkMode ? const Color(0xFF0A0A0A) : AppColors.surface,
+        title: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Settings',
+              style: TextStyle(
+                color: isDarkMode
+                    ? const Color(0xFFFFFFFF)
+                    : AppColors.textPrimary,
+                fontSize: 22,
+                fontWeight: FontWeight.w800,
+                letterSpacing: -0.5,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Manage your preferences',
+              style: TextStyle(
+                color: isDarkMode
+                    ? const Color(0xFF808080)
+                    : AppColors.textSecondary,
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
       ),
       body: Consumer2<LanguageProvider, ThemeProvider>(
         builder: (context, languageProvider, themeProvider, child) {
@@ -288,12 +349,15 @@ class SettingsScreen extends StatelessWidget {
             padding: const EdgeInsets.all(20),
             children: [
               // Account Section
-              const Text(
+              Text(
                 'Account',
                 style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.textSecondary,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: isDarkMode
+                      ? const Color(0xFFB0B0B0)
+                      : AppColors.textSecondary,
+                  letterSpacing: 0.5,
                 ),
               ),
               const SizedBox(height: 12),
@@ -326,15 +390,18 @@ class SettingsScreen extends StatelessWidget {
                 },
               ),
 
-              const SizedBox(height: 24),
+              const SizedBox(height: 32),
 
               // Preferences Section
-              const Text(
+              Text(
                 'Preferences',
                 style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.textSecondary,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: isDarkMode
+                      ? const Color(0xFFB0B0B0)
+                      : AppColors.textSecondary,
+                  letterSpacing: 0.5,
                 ),
               ),
               const SizedBox(height: 12),
@@ -369,15 +436,18 @@ class SettingsScreen extends StatelessWidget {
               ),
               _buildThemeSettingsCard(context, themeProvider),
 
-              const SizedBox(height: 24),
+              const SizedBox(height: 32),
 
               // Privacy Section
-              const Text(
+              Text(
                 'Privacy & Security',
                 style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.textSecondary,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: isDarkMode
+                      ? const Color(0xFFB0B0B0)
+                      : AppColors.textSecondary,
+                  letterSpacing: 0.5,
                 ),
               ),
               const SizedBox(height: 12),
@@ -410,15 +480,18 @@ class SettingsScreen extends StatelessWidget {
                 },
               ),
 
-              const SizedBox(height: 24),
+              const SizedBox(height: 32),
 
               // About Section
-              const Text(
+              Text(
                 'About',
                 style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.textSecondary,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: isDarkMode
+                      ? const Color(0xFFB0B0B0)
+                      : AppColors.textSecondary,
+                  letterSpacing: 0.5,
                 ),
               ),
               const SizedBox(height: 12),
@@ -446,39 +519,49 @@ class SettingsScreen extends StatelessWidget {
                 },
               ),
 
-              const SizedBox(height: 32),
+              const SizedBox(height: 40),
 
               // Logout Button
               Container(
-                margin: const EdgeInsets.symmetric(horizontal: 0),
                 decoration: BoxDecoration(
-                  color: AppColors.error.withOpacity(0.1),
+                  color: AppColors.error.withOpacity(0.08),
                   borderRadius: BorderRadius.circular(AppSizes.borderRadius),
-                  border: Border.all(color: AppColors.error.withOpacity(0.3)),
+                  border: Border.all(
+                    color: AppColors.error.withOpacity(0.25),
+                    width: 1.5,
+                  ),
                 ),
                 child: ListTile(
-                  leading: const Icon(Icons.logout, color: AppColors.error),
-                  title: const Text(
+                  leading: Icon(
+                    Icons.logout,
+                    color: AppColors.error,
+                    size: 22,
+                  ),
+                  title: Text(
                     'Logout',
                     style: TextStyle(
                       color: AppColors.error,
-                      fontWeight: FontWeight.bold,
+                      fontWeight: FontWeight.w600,
                       fontSize: 16,
+                      letterSpacing: -0.3,
                     ),
                   ),
-                  subtitle: const Text(
+                  subtitle: Text(
                     'Sign out of your account',
-                    style: TextStyle(color: AppColors.error),
+                    style: TextStyle(
+                      color: AppColors.error.withOpacity(0.7),
+                      fontSize: 13,
+                    ),
                   ),
-                  trailing: const Icon(
+                  trailing: Icon(
                     Icons.arrow_forward_ios,
-                    color: AppColors.error,
+                    color: AppColors.error.withOpacity(0.6),
                     size: 16,
                   ),
                   onTap: () => _showLogoutDialog(context),
                 ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 24),
             ],
           );
         },
@@ -490,6 +573,7 @@ class SettingsScreen extends StatelessWidget {
     BuildContext context,
     ThemeProvider themeProvider,
   ) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final modeLabel = switch (themeProvider.themeMode) {
       ThemeMode.system => 'System (Auto)',
       ThemeMode.light => 'Light',
@@ -499,76 +583,89 @@ class SettingsScreen extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: Theme.of(context).brightness == Brightness.dark
-            ? const Color(0xFF1A1A1A)
-            : AppColors.surface,
+        color: isDarkMode ? const Color(0xFF1A1A1A) : AppColors.surface,
         borderRadius: BorderRadius.circular(AppSizes.borderRadius),
+        border: Border.all(
+          color: isDarkMode ? const Color(0xFF404040) : const Color(0xFFE8E8E8),
+          width: 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(isDarkMode ? 0.2 : 0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Column(
         children: [
           ListTile(
             leading: Icon(
               Icons.palette,
-              color: Theme.of(context).brightness == Brightness.dark
-                  ? AppColors.accent
-                  : AppColors.brandGreenDeep,
+              color:
+                  isDarkMode ? AppColors.brandGreen : AppColors.brandGreenDeep,
+              size: 22,
             ),
             title: Text(
               'Theme',
               style: TextStyle(
-                color: Theme.of(context).brightness == Brightness.dark
+                color: isDarkMode
                     ? const Color(0xFFFFFFFF)
                     : AppColors.textPrimary,
                 fontWeight: FontWeight.w600,
                 fontSize: 16,
+                letterSpacing: -0.3,
               ),
             ),
             subtitle: Text(
               modeLabel,
               style: TextStyle(
-                color: Theme.of(context).brightness == Brightness.dark
+                color: isDarkMode
                     ? const Color(0xFFB0B0B0)
                     : AppColors.textSecondary,
-                fontSize: 14,
+                fontSize: 13,
               ),
             ),
           ),
           Divider(
             height: 1,
-            color: Theme.of(context).brightness == Brightness.dark
-                ? const Color(0xFF404040)
-                : AppColors.charcoal,
+            color:
+                isDarkMode ? const Color(0xFF404040) : const Color(0xFFE8E8E8),
           ),
           SwitchListTile.adaptive(
             title: Text(
               'Use system theme',
               style: TextStyle(
-                color: Theme.of(context).brightness == Brightness.dark
+                color: isDarkMode
                     ? const Color(0xFFFFFFFF)
                     : AppColors.textPrimary,
+                fontSize: 15,
+                fontWeight: FontWeight.w500,
               ),
             ),
             subtitle: Text(
               'Automatically match your phone theme',
               style: TextStyle(
-                color: Theme.of(context).brightness == Brightness.dark
+                color: isDarkMode
                     ? const Color(0xFFB0B0B0)
                     : AppColors.textSecondary,
+                fontSize: 13,
               ),
             ),
             value: themeProvider.useSystemTheme,
-            activeColor: Theme.of(context).brightness == Brightness.dark
-                ? AppColors.accent
-                : AppColors.brandGreenDeep,
+            activeColor:
+                isDarkMode ? AppColors.brandGreen : AppColors.brandGreenDeep,
             onChanged: (value) => themeProvider.setUseSystemTheme(value),
           ),
           SwitchListTile.adaptive(
             title: Text(
               'Dark mode',
               style: TextStyle(
-                color: Theme.of(context).brightness == Brightness.dark
+                color: isDarkMode
                     ? const Color(0xFFFFFFFF)
                     : AppColors.textPrimary,
+                fontSize: 15,
+                fontWeight: FontWeight.w500,
               ),
             ),
             subtitle: Text(
@@ -576,15 +673,15 @@ class SettingsScreen extends StatelessWidget {
                   ? 'Disabled while system theme is enabled'
                   : 'Turn off for light mode',
               style: TextStyle(
-                color: Theme.of(context).brightness == Brightness.dark
+                color: isDarkMode
                     ? const Color(0xFFB0B0B0)
                     : AppColors.textSecondary,
+                fontSize: 13,
               ),
             ),
             value: themeProvider.isDarkMode,
-            activeColor: Theme.of(context).brightness == Brightness.dark
-                ? AppColors.accent
-                : AppColors.brandGreenDeep,
+            activeColor:
+                isDarkMode ? AppColors.brandGreen : AppColors.brandGreenDeep,
             onChanged: themeProvider.useSystemTheme
                 ? null
                 : (value) => themeProvider.setDarkModeEnabled(value),
@@ -601,45 +698,52 @@ class SettingsScreen extends StatelessWidget {
     required String subtitle,
     required VoidCallback onTap,
   }) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: Theme.of(context).brightness == Brightness.dark
-            ? const Color(0xFF1A1A1A)
-            : AppColors.surface,
+        color: isDarkMode ? const Color(0xFF1A1A1A) : AppColors.surface,
         borderRadius: BorderRadius.circular(AppSizes.borderRadius),
+        border: Border.all(
+          color: isDarkMode ? const Color(0xFF404040) : const Color(0xFFE8E8E8),
+          width: 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(isDarkMode ? 0.2 : 0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: ListTile(
         leading: Icon(
           icon,
-          color: Theme.of(context).brightness == Brightness.dark
-              ? AppColors.accent
-              : AppColors.brandGreenDeep,
+          color: isDarkMode ? AppColors.brandGreen : AppColors.brandGreenDeep,
+          size: 22,
         ),
         title: Text(
           title,
           style: TextStyle(
-            color: Theme.of(context).brightness == Brightness.dark
-                ? const Color(0xFFFFFFFF)
-                : AppColors.textPrimary,
+            color: isDarkMode ? const Color(0xFFFFFFFF) : AppColors.textPrimary,
             fontWeight: FontWeight.w600,
             fontSize: 16,
+            letterSpacing: -0.3,
           ),
         ),
         subtitle: Text(
           subtitle,
           style: TextStyle(
-            color: Theme.of(context).brightness == Brightness.dark
-                ? const Color(0xFFB0B0B0)
-                : AppColors.textSecondary,
-            fontSize: 14,
+            color:
+                isDarkMode ? const Color(0xFFB0B0B0) : AppColors.textSecondary,
+            fontSize: 13,
           ),
         ),
         trailing: Icon(
-          Icons.chevron_right,
-          color: Theme.of(context).brightness == Brightness.dark
-              ? const Color(0xFFB0B0B0)
-              : AppColors.textSecondary,
+          Icons.arrow_forward_ios,
+          color: isDarkMode ? const Color(0xFF808080) : AppColors.textSecondary,
+          size: 16,
         ),
         onTap: onTap,
       ),

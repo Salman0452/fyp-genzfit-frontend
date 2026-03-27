@@ -514,4 +514,28 @@ class PaymentService {
       throw Exception('Failed to get trainer earnings: $e');
     }
   }
+
+  /// Get platform's bank details from system settings
+  /// This is used to show clients where to transfer money
+  Future<Map<String, dynamic>?> getPlatformBankDetails() async {
+    try {
+      final settingsDoc =
+          await _firestore.collection('platform_settings').doc('payment').get();
+
+      if (settingsDoc.exists) {
+        final data = settingsDoc.data();
+        if (data != null) {
+          return {
+            'bankName': data['bankName'] as String? ?? '',
+            'accountHolder': data['accountHolder'] as String? ?? '',
+            'iban': data['iban'] as String? ?? '',
+            'accountNumber': data['accountNumber'] as String? ?? '',
+          };
+        }
+      }
+      return null;
+    } catch (e) {
+      throw Exception('Failed to get platform bank details: $e');
+    }
+  }
 }

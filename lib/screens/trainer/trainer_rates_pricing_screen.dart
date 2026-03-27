@@ -68,8 +68,7 @@ class _TrainerRatesPricingScreenState extends State<TrainerRatesPricingScreen> {
           .get();
 
       if (trainerSnapshot.docs.isNotEmpty) {
-        final trainerData =
-            trainerSnapshot.docs.first.data() as Map<String, dynamic>;
+        final trainerData = trainerSnapshot.docs.first.data();
         final packages = trainerData['packages'] as List<dynamic>? ?? [];
 
         setState(() {

@@ -74,35 +74,85 @@ class _ProgressScreenState extends State<ProgressScreen>
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final accentColor =
+        isDarkMode ? AppColors.brandGreen : AppColors.brandGreenDeep;
+
     return Scaffold(
       backgroundColor: _getBg(context),
       appBar: AppBar(
-        backgroundColor: _getBg(context),
+        backgroundColor:
+            isDarkMode ? const Color(0xFF1A1A1A) : AppColors.surface,
         elevation: 0,
         automaticallyImplyLeading: false,
-        title: Text(
-          'Progress',
-          style: GoogleFonts.plusJakartaSans(
-            color: AppColors.textPrimary,
-            fontSize: 24,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        bottom: TabBar(
-          controller: _tabController,
-          indicatorColor: _kBrandGreen,
-          indicatorWeight: 3,
-          labelColor: AppColors.textPrimary,
-          unselectedLabelColor: AppColors.textSecondary,
-          labelStyle: GoogleFonts.plusJakartaSans(
-            fontWeight: FontWeight.w600,
-            fontSize: 13,
-          ),
-          tabs: const [
-            Tab(text: 'TODAY'),
-            Tab(text: 'WEEKLY'),
-            Tab(text: 'INSIGHTS'),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Your Progress',
+              style: GoogleFonts.plusJakartaSans(
+                color: isDarkMode
+                    ? const Color(0xFFFFFFFF)
+                    : AppColors.textPrimary,
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                letterSpacing: -0.3,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Track your fitness journey',
+              style: GoogleFonts.plusJakartaSans(
+                color: isDarkMode
+                    ? const Color(0xFFB0B0B0)
+                    : AppColors.textSecondary,
+                fontSize: 12,
+                fontWeight: FontWeight.w400,
+              ),
+            ),
           ],
+        ),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(54),
+          child: Container(
+            decoration: BoxDecoration(
+              border: Border(
+                bottom: BorderSide(
+                  color: accentColor.withOpacity(0.1),
+                  width: 1,
+                ),
+              ),
+            ),
+            child: TabBar(
+              controller: _tabController,
+              indicator: UnderlineTabIndicator(
+                borderSide: BorderSide(
+                  color: accentColor,
+                  width: 2.5,
+                ),
+                insets: const EdgeInsets.symmetric(horizontal: 0),
+              ),
+              indicatorWeight: 0,
+              labelColor: accentColor,
+              unselectedLabelColor: isDarkMode
+                  ? const Color(0xFFB0B0B0)
+                  : AppColors.textSecondary,
+              labelStyle: GoogleFonts.plusJakartaSans(
+                fontWeight: FontWeight.w600,
+                fontSize: 13,
+                letterSpacing: -0.1,
+              ),
+              unselectedLabelStyle: GoogleFonts.plusJakartaSans(
+                fontWeight: FontWeight.w500,
+                fontSize: 13,
+              ),
+              tabs: const [
+                Tab(text: 'TODAY'),
+                Tab(text: 'WEEKLY'),
+                Tab(text: 'INSIGHTS'),
+              ],
+            ),
+          ),
         ),
       ),
       body: TabBarView(
@@ -321,8 +371,24 @@ class _ScoreCard extends StatelessWidget {
     return [_kError, Color(0xFFDC2626)];
   }
 
+  String get _status {
+    if (score >= 80) return 'Excellent!';
+    if (score >= 60) return 'Good Progress';
+    return 'Keep Going';
+  }
+
+  String get _message {
+    if (score >= 80) return 'Outstanding consistency with your plan';
+    if (score >= 60) return 'You\'re on track, keep pushing';
+    return 'Time to focus on your goals';
+  }
+
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final accentColor =
+        isDarkMode ? AppColors.brandGreen : AppColors.brandGreenDeep;
+
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
@@ -331,32 +397,73 @@ class _ScoreCard extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: _gradient[0].withOpacity(0.3),
+            blurRadius: 16,
+            offset: const Offset(0, 8),
+          ),
+        ],
       ),
       child: Column(
         children: [
-          Text(
-            '$score',
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 64,
-              fontWeight: FontWeight.w900,
+          // Score circle
+          Container(
+            width: 120,
+            height: 120,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.white.withOpacity(0.15),
+              border: Border.all(
+                color: Colors.white.withOpacity(0.3),
+                width: 2,
+              ),
+            ),
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    '$score',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 56,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: -1,
+                    ),
+                  ),
+                  Text(
+                    '/100',
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.7),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
-          const Text(
-            'Today\'s Score',
-            style: TextStyle(color: Colors.white, fontSize: 18),
-          ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 16),
           Text(
-            score >= 80
-                ? 'Excellent consistency'
-                : score >= 60
-                    ? 'Good progress'
-                    : 'Let\'s catch up',
+            _status,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+              letterSpacing: -0.3,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            _message,
+            textAlign: TextAlign.center,
             style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.85),
+              color: Colors.white.withOpacity(0.85),
               fontSize: 13,
+              fontWeight: FontWeight.w500,
+              height: 1.5,
             ),
           ),
         ],
@@ -408,8 +515,20 @@ class _NutritionRings extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: _getCard(context),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _getBorder(context)),
+        borderRadius: BorderRadius.circular(AppSizes.borderRadius),
+        border: Border.all(
+          color: _getBorder(context),
+          width: 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Theme.of(context).brightness == Brightness.dark
+                ? Colors.black.withOpacity(0.2)
+                : Colors.black.withOpacity(0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -637,34 +756,78 @@ class _StatBox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: _getCard(context),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _getBorder(context)),
+        borderRadius: BorderRadius.circular(AppSizes.borderRadius),
+        border: Border.all(
+          color: color.withOpacity(0.2),
+          width: 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: isDarkMode
+                ? Colors.black.withOpacity(0.2)
+                : Colors.black.withOpacity(0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(icon, style: const TextStyle(fontSize: 24)),
-          const SizedBox(height: 8),
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Center(
+              child: Text(
+                icon,
+                style: TextStyle(
+                  color: color,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
           Text(
             value,
             style: TextStyle(
               color: color,
-              fontSize: 28,
+              fontSize: 24,
               fontWeight: FontWeight.w900,
+              letterSpacing: -0.5,
             ),
           ),
+          const SizedBox(height: 6),
           Text(
             label,
-            style: TextStyle(color: AppColors.textPrimary, fontSize: 13),
+            style: TextStyle(
+              color:
+                  isDarkMode ? const Color(0xFFFFFFFF) : AppColors.textPrimary,
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+            ),
           ),
           const SizedBox(height: 2),
           Text(
             sub,
-            style: TextStyle(color: AppColors.textSecondary, fontSize: 11),
+            style: TextStyle(
+              color: isDarkMode
+                  ? const Color(0xFFB0B0B0)
+                  : AppColors.textSecondary,
+              fontSize: 11,
+              fontWeight: FontWeight.w500,
+            ),
           ),
         ],
       ),
@@ -902,37 +1065,71 @@ class _OverviewCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: _getCard(context),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: _getBorder(context)),
+        borderRadius: BorderRadius.circular(AppSizes.borderRadius),
+        border: Border.all(
+          color: color.withOpacity(0.2),
+          width: 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: isDarkMode
+                ? Colors.black.withOpacity(0.15)
+                : Colors.black.withOpacity(0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: color, size: 20),
-          const SizedBox(height: 8),
+          Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.12),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, color: color, size: 16),
+          ),
+          const SizedBox(height: 10),
           Text(
             value,
             style: TextStyle(
               color: color,
               fontSize: 16,
               fontWeight: FontWeight.w800,
+              letterSpacing: -0.3,
             ),
           ),
-          if (unit.isNotEmpty)
+          if (unit.isNotEmpty) ...[
+            const SizedBox(height: 2),
             Text(
               unit,
-              style: TextStyle(color: AppColors.textSecondary, fontSize: 10),
+              style: TextStyle(
+                color: isDarkMode
+                    ? const Color(0xFFB0B0B0)
+                    : AppColors.textSecondary,
+                fontSize: 10,
+                fontWeight: FontWeight.w500,
+              ),
             ),
-          const SizedBox(height: 2),
+          ],
+          const SizedBox(height: 4),
           Text(
             subtitle,
-            style: const TextStyle(
-              color: AppColors.textSecondary,
-              fontSize: 10,
+            style: TextStyle(
+              color: isDarkMode
+                  ? const Color(0xFFB0B0B0)
+                  : AppColors.textSecondary,
+              fontSize: 11,
+              fontWeight: FontWeight.w500,
             ),
           ),
         ],
@@ -1000,8 +1197,20 @@ class _BarChartSection extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(8, 16, 8, 8),
       decoration: BoxDecoration(
         color: _getCard(context),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _getBorder(context)),
+        borderRadius: BorderRadius.circular(AppSizes.borderRadius),
+        border: Border.all(
+          color: AppColors.brandBlue.withOpacity(0.15),
+          width: 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Theme.of(context).brightness == Brightness.dark
+                ? Colors.black.withOpacity(0.2)
+                : Colors.black.withOpacity(0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: BarChart(
         BarChartData(
@@ -1098,8 +1307,20 @@ class _MacroBars extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: _getCard(context),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _getBorder(context)),
+        borderRadius: BorderRadius.circular(AppSizes.borderRadius),
+        border: Border.all(
+          color: _getBorder(context),
+          width: 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Theme.of(context).brightness == Brightness.dark
+                ? Colors.black.withOpacity(0.15)
+                : Colors.black.withOpacity(0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Column(
         children: [
@@ -1199,13 +1420,26 @@ class _CalorieBalanceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final fmt = NumberFormat('#,###');
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: _getCard(context),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _getBorder(context)),
+        borderRadius: BorderRadius.circular(AppSizes.borderRadius),
+        border: Border.all(
+          color: _statusColor.withOpacity(0.15),
+          width: 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: isDarkMode
+                ? Colors.black.withOpacity(0.15)
+                : Colors.black.withOpacity(0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Column(
         children: [
@@ -1532,6 +1766,7 @@ class _AiScoreCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final score = analysis['overall_score'] ?? 0;
     final grade = (analysis['grade'] ?? 'B') as String;
     final headline = (analysis['headline'] ?? 'Keep pushing!') as String;
@@ -1541,26 +1776,36 @@ class _AiScoreCard extends StatelessWidget {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: _getCard(context),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withValues(alpha: 0.4), width: 1.5),
+        borderRadius: BorderRadius.circular(AppSizes.borderRadius),
+        border: Border.all(color: color.withOpacity(0.2), width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: isDarkMode
+                ? Colors.black.withOpacity(0.2)
+                : Colors.black.withOpacity(0.04),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Row(
         children: [
           Container(
-            width: 80,
-            height: 80,
+            width: 100,
+            height: 100,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: color.withValues(alpha: 0.15),
-              border: Border.all(color: color, width: 2),
+              color: color.withOpacity(0.12),
+              border: Border.all(color: color, width: 2.5),
             ),
             child: Center(
               child: Text(
                 grade,
                 style: TextStyle(
                   color: color,
-                  fontSize: 28,
+                  fontSize: 36,
                   fontWeight: FontWeight.w900,
+                  letterSpacing: -1,
                 ),
               ),
             ),
@@ -1574,16 +1819,18 @@ class _AiScoreCard extends StatelessWidget {
                   '$score / 100',
                   style: const TextStyle(
                     color: Colors.white,
-                    fontSize: 22,
+                    fontSize: 24,
                     fontWeight: FontWeight.w900,
+                    letterSpacing: -0.5,
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 6),
                 Text(
                   headline,
                   style: const TextStyle(
                     color: AppColors.textSecondary,
                     fontSize: 13,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
               ],
@@ -1987,12 +2234,25 @@ class _InsightCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: _getCard(context),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _getBorder(context)),
+        borderRadius: BorderRadius.circular(AppSizes.borderRadius),
+        border: Border.all(
+          color: _getBorder(context),
+          width: 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: isDarkMode
+                ? Colors.black.withOpacity(0.15)
+                : Colors.black.withOpacity(0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -2002,7 +2262,8 @@ class _InsightCard extends StatelessWidget {
             style: const TextStyle(
               color: Colors.white,
               fontSize: 15,
-              fontWeight: FontWeight.bold,
+              fontWeight: FontWeight.w700,
+              letterSpacing: -0.3,
             ),
           ),
           if (subtitle != null) ...[
@@ -2012,6 +2273,7 @@ class _InsightCard extends StatelessWidget {
               style: const TextStyle(
                 color: AppColors.textSecondary,
                 fontSize: 11,
+                fontWeight: FontWeight.w500,
               ),
             ),
           ],
@@ -2032,11 +2294,11 @@ class _StatusChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withValues(alpha: 0.4)),
+        color: color.withOpacity(0.12),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withOpacity(0.3), width: 1),
       ),
       child: Text(
         label,
@@ -2044,6 +2306,7 @@ class _StatusChip extends StatelessWidget {
           color: color,
           fontSize: 11,
           fontWeight: FontWeight.w600,
+          letterSpacing: -0.2,
         ),
       ),
     );
@@ -2058,17 +2321,19 @@ class _TipBox extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(10),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppColors.accentViolet.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(8),
-        border:
-            Border.all(color: AppColors.accentViolet.withValues(alpha: 0.3)),
+        color: AppColors.accentViolet.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: AppColors.accentViolet.withOpacity(0.2),
+          width: 1.5,
+        ),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('💡 ', style: TextStyle(fontSize: 14)),
+          const Text('💡 ', style: TextStyle(fontSize: 15)),
           Expanded(
             child: Text(
               tip,

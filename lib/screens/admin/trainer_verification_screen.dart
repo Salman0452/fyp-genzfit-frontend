@@ -390,6 +390,195 @@ class _TrainerVerificationScreenState extends State<TrainerVerificationScreen> {
         ),
         const SizedBox(height: 20),
 
+        // Pricing Information
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Theme.of(context).brightness == Brightness.dark
+                ? const Color(0xFF1F2120)
+                : AppColors.surface,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: (Theme.of(context).brightness == Brightness.dark
+                      ? const Color(0xFFFFFFFF)
+                      : AppColors.textPrimary)
+                  .withOpacity(0.1),
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Pricing',
+                style: GoogleFonts.poppins(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? const Color(0xFFFFFFFF)
+                      : AppColors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Hourly Rate',
+                          style: GoogleFonts.inter(
+                            fontSize: 12,
+                            color:
+                                (Theme.of(context).brightness == Brightness.dark
+                                        ? const Color(0xFFFFFFFF)
+                                        : AppColors.textPrimary)
+                                    .withOpacity(0.6),
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'PKR ${trainer.hourlyRate?.toStringAsFixed(0) ?? '0'}/hr',
+                          style: GoogleFonts.poppins(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color:
+                                Theme.of(context).brightness == Brightness.dark
+                                    ? AppColors.brandGreen
+                                    : AppColors.brandGreenDeep,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (trainer.monthlyRate != null && trainer.monthlyRate! > 0)
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Monthly Rate',
+                            style: GoogleFonts.inter(
+                              fontSize: 12,
+                              color: (Theme.of(context).brightness ==
+                                          Brightness.dark
+                                      ? const Color(0xFFFFFFFF)
+                                      : AppColors.textPrimary)
+                                  .withOpacity(0.6),
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'PKR ${trainer.monthlyRate?.toStringAsFixed(0) ?? '0'}/mo',
+                            style: GoogleFonts.poppins(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Theme.of(context).brightness ==
+                                      Brightness.dark
+                                  ? AppColors.brandGreen
+                                  : AppColors.brandGreenDeep,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                ],
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 20),
+
+        // Bio/About
+        if (trainer.bio != null && trainer.bio!.isNotEmpty) ...[
+          Text(
+            'About',
+            style: GoogleFonts.poppins(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? const Color(0xFFFFFFFF)
+                  : AppColors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? const Color(0xFF1F2120)
+                  : AppColors.surface,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: (Theme.of(context).brightness == Brightness.dark
+                        ? const Color(0xFFFFFFFF)
+                        : AppColors.textPrimary)
+                    .withOpacity(0.1),
+              ),
+            ),
+            child: Text(
+              trainer.bio!,
+              style: GoogleFonts.inter(
+                fontSize: 13,
+                height: 1.5,
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? const Color(0xFFFFFFFF)
+                    : AppColors.textPrimary,
+              ),
+            ),
+          ),
+          const SizedBox(height: 20),
+        ],
+
+        // Expertise
+        if (trainer.expertise != null && trainer.expertise!.isNotEmpty) ...[
+          Text(
+            'Expertise',
+            style: GoogleFonts.poppins(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? const Color(0xFFFFFFFF)
+                  : AppColors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: trainer.expertise!.map((exp) {
+              return Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: (Theme.of(context).brightness == Brightness.dark
+                          ? AppColors.brandGreen
+                          : AppColors.brandGreenDeep)
+                      .withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: (Theme.of(context).brightness == Brightness.dark
+                            ? AppColors.brandGreen
+                            : AppColors.brandGreenDeep)
+                        .withOpacity(0.3),
+                  ),
+                ),
+                child: Text(
+                  exp,
+                  style: GoogleFonts.inter(
+                    fontSize: 12,
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? AppColors.brandGreen
+                        : AppColors.brandGreenDeep,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 20),
+        ],
+
         // Certifications
         if (trainer.certifications != null &&
             trainer.certifications!.isNotEmpty) ...[

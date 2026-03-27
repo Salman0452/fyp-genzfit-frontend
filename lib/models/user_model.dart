@@ -20,6 +20,8 @@ class UserModel {
   final List<String>? expertise;
   final double? rating;
   final double? hourlyRate;
+  final double? monthlyRate;
+  final String? bio;
   final bool? verified;
   final List<String>? certifications;
   final List<String>? videoUrls;
@@ -40,6 +42,8 @@ class UserModel {
     this.expertise,
     this.rating,
     this.hourlyRate,
+    this.monthlyRate,
+    this.bio,
     this.verified,
     this.certifications,
     this.videoUrls,
@@ -92,6 +96,8 @@ class UserModel {
         'expertise': expertise ?? [],
         'rating': rating ?? 0.0,
         'hourlyRate': hourlyRate ?? 0.0,
+        'monthlyRate': monthlyRate ?? 0.0,
+        'bio': bio ?? '',
         'verified': verified ?? false,
         'certifications': certifications ?? [],
         'videoUrls': videoUrls ?? [],
@@ -118,6 +124,8 @@ class UserModel {
           map['expertise'] != null ? List<String>.from(map['expertise']) : null,
       rating: map['rating']?.toDouble(),
       hourlyRate: map['hourlyRate']?.toDouble(),
+      monthlyRate: map['monthlyRate']?.toDouble(),
+      bio: map['bio'] as String?,
       verified: map['verified'],
       certifications: map['certifications'] != null
           ? List<String>.from(map['certifications'])
@@ -153,6 +161,8 @@ class UserModel {
     List<String>? expertise,
     double? rating,
     double? hourlyRate,
+    double? monthlyRate,
+    String? bio,
     bool? verified,
     List<String>? certifications,
     List<String>? videoUrls,
@@ -173,6 +183,8 @@ class UserModel {
       expertise: expertise ?? this.expertise,
       rating: rating ?? this.rating,
       hourlyRate: hourlyRate ?? this.hourlyRate,
+      monthlyRate: monthlyRate ?? this.monthlyRate,
+      bio: bio ?? this.bio,
       verified: verified ?? this.verified,
       certifications: certifications ?? this.certifications,
       videoUrls: videoUrls ?? this.videoUrls,

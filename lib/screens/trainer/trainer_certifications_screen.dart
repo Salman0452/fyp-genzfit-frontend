@@ -57,8 +57,7 @@ class _TrainerCertificationsScreenState
           .get();
 
       if (trainerSnapshot.docs.isNotEmpty) {
-        final trainerData =
-            trainerSnapshot.docs.first.data() as Map<String, dynamic>;
+        final trainerData = trainerSnapshot.docs.first.data();
         final certifications =
             trainerData['certifications'] as List<dynamic>? ?? [];
 

@@ -49,6 +49,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final authProvider = Provider.of<AuthProvider>(context);
     final currentUserId = authProvider.user?.uid ?? '';
     final currentUser = authProvider.currentUser;
@@ -62,53 +63,83 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Theme.of(context).brightness == Brightness.dark
-            ? const Color(0xFF1A1A1A)
-            : AppColors.surface,
+        backgroundColor:
+            isDarkMode ? const Color(0xFF1A1A1A) : AppColors.surface,
+        elevation: 0,
         leading: IconButton(
           icon: Icon(
             Icons.arrow_back,
-            color: Theme.of(context).brightness == Brightness.dark
-                ? const Color(0xFFFFFFFF)
-                : AppColors.textPrimary,
+            color: isDarkMode ? const Color(0xFFFFFFFF) : AppColors.textPrimary,
           ),
           onPressed: () => Navigator.pop(context),
         ),
         title: Row(
           children: [
-            CircleAvatar(
-              radius: 18,
-              backgroundColor: Theme.of(context).brightness == Brightness.dark
-                  ? const Color(0xFF2A2A2A)
-                  : const Color(0xFFE0E0E0),
-              backgroundImage: widget.otherUserAvatar != null &&
-                      widget.otherUserAvatar!.isNotEmpty
-                  ? CachedNetworkImageProvider(widget.otherUserAvatar!)
-                  : null,
-              child: widget.otherUserAvatar == null ||
-                      widget.otherUserAvatar!.isEmpty
-                  ? Text(
-                      widget.otherUserName[0].toUpperCase(),
-                      style: TextStyle(
-                        color: Theme.of(context).brightness == Brightness.dark
-                            ? const Color(0xFFFFFFFF)
-                            : AppColors.textPrimary,
-                        fontSize: 16,
-                      ),
-                    )
-                  : null,
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: (isDarkMode
+                          ? AppColors.brandGreen
+                          : AppColors.brandGreenDeep)
+                      .withOpacity(0.3),
+                  width: 1.5,
+                ),
+              ),
+              child: CircleAvatar(
+                radius: 20,
+                backgroundColor: isDarkMode
+                    ? const Color(0xFF2A2A2A)
+                    : const Color(0xFFE0E0E0),
+                backgroundImage: widget.otherUserAvatar != null &&
+                        widget.otherUserAvatar!.isNotEmpty
+                    ? CachedNetworkImageProvider(widget.otherUserAvatar!)
+                    : null,
+                child: widget.otherUserAvatar == null ||
+                        widget.otherUserAvatar!.isEmpty
+                    ? Text(
+                        widget.otherUserName[0].toUpperCase(),
+                        style: TextStyle(
+                          color: isDarkMode
+                              ? const Color(0xFFFFFFFF)
+                              : AppColors.textPrimary,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      )
+                    : null,
+              ),
             ),
             const SizedBox(width: 12),
             Expanded(
-              child: Text(
-                widget.otherUserName,
-                style: TextStyle(
-                  color: Theme.of(context).brightness == Brightness.dark
-                      ? const Color(0xFFFFFFFF)
-                      : AppColors.textPrimary,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    widget.otherUserName,
+                    style: TextStyle(
+                      color: isDarkMode
+                          ? const Color(0xFFFFFFFF)
+                          : AppColors.textPrimary,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: -0.3,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'Active now',
+                    style: TextStyle(
+                      color: isDarkMode
+                          ? const Color(0xFF9F9F9F)
+                          : AppColors.textSecondary,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
@@ -175,13 +206,16 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                           : AppColors.textPrimary,
                   inputPadding: const EdgeInsets.symmetric(
                     horizontal: 16,
-                    vertical: 35,
+                    vertical: 16,
                   ),
-                  inputMargin: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 12,
+                  inputMargin: const EdgeInsets.fromLTRB(
+                    12,
+                    16,
+                    12,
+                    20,
                   ),
                   messageBorderRadius: 12,
+                  sendButtonMargin: const EdgeInsets.fromLTRB(8, 8, 8, 8),
                   userAvatarNameColors: [
                     Theme.of(context).brightness == Brightness.dark
                         ? AppColors.brandGreen
@@ -267,76 +301,103 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
   }
 
   Future<void> _handleAttachmentPressed(String currentUserId) async {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     showModalBottomSheet(
       context: context,
-      backgroundColor: Theme.of(context).brightness == Brightness.dark
-          ? const Color(0xFF1A1A1A)
-          : AppColors.surface,
+      backgroundColor: isDarkMode ? const Color(0xFF1A1A1A) : AppColors.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (context) => SafeArea(
-        child: Wrap(
-          children: [
-            ListTile(
-              leading: Icon(
-                Icons.photo,
-                color: Theme.of(context).brightness == Brightness.dark
-                    ? AppColors.brandGreen
-                    : AppColors.brandGreenDeep,
-              ),
-              title: Text(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+          child: Wrap(
+            spacing: 16,
+            runSpacing: 16,
+            children: [
+              _buildAttachmentOption(
+                context,
+                Icons.photo_library_rounded,
                 'Photo',
-                style: TextStyle(
-                  color: Theme.of(context).brightness == Brightness.dark
-                      ? const Color(0xFFFFFFFF)
-                      : AppColors.textPrimary,
-                ),
+                isDarkMode ? AppColors.brandGreen : AppColors.brandGreenDeep,
+                () {
+                  Navigator.pop(context);
+                  _pickImage(currentUserId);
+                },
               ),
-              onTap: () {
-                Navigator.pop(context);
-                _pickImage(currentUserId);
-              },
-            ),
-            ListTile(
-              leading: Icon(
-                Icons.videocam,
-                color: Theme.of(context).brightness == Brightness.dark
-                    ? const Color(0xFF10B981)
-                    : const Color(0xFF059669),
-              ),
-              title: Text(
+              _buildAttachmentOption(
+                context,
+                Icons.videocam_rounded,
                 'Video',
-                style: TextStyle(
-                  color: Theme.of(context).brightness == Brightness.dark
-                      ? const Color(0xFFFFFFFF)
-                      : AppColors.textPrimary,
-                ),
+                const Color(0xFF10B981),
+                () {
+                  Navigator.pop(context);
+                  _pickVideo(currentUserId);
+                },
               ),
-              onTap: () {
-                Navigator.pop(context);
-                _pickVideo(currentUserId);
-              },
-            ),
-            ListTile(
-              leading: Icon(
-                Icons.attach_file,
-                color: Theme.of(context).brightness == Brightness.dark
-                    ? const Color(0xFFFFA500)
-                    : const Color(0xFFFF8C00),
-              ),
-              title: Text(
+              _buildAttachmentOption(
+                context,
+                Icons.attach_file_rounded,
                 'File',
-                style: TextStyle(
-                  color: Theme.of(context).brightness == Brightness.dark
-                      ? const Color(0xFFFFFFFF)
-                      : AppColors.textPrimary,
-                ),
+                const Color(0xFFFFA500),
+                () {
+                  Navigator.pop(context);
+                  _pickFile(currentUserId);
+                },
               ),
-              onTap: () {
-                Navigator.pop(context);
-                _pickFile(currentUserId);
-              },
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAttachmentOption(
+    BuildContext context,
+    IconData icon,
+    String label,
+    Color color,
+    VoidCallback onTap,
+  ) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 100,
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.12),
+          borderRadius: BorderRadius.circular(AppSizes.borderRadius),
+          border: Border.all(
+            color: color.withOpacity(0.2),
+            width: 1.5,
+          ),
+        ),
+        child: Column(
+          children: [
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: color.withOpacity(0.15),
+              ),
+              child: Icon(
+                icon,
+                color: color,
+                size: 24,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              label,
+              style: TextStyle(
+                color: isDarkMode
+                    ? const Color(0xFFFFFFFF)
+                    : AppColors.textPrimary,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ],
         ),
@@ -427,6 +488,8 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
     types.Message message,
     String currentUserId,
   ) async {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     // Only allow deletion of messages sent by the current user
     if (message.author.id != currentUserId) {
       _showErrorSnackBar('You can only delete your own messages');
@@ -437,42 +500,77 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: Theme.of(context).brightness == Brightness.dark
-            ? const Color(0xFF2A2A2A)
-            : AppColors.surface,
-        title: Text(
-          'Delete Message',
-          style: TextStyle(
-            color: Theme.of(context).brightness == Brightness.dark
-                ? const Color(0xFFFFFFFF)
-                : AppColors.textPrimary,
-          ),
+        backgroundColor:
+            isDarkMode ? const Color(0xFF1A1A1A) : AppColors.surface,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppSizes.borderRadius),
+        ),
+        title: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: const Color(0xFFFF5C5C).withOpacity(0.15),
+              ),
+              child: const Icon(
+                Icons.delete_outline,
+                color: Color(0xFFFF5C5C),
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Text(
+              'Delete Message',
+              style: TextStyle(
+                color: isDarkMode
+                    ? const Color(0xFFFFFFFF)
+                    : AppColors.textPrimary,
+                fontWeight: FontWeight.w700,
+                fontSize: 16,
+              ),
+            ),
+          ],
         ),
         content: Text(
           'Are you sure you want to delete this message?',
           style: TextStyle(
-            color: Theme.of(context).brightness == Brightness.dark
-                ? const Color(0xFFB0B0B0)
-                : AppColors.textSecondary,
+            color:
+                isDarkMode ? const Color(0xFFB0B0B0) : AppColors.textSecondary,
+            fontSize: 13,
+            height: 1.4,
           ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
+            style: TextButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            ),
             child: Text(
               'Cancel',
               style: TextStyle(
-                color: Theme.of(context).brightness == Brightness.dark
+                color: isDarkMode
                     ? AppColors.brandGreen
-                    : AppColors.accent,
+                    : AppColors.brandGreenDeep,
+                fontWeight: FontWeight.w600,
+                fontSize: 13,
               ),
             ),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            ),
             child: const Text(
               'Delete',
-              style: TextStyle(color: Color(0xFFFF5C5C)),
+              style: TextStyle(
+                color: Color(0xFFFF5C5C),
+                fontWeight: FontWeight.w700,
+                fontSize: 13,
+              ),
             ),
           ),
         ],
@@ -488,7 +586,8 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
               content: const Text('Message deleted'),
               backgroundColor: Theme.of(context).brightness == Brightness.dark
                   ? AppColors.brandGreen
-                  : AppColors.accent,
+                  : AppColors.brandGreenDeep,
+              duration: const Duration(seconds: 2),
             ),
           );
         }

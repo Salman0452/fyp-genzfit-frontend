@@ -62,6 +62,8 @@ class _TrainerDetailScreenState extends State<TrainerDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     return StreamBuilder<DocumentSnapshot>(
       stream: FirebaseFirestore.instance
           .collection('users')
@@ -69,9 +71,9 @@ class _TrainerDetailScreenState extends State<TrainerDetailScreen> {
           .snapshots(),
       builder: (context, userSnapshot) {
         if (!userSnapshot.hasData) {
-          return const Scaffold(
-            backgroundColor: Colors.black,
-            body: Center(child: LoadingWidget()),
+          return Scaffold(
+            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+            body: const Center(child: LoadingWidget()),
           );
         }
 
@@ -82,9 +84,9 @@ class _TrainerDetailScreenState extends State<TrainerDetailScreen> {
               .snapshots(),
           builder: (context, trainerSnapshot) {
             if (!trainerSnapshot.hasData) {
-              return const Scaffold(
-                backgroundColor: Colors.black,
-                body: Center(child: LoadingWidget()),
+              return Scaffold(
+                backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+                body: const Center(child: LoadingWidget()),
               );
             }
 
@@ -92,7 +94,7 @@ class _TrainerDetailScreenState extends State<TrainerDetailScreen> {
             final trainerData =
                 trainerSnapshot.data!.data() as Map<String, dynamic>;
 
-            return _buildContent(userData, trainerData);
+            return _buildContent(userData, trainerData, isDarkMode);
           },
         );
       },
@@ -102,6 +104,7 @@ class _TrainerDetailScreenState extends State<TrainerDetailScreen> {
   Widget _buildContent(
     Map<String, dynamic> userData,
     Map<String, dynamic> trainerData,
+    bool isDarkMode,
   ) {
     final name = userData['name'] ?? 'Trainer';
     final avatarUrl = userData['avatarUrl'] ?? '';
@@ -114,36 +117,46 @@ class _TrainerDetailScreenState extends State<TrainerDetailScreen> {
         List<String>.from(trainerData['certifications'] ?? []);
     final videoUrls = List<String>.from(trainerData['videoUrls'] ?? []);
 
+    final accentColor =
+        isDarkMode ? AppColors.brandGreen : AppColors.brandGreenDeep;
+
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: CustomScrollView(
         slivers: [
           SliverAppBar(
-            expandedHeight: 300,
+            expandedHeight: 280,
             pinned: true,
-            backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
+            elevation: 0,
+            backgroundColor:
+                isDarkMode ? const Color(0xFF1A1A1A) : AppColors.surface,
             iconTheme: IconThemeData(
-                color: Theme.of(context).brightness == Brightness.dark
-                    ? const Color(0xFFFFFFFF)
-                    : AppColors.textPrimary),
+              color: accentColor,
+              size: 20,
+            ),
             flexibleSpace: FlexibleSpaceBar(
               background: Stack(
                 fit: StackFit.expand,
                 children: [
+                  // Hero image
                   if (avatarUrl.isNotEmpty)
                     CachedNetworkImage(
                       imageUrl: avatarUrl,
                       fit: BoxFit.cover,
+                      placeholder: (context, url) => Container(
+                        color: accentColor.withOpacity(0.1),
+                      ),
                     )
                   else
                     Container(
-                      color: AppColors.charcoal,
+                      color: accentColor.withOpacity(0.1),
                       child: Icon(
                         Icons.person,
-                        size: 100,
-                        color: AppColors.textTertiary,
+                        size: 120,
+                        color: accentColor.withOpacity(0.3),
                       ),
                     ),
+                  // Gradient overlay
                   Container(
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
@@ -151,11 +164,12 @@ class _TrainerDetailScreenState extends State<TrainerDetailScreen> {
                         end: Alignment.bottomCenter,
                         colors: [
                           Colors.transparent,
-                          Colors.black.withOpacity(0.7),
+                          Colors.black.withOpacity(0.6),
                         ],
                       ),
                     ),
                   ),
+                  // Header info
                   Positioned(
                     bottom: 16,
                     left: 16,
@@ -163,40 +177,105 @@ class _TrainerDetailScreenState extends State<TrainerDetailScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          name,
-                          style: const TextStyle(
-                            color: AppColors.textOnBrand,
-                            fontSize: 28,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
                         Row(
                           children: [
-                            Icon(Icons.star,
-                                color: Theme.of(context).brightness ==
-                                        Brightness.dark
-                                    ? AppColors.brandGreen
-                                    : AppColors.brandGreenDeep,
-                                size: 20),
-                            const SizedBox(width: 4),
-                            Text(
-                              rating.toStringAsFixed(1),
-                              style: const TextStyle(
-                                color: AppColors.textOnBrand,
-                                fontSize: 16,
+                            Expanded(
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      name,
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 28,
+                                        fontWeight: FontWeight.w800,
+                                        letterSpacing: -0.5,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                  if (trainerData['verified'] == true) ...[
+                                    const SizedBox(width: 8),
+                                    Container(
+                                      width: 24,
+                                      height: 24,
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        color: accentColor,
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: accentColor.withOpacity(0.5),
+                                            blurRadius: 8,
+                                            offset: const Offset(0, 2),
+                                          ),
+                                        ],
+                                      ),
+                                      child: const Icon(
+                                        Icons.check_rounded,
+                                        color: Colors.white,
+                                        size: 13,
+                                      ),
+                                    ),
+                                  ],
+                                ],
                               ),
                             ),
-                            const SizedBox(width: 16),
-                            Icon(Icons.people,
-                                color: AppColors.brandBlue, size: 20),
-                            const SizedBox(width: 4),
-                            Text(
-                              '$clients clients',
-                              style: const TextStyle(
-                                color: AppColors.textOnBrand,
-                                fontSize: 16,
+                          ],
+                        ),
+                        const SizedBox(height: 10),
+                        Row(
+                          children: [
+                            // Rating
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 6,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.2),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(Icons.star_rounded,
+                                      color: accentColor, size: 16),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    rating.toStringAsFixed(1),
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            // Clients
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 6,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.2),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(Icons.people_rounded,
+                                      color: AppColors.brandBlue, size: 16),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    '$clients clients',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ],
@@ -210,152 +289,286 @@ class _TrainerDetailScreenState extends State<TrainerDetailScreen> {
           ),
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Price card
+                  // Verified badge (prominent)
+                  if (trainerData['verified'] == true)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: accentColor.withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: accentColor.withOpacity(0.3),
+                          width: 1.5,
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.verified_rounded,
+                            size: 14,
+                            color: accentColor,
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            'Verified Trainer',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: accentColor,
+                              letterSpacing: -0.1,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  if (trainerData['verified'] == true)
+                    const SizedBox(height: 16),
+                  // Modern price card
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
-                      color: AppColors.brandBlue.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: AppColors.brandBlue, width: 2),
-                    ),
-                    child: Column(
-                      children: [
-                        Text(
-                          '\$${hourlyRate.toStringAsFixed(0)}',
-                          style: const TextStyle(
-                            color: AppColors.brandBlue,
-                            fontSize: 36,
-                            fontWeight: FontWeight.bold,
-                          ),
+                      color: isDarkMode
+                          ? const Color(0xFF262626)
+                          : const Color(0xFFFAFAFA),
+                      borderRadius:
+                          BorderRadius.circular(AppSizes.borderRadius),
+                      border: Border.all(
+                        color: accentColor.withOpacity(0.2),
+                        width: 1.5,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: isDarkMode
+                              ? Colors.black.withOpacity(0.3)
+                              : Colors.black.withOpacity(0.05),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
                         ),
-                        Text(
-                          'per hour',
-                          style: TextStyle(
-                            color: AppColors.textSecondary,
-                            fontSize: 16,
+                      ],
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Hourly Rate',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: isDarkMode
+                                    ? const Color(0xFFB0B0B0)
+                                    : AppColors.textSecondary,
+                                letterSpacing: -0.1,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'PKR ${hourlyRate.toStringAsFixed(0)}',
+                              style: TextStyle(
+                                fontSize: 28,
+                                fontWeight: FontWeight.w800,
+                                color: accentColor,
+                                letterSpacing: -0.5,
+                              ),
+                            ),
+                          ],
+                        ),
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: accentColor.withOpacity(0.15),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            Icons.trending_up_rounded,
+                            color: accentColor,
+                            size: 24,
                           ),
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 28),
 
-                  // Bio
+                  // Bio section
                   if (bio.isNotEmpty) ...[
-                    const Text(
+                    Text(
                       'About',
                       style: TextStyle(
-                        color: AppColors.textPrimary,
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: isDarkMode
+                            ? const Color(0xFFFFFFFF)
+                            : AppColors.textPrimary,
+                        letterSpacing: -0.2,
                       ),
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      bio,
-                      style: TextStyle(
-                        color: AppColors.textSecondary,
-                        fontSize: 16,
-                        height: 1.5,
+                    const SizedBox(height: 12),
+                    Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: isDarkMode
+                            ? const Color(0xFF262626)
+                            : const Color(0xFFFAFAFA),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: accentColor.withOpacity(0.1),
+                        ),
+                      ),
+                      child: Text(
+                        bio,
+                        style: TextStyle(
+                          color: isDarkMode
+                              ? const Color(0xFFD0D0D0)
+                              : AppColors.textSecondary,
+                          fontSize: 13,
+                          height: 1.6,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 28),
                   ],
 
-                  // Expertise
+                  // Expertise section
                   if (expertise.isNotEmpty) ...[
-                    const Text(
-                      'Expertise',
+                    Text(
+                      'Specializations',
                       style: TextStyle(
-                        color: AppColors.textPrimary,
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: isDarkMode
+                            ? const Color(0xFFFFFFFF)
+                            : AppColors.textPrimary,
+                        letterSpacing: -0.2,
                       ),
                     ),
                     const SizedBox(height: 12),
                     Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
+                      spacing: 10,
+                      runSpacing: 10,
                       children: expertise.map((exp) {
                         return Container(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
+                            horizontal: 14,
                             vertical: 8,
                           ),
                           decoration: BoxDecoration(
-                            color: AppColors.brandBlue.withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(20),
+                            color: AppColors.brandBlue.withOpacity(0.15),
+                            borderRadius: BorderRadius.circular(8),
                             border: Border.all(
-                                color: AppColors.brandBlue, width: 1),
-                          ),
-                          child: Text(
-                            exp,
-                            style: const TextStyle(
-                              color: AppColors.brandBlue,
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
+                              color: AppColors.brandBlue.withOpacity(0.3),
+                              width: 1,
                             ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.check_circle_rounded,
+                                size: 14,
+                                color: AppColors.brandBlue,
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                exp,
+                                style: const TextStyle(
+                                  color: AppColors.brandBlue,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  letterSpacing: -0.1,
+                                ),
+                              ),
+                            ],
                           ),
                         );
                       }).toList(),
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 28),
                   ],
 
-                  // Certifications
+                  // Certifications section
                   if (certifications.isNotEmpty) ...[
-                    const Text(
+                    Text(
                       'Certifications',
                       style: TextStyle(
-                        color: AppColors.textPrimary,
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: isDarkMode
+                            ? const Color(0xFFFFFFFF)
+                            : AppColors.textPrimary,
+                        letterSpacing: -0.2,
                       ),
                     ),
                     const SizedBox(height: 12),
                     SizedBox(
-                      height: 140,
+                      height: 160,
                       child: ListView.builder(
                         scrollDirection: Axis.horizontal,
                         itemCount: certifications.length,
                         itemBuilder: (context, index) {
                           return Container(
-                            width: 150,
+                            width: 140,
                             margin: const EdgeInsets.only(right: 12),
                             decoration: BoxDecoration(
-                              color: AppColors.surfaceVariant,
-                              borderRadius: BorderRadius.circular(12),
+                              color: isDarkMode
+                                  ? const Color(0xFF262626)
+                                  : const Color(0xFFFAFAFA),
+                              borderRadius:
+                                  BorderRadius.circular(AppSizes.borderRadius),
                               border: Border.all(
-                                  color: AppColors.brandBlue, width: 1),
+                                color: accentColor.withOpacity(0.2),
+                                width: 1.5,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: isDarkMode
+                                      ? Colors.black.withOpacity(0.3)
+                                      : Colors.black.withOpacity(0.05),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
                             ),
                             child: ClipRRect(
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius:
+                                  BorderRadius.circular(AppSizes.borderRadius),
                               child: CachedNetworkImage(
                                 imageUrl: certifications[index],
                                 fit: BoxFit.cover,
                                 width: double.infinity,
                                 height: double.infinity,
-                                errorWidget: (context, url, error) => Padding(
-                                  padding: const EdgeInsets.all(16),
+                                errorWidget: (context, url, error) => Container(
+                                  color: accentColor.withOpacity(0.1),
                                   child: Column(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
                                       Icon(
-                                        Icons.verified,
-                                        color: AppColors.brandBlue,
+                                        Icons.verified_user_rounded,
+                                        color: accentColor,
                                         size: 32,
                                       ),
                                       const SizedBox(height: 8),
                                       Text(
                                         'Certificate',
                                         style: TextStyle(
-                                          color: AppColors.textSecondary,
-                                          fontSize: 12,
+                                          color: isDarkMode
+                                              ? const Color(0xFFB0B0B0)
+                                              : AppColors.textSecondary,
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w500,
                                         ),
                                         textAlign: TextAlign.center,
                                       ),
@@ -368,22 +581,25 @@ class _TrainerDetailScreenState extends State<TrainerDetailScreen> {
                         },
                       ),
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 28),
                   ],
 
-                  // Videos
+                  // Videos section
                   if (videoUrls.isNotEmpty) ...[
-                    const Text(
+                    Text(
                       'Training Videos',
                       style: TextStyle(
-                        color: AppColors.textPrimary,
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: isDarkMode
+                            ? const Color(0xFFFFFFFF)
+                            : AppColors.textPrimary,
+                        letterSpacing: -0.2,
                       ),
                     ),
                     const SizedBox(height: 12),
                     SizedBox(
-                      height: 120,
+                      height: 140,
                       child: ListView.builder(
                         scrollDirection: Axis.horizontal,
                         itemCount: videoUrls.length,
@@ -392,35 +608,50 @@ class _TrainerDetailScreenState extends State<TrainerDetailScreen> {
                             width: 200,
                             margin: const EdgeInsets.only(right: 12),
                             decoration: BoxDecoration(
-                              color: AppColors.charcoal,
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius:
+                                  BorderRadius.circular(AppSizes.borderRadius),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: isDarkMode
+                                      ? Colors.black.withOpacity(0.4)
+                                      : Colors.black.withOpacity(0.1),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
                             ),
                             child: Stack(
                               alignment: Alignment.center,
                               children: [
                                 ClipRRect(
-                                  borderRadius: BorderRadius.circular(12),
+                                  borderRadius: BorderRadius.circular(
+                                      AppSizes.borderRadius),
                                   child: CachedNetworkImage(
                                     imageUrl: videoUrls[index],
                                     fit: BoxFit.cover,
                                     width: double.infinity,
                                     height: double.infinity,
-                                    errorWidget: (context, url, error) => Icon(
-                                        Icons.video_library,
-                                        color: AppColors.textSecondary,
-                                        size: 40),
+                                    errorWidget: (context, url, error) =>
+                                        Container(
+                                      color: accentColor.withOpacity(0.1),
+                                      child: Icon(
+                                        Icons.video_library_rounded,
+                                        color: accentColor.withOpacity(0.5),
+                                        size: 40,
+                                      ),
+                                    ),
                                   ),
                                 ),
                                 Container(
                                   decoration: BoxDecoration(
-                                    color: Colors.black.withOpacity(0.3),
+                                    color: Colors.black.withOpacity(0.35),
                                     shape: BoxShape.circle,
                                   ),
                                   padding: const EdgeInsets.all(12),
-                                  child: const Icon(
-                                    Icons.play_arrow,
-                                    color: AppColors.textOnBrand,
-                                    size: 32,
+                                  child: Icon(
+                                    Icons.play_arrow_rounded,
+                                    color: accentColor,
+                                    size: 28,
                                   ),
                                 ),
                               ],
@@ -429,7 +660,7 @@ class _TrainerDetailScreenState extends State<TrainerDetailScreen> {
                         },
                       ),
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 28),
                   ],
 
                   // Action buttons
@@ -445,18 +676,26 @@ class _TrainerDetailScreenState extends State<TrainerDetailScreen> {
   }
 
   Widget _buildBottomBar(double hourlyRate) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final accentColor =
+        isDarkMode ? AppColors.brandGreen : AppColors.brandGreenDeep;
+
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: Theme.of(context).appBarTheme.backgroundColor,
+        color: isDarkMode ? const Color(0xFF1A1A1A) : AppColors.surface,
+        border: Border(
+          top: BorderSide(
+            color: accentColor.withOpacity(0.1),
+            width: 1,
+          ),
+        ),
         boxShadow: [
           BoxShadow(
-            color: (Theme.of(context).brightness == Brightness.dark
-                    ? const Color(0xFF000000)
-                    : Colors.black)
-                .withOpacity(0.3),
-            blurRadius: 10,
-            offset: const Offset(0, -2),
+            color: (isDarkMode ? const Color(0xFF000000) : Colors.black)
+                .withOpacity(0.08),
+            blurRadius: 12,
+            offset: const Offset(0, -4),
           ),
         ],
       ),
@@ -464,47 +703,64 @@ class _TrainerDetailScreenState extends State<TrainerDetailScreen> {
         child: Row(
           children: [
             Expanded(
-              child: OutlinedButton(
+              child: OutlinedButton.icon(
                 onPressed: _isLoading ? null : _handleMessageTrainer,
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: AppColors.brandBlue,
-                  side: const BorderSide(color: AppColors.brandBlue, width: 2),
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                icon: const Icon(Icons.message_outlined, size: 18),
+                label: const Text(
+                  'Message',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
-                child: const Text(
-                  'Message',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.brandBlue,
+                  side: BorderSide(
+                    color: AppColors.brandBlue.withOpacity(0.5),
+                    width: 1.5,
+                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                 ),
               ),
             ),
             const SizedBox(width: 12),
             Expanded(
               flex: 2,
-              child: ElevatedButton(
+              child: ElevatedButton.icon(
                 onPressed: _isLoading || _hasActiveSession || _hasPendingRequest
                     ? null
                     : () => _handleHireTrainer(hourlyRate),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.brandBlue,
-                  foregroundColor: AppColors.textOnBrand,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
+                icon: Icon(
+                  _hasActiveSession
+                      ? Icons.check_circle
+                      : _hasPendingRequest
+                          ? Icons.hourglass_empty
+                          : Icons.handshake_outlined,
+                  size: 18,
                 ),
-                child: Text(
+                label: Text(
                   _hasActiveSession
                       ? 'Active Session'
                       : _hasPendingRequest
                           ? 'Request Pending'
                           : 'Hire Trainer',
                   style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: -0.2,
                   ),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: accentColor,
+                  foregroundColor: isDarkMode ? Colors.black87 : Colors.white,
+                  disabledBackgroundColor: accentColor.withOpacity(0.5),
+                  elevation: 2,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  shadowColor: accentColor.withOpacity(0.3),
                 ),
               ),
             ),

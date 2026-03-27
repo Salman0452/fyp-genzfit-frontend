@@ -89,6 +89,7 @@ class _TrainerEditProfileScreenState extends State<TrainerEditProfileScreen> {
       final updates = <String, dynamic>{
         'name': _nameController.text.trim(),
         'hourlyRate': double.parse(_hourlyRateController.text.trim()),
+        'bio': _bioController.text.trim(),
         'updatedAt': FieldValue.serverTimestamp(),
       };
 
@@ -395,7 +396,8 @@ class _TrainerEditProfileScreenState extends State<TrainerEditProfileScreen> {
                 width: double.infinity,
                 child: CustomButton(
                   text: _isLoading ? 'Updating...' : 'Update Profile',
-                  onPressed: _isLoading ? null : _updateProfile,
+                  isLoading: _isLoading,
+                  onPressed: _updateProfile,
                 ),
               ),
             ],
