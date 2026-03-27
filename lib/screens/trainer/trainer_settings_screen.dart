@@ -8,6 +8,11 @@ import 'package:genzfit/screens/common/privacy_policy_screen.dart';
 import 'package:genzfit/screens/common/terms_of_service_screen.dart';
 import 'package:genzfit/screens/common/help_support_screen.dart';
 import 'package:genzfit/screens/common/language_selection_screen.dart';
+import 'package:genzfit/screens/trainer/trainer_edit_profile_screen.dart';
+import 'package:genzfit/screens/trainer/trainer_change_password_screen.dart';
+import 'package:genzfit/screens/trainer/trainer_availability_screen.dart';
+import 'package:genzfit/screens/trainer/trainer_rates_pricing_screen.dart';
+import 'package:genzfit/screens/trainer/trainer_certifications_screen.dart';
 
 class TrainerSettingsScreen extends StatelessWidget {
   const TrainerSettingsScreen({super.key});
@@ -301,10 +306,11 @@ class TrainerSettingsScreen extends StatelessWidget {
                 title: 'Edit Profile',
                 subtitle: 'Update your profile information',
                 onTap: () {
-                  // TODO: Navigate to edit profile screen
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                        content: Text('Profile editing coming soon')),
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const TrainerEditProfileScreen(),
+                    ),
                   );
                 },
               ),
@@ -314,10 +320,11 @@ class TrainerSettingsScreen extends StatelessWidget {
                 title: 'Change Password',
                 subtitle: 'Update your password',
                 onTap: () {
-                  // TODO: Navigate to change password screen
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                        content: Text('Password change coming soon')),
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const TrainerChangePasswordScreen(),
+                    ),
                   );
                 },
               ),
@@ -339,10 +346,11 @@ class TrainerSettingsScreen extends StatelessWidget {
                 title: 'Availability',
                 subtitle: 'Set your working hours and availability',
                 onTap: () {
-                  // TODO: Navigate to availability settings
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                        content: Text('Availability settings coming soon')),
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const TrainerAvailabilityScreen(),
+                    ),
                   );
                 },
               ),
@@ -352,10 +360,11 @@ class TrainerSettingsScreen extends StatelessWidget {
                 title: 'Rates & Pricing',
                 subtitle: 'Manage your consultation rates',
                 onTap: () {
-                  // TODO: Navigate to pricing settings
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                        content: Text('Pricing settings coming soon')),
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const TrainerRatesPricingScreen(),
+                    ),
                   );
                 },
               ),
@@ -378,10 +387,11 @@ class TrainerSettingsScreen extends StatelessWidget {
                 title: 'Certifications',
                 subtitle: 'Manage your certifications & credentials',
                 onTap: () {
-                  // TODO: Navigate to certifications management
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                        content: Text('Certification management coming soon')),
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const TrainerCertificationsScreen(),
+                    ),
                   );
                 },
               ),

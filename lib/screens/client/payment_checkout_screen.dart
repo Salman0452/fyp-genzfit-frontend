@@ -34,13 +34,18 @@ class _PaymentCheckoutScreenState extends State<PaymentCheckoutScreen> {
   bool _isUploading = false;
   String _transactionId = '';
   double _commissionRate = 0.10; // Default 10%, will be updated from Firestore
-
-  late double _platformFee;
-  late double _trainerAmount;
+  double _platformFee = 0.0;
+  double _trainerAmount = 0.0;
 
   @override
   void initState() {
     super.initState();
+    _initializeAmounts();
+  }
+
+  void _initializeAmounts() {
+    _platformFee = widget.sessionAmount * _commissionRate;
+    _trainerAmount = widget.sessionAmount - _platformFee;
     _loadCommissionRate();
   }
 

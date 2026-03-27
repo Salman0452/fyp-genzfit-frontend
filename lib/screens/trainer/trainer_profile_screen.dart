@@ -12,6 +12,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloudinary_public/cloudinary_public.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:genzfit/screens/trainer/trainer_settings_screen.dart';
+import 'package:genzfit/screens/trainer/trainer_edit_profile_screen.dart';
 
 class TrainerProfileScreen extends StatefulWidget {
   const TrainerProfileScreen({super.key});
@@ -250,61 +251,6 @@ class _TrainerProfileScreenState extends State<TrainerProfileScreen> {
     return null;
   }
 
-  Future<void> _showLogoutDialog() async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: Theme.of(context).brightness == Brightness.dark
-            ? const Color(0xFF1A1A1A)
-            : AppColors.surface,
-        title: Text(
-          'Logout',
-          style: TextStyle(
-            color: Theme.of(context).brightness == Brightness.dark
-                ? const Color(0xFFFFFFFF)
-                : AppColors.textPrimary,
-          ),
-        ),
-        content: Text(
-          'Are you sure you want to logout?',
-          style: TextStyle(
-            color: Theme.of(context).brightness == Brightness.dark
-                ? const Color(0xFFB0B0B0)
-                : AppColors.textSecondary,
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: Text(
-              'Cancel',
-              style: TextStyle(
-                color: Theme.of(context).brightness == Brightness.dark
-                    ? const Color(0xFFB0B0B0)
-                    : AppColors.textSecondary,
-              ),
-            ),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text(
-              'Logout',
-              style: TextStyle(color: AppColors.error),
-            ),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmed == true && mounted) {
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      await authProvider.signOut();
-      if (mounted) {
-        Navigator.pushReplacementNamed(context, '/role-selection');
-      }
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
@@ -334,11 +280,6 @@ class _TrainerProfileScreenState extends State<TrainerProfileScreen> {
               );
             },
             tooltip: 'Settings',
-          ),
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: _showLogoutDialog,
-            tooltip: 'Logout',
           ),
         ],
       ),
@@ -518,7 +459,12 @@ class _TrainerProfileScreenState extends State<TrainerProfileScreen> {
           CustomButton(
             text: 'Edit Profile',
             onPressed: () {
-              // TODO: Navigate to edit profile
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const TrainerEditProfileScreen(),
+                ),
+              );
             },
             isOutlined: true,
           ),

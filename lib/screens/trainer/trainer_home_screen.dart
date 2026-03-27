@@ -5,6 +5,8 @@ import 'package:genzfit/utils/constants.dart';
 import 'package:genzfit/screens/trainer/trainer_profile_screen.dart';
 import 'package:genzfit/screens/trainer/dashboard_screen.dart';
 import 'package:genzfit/screens/chat/chat_list_screen.dart';
+import 'package:genzfit/screens/trainer/trainer_clients_screen.dart';
+import 'package:genzfit/screens/trainer/trainer_schedule_screen.dart';
 import 'package:genzfit/services/notification_service.dart';
 
 class TrainerHomeScreen extends StatefulWidget {
@@ -110,30 +112,43 @@ class _TrainerHomeScreenState extends State<TrainerHomeScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Welcome back, ${user?.name?.split(' ').first ?? 'Trainer'}!',
-                      style: TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                        color: Theme.of(context).brightness == Brightness.dark
-                            ? const Color(0xFFFFFFFF)
-                            : AppColors.textPrimary,
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Welcome back,',
+                        style: TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.bold,
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? const Color(0xFFFFFFFF)
+                              : AppColors.textPrimary,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Help your clients achieve their goals',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Theme.of(context).brightness == Brightness.dark
-                            ? const Color(0xFFB0B0B0)
-                            : AppColors.textSecondary,
+                      const SizedBox(height: 4),
+                      Text(
+                        '${user?.name != null ? user!.name.split(' ').first : 'Trainer'}!',
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w500,
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? const Color(0xFFB0B0B0)
+                              : AppColors.textSecondary,
+                        ),
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 8),
+                      Text(
+                        'Help your clients achieve their goals',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? const Color(0xFFB0B0B0)
+                              : AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
                 Container(
                   decoration: BoxDecoration(
@@ -347,7 +362,12 @@ class _TrainerHomeScreenState extends State<TrainerHomeScreen> {
                 Icons.people_outline,
                 AppColors.info,
                 () {
-                  setState(() => _currentIndex = 1);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const TrainerClientsScreen(),
+                    ),
+                  );
                 },
               ),
             ),
@@ -375,12 +395,7 @@ class _TrainerHomeScreenState extends State<TrainerHomeScreen> {
                     ? AppColors.brandGreen
                     : AppColors.brandGreenDeep,
                 () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const ChatListScreen(),
-                    ),
-                  );
+                  setState(() => _currentIndex = 1);
                 },
               ),
             ),
@@ -391,7 +406,12 @@ class _TrainerHomeScreenState extends State<TrainerHomeScreen> {
                 Icons.calendar_today_outlined,
                 AppColors.warning,
                 () {
-                  // TODO: Navigate to schedule
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const TrainerScheduleScreen(),
+                    ),
+                  );
                 },
               ),
             ),

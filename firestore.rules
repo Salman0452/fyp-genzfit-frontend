@@ -307,8 +307,10 @@ service cloud.firestore {
       // Anyone can read payment settings
       allow read: if true;
       
-      // Only admins can update payment settings
-      allow write: if isAdmin();
+      // Only admins can write payment settings
+      // Use direct role check to avoid getUserRole() issues
+      allow write: if isSignedIn() && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
     }
   }
 }
