@@ -61,3 +61,20 @@ smpl_backend/__pycache__/
 smpl_backend/**/__pycache__/
 smpl_backend/cache/
 smpl_backend/*.egg-info/
+
+# Firebase Functions
+functions/node_modules/
+functions/.env
+functions/.firebaserc
+functions/.runtimeconfig.json
+functions/lib/
+functions/dist/
+
+# Node modules (npm/yarn)
+node_modules/
+npm-debug.log
+yarn-error.log
+.npm
+.yarn/cache
+.yarn/install-state.gz
+

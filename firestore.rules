@@ -52,6 +52,30 @@ service cloud.firestore {
       
       // Only admins can delete users
       allow delete: if isAdmin();
+      
+      // Meals subcollection - users can read/write their own meals
+      match /meals/{mealId} {
+        allow read: if isOwner(userId) || isAdmin();
+        allow create: if isOwner(userId);
+        allow update, delete: if isOwner(userId);
+      }
+      
+      // Exercises subcollection - users can read/write their own exercises
+      match /exercises/{exerciseId} {
+        allow read: if isOwner(userId) || isAdmin();
+        allow create: if isOwner(userId);
+        allow update, delete: if isOwner(userId);
+      }
+    }
+    
+    // OTP Verification collection
+    // Doc ID is the email address
+    match /otp_verification/{email} {
+      // Users can only read/write OTP for their own email during signup (before auth)
+      // So we allow unauthenticated access for initial OTP generation
+      allow create: if true; // Allow unauthenticated creation during signup
+      allow update, read: if true; // Allow updates and reads during verification
+      allow delete: if isAdmin(); // Only admins can delete
     }
     
     // Measurements collection

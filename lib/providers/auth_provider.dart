@@ -73,6 +73,7 @@ class AuthProvider extends ChangeNotifier {
     String? goals,
     List<String>? expertise,
     double? hourlyRate,
+    bool emailVerified = false,
   }) async {
     try {
       _isLoading = true;
@@ -87,6 +88,7 @@ class AuthProvider extends ChangeNotifier {
         goals: goals,
         expertise: expertise,
         hourlyRate: hourlyRate,
+        emailVerified: emailVerified,
       );
 
       _isLoading = false;
@@ -97,6 +99,20 @@ class AuthProvider extends ChangeNotifier {
       _isLoading = false;
       notifyListeners();
       return false;
+    }
+  }
+
+  // Mark email as verified after OTP verification
+  Future<void> markEmailAsVerified() async {
+    try {
+      if (_currentUser != null) {
+        await _authService.markEmailAsVerified(_currentUser!.id);
+        _currentUser = _currentUser!.copyWith(emailVerified: true);
+        notifyListeners();
+      }
+    } catch (e) {
+      _error = e.toString();
+      notifyListeners();
     }
   }
 

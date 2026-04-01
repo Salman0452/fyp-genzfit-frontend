@@ -130,35 +130,61 @@ class _AICoachScreenState extends State<AICoachScreen> {
   }
 
   Future<void> _clearHistory() async {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: Theme.of(context).brightness == Brightness.dark
-            ? const Color(0xFF1A1A1A)
-            : AppColors.surface,
+        backgroundColor:
+            isDarkMode ? const Color(0xFF262626) : AppColors.surface,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: BorderSide(
+            color:
+                isDarkMode ? const Color(0xFF3A3A3A) : const Color(0xFFE0E0E0),
+            width: 1,
+          ),
+        ),
         title: Text(
           'Clear Conversation',
           style: GoogleFonts.poppins(
-              color: Theme.of(context).brightness == Brightness.dark
-                  ? const Color(0xFFFFFFFF)
-                  : AppColors.textPrimary),
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+            color: isDarkMode ? Colors.white : AppColors.textPrimary,
+          ),
         ),
         content: Text(
           'Are you sure you want to clear all messages?',
           style: GoogleFonts.inter(
-              color: Theme.of(context).brightness == Brightness.dark
-                  ? const Color(0xFFB0B0B0)
-                  : AppColors.textSecondary),
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            color:
+                isDarkMode ? const Color(0xFFB0B0B0) : AppColors.textSecondary,
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child:
-                Text('Cancel', style: GoogleFonts.inter(color: Colors.white70)),
+            child: Text(
+              'Cancel',
+              style: GoogleFonts.inter(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: isDarkMode
+                    ? const Color(0xFFB0B0B0)
+                    : AppColors.textSecondary,
+              ),
+            ),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: Text('Clear', style: GoogleFonts.inter(color: Colors.red)),
+            child: Text(
+              'Clear',
+              style: GoogleFonts.inter(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: AppColors.error,
+              ),
+            ),
           ),
         ],
       ),
@@ -172,16 +198,15 @@ class _AICoachScreenState extends State<AICoachScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      backgroundColor: isDarkMode ? const Color(0xFF1A1A1A) : AppColors.surface,
       appBar: AppBar(
-        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
+        backgroundColor: isDarkMode ? const Color(0xFF262626) : Colors.white,
         elevation: 0,
         leading: IconButton(
           icon: Icon(Icons.arrow_back_ios,
-              color: Theme.of(context).brightness == Brightness.dark
-                  ? const Color(0xFFFFFFFF)
-                  : AppColors.textPrimary),
+              color: isDarkMode ? Colors.white : AppColors.textPrimary),
           onPressed: () => Navigator.pop(context),
         ),
         title: Row(
@@ -191,7 +216,7 @@ class _AICoachScreenState extends State<AICoachScreen> {
               height: 40,
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
-                  colors: [Color(0xFF83BCB5), Color(0xFF7FFA88)],
+                  colors: [AppColors.brandBlue, AppColors.brandGreen],
                 ),
                 borderRadius: BorderRadius.circular(20),
               ),
@@ -205,15 +230,18 @@ class _AICoachScreenState extends State<AICoachScreen> {
                   'AI Coach',
                   style: GoogleFonts.poppins(
                     fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
+                    color: isDarkMode ? Colors.white : AppColors.textPrimary,
                   ),
                 ),
                 Text(
                   'Powered by Groq',
                   style: GoogleFonts.inter(
                     fontSize: 12,
-                    color: Colors.white60,
+                    fontWeight: FontWeight.w500,
+                    color: isDarkMode
+                        ? const Color(0xFFB0B0B0)
+                        : AppColors.textSecondary,
                   ),
                 ),
               ],
@@ -223,9 +251,7 @@ class _AICoachScreenState extends State<AICoachScreen> {
         actions: [
           IconButton(
             icon: Icon(Icons.delete_outline,
-                color: Theme.of(context).brightness == Brightness.dark
-                    ? const Color(0xFFFFFFFF)
-                    : AppColors.textPrimary),
+                color: isDarkMode ? Colors.white : AppColors.textPrimary),
             onPressed: _clearHistory,
           ),
         ],
@@ -236,19 +262,20 @@ class _AICoachScreenState extends State<AICoachScreen> {
             child: _isLoadingHistory
                 ? Center(
                     child: CircularProgressIndicator(
-                      color: Theme.of(context).brightness == Brightness.dark
+                      color: isDarkMode
                           ? AppColors.brandGreen
                           : AppColors.brandGreenDeep,
                     ),
                   )
                 : _messages.isEmpty
-                    ? _buildEmptyState()
+                    ? _buildEmptyState(isDarkMode)
                     : ListView.builder(
                         controller: _scrollController,
                         padding: const EdgeInsets.all(16),
                         itemCount: _messages.length,
                         itemBuilder: (context, index) {
-                          return _buildMessageBubble(_messages[index]);
+                          return _buildMessageBubble(
+                              _messages[index], isDarkMode);
                         },
                       ),
           ),
@@ -260,7 +287,9 @@ class _AICoachScreenState extends State<AICoachScreen> {
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF171917),
+                      color: isDarkMode
+                          ? const Color(0xFF2A2A2A)
+                          : const Color(0xFFF0F0F0),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Row(
@@ -271,15 +300,20 @@ class _AICoachScreenState extends State<AICoachScreen> {
                           height: 16,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            color: Colors.white60,
+                            color: isDarkMode
+                                ? const Color(0xFFB0B0B0)
+                                : const Color(0xFF595959),
                           ),
                         ),
                         const SizedBox(width: 8),
                         Text(
                           'Typing...',
                           style: GoogleFonts.inter(
-                            color: Colors.white60,
+                            color: isDarkMode
+                                ? const Color(0xFFB0B0B0)
+                                : const Color(0xFF595959),
                             fontSize: 14,
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
                       ],
@@ -288,13 +322,13 @@ class _AICoachScreenState extends State<AICoachScreen> {
                 ],
               ),
             ),
-          _buildInputArea(),
+          _buildInputArea(isDarkMode),
         ],
       ),
     );
   }
 
-  Widget _buildEmptyState() {
+  Widget _buildEmptyState(bool isDarkMode) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
       child: Column(
@@ -306,7 +340,7 @@ class _AICoachScreenState extends State<AICoachScreen> {
             height: 120,
             decoration: BoxDecoration(
               gradient: const LinearGradient(
-                colors: [Color(0xFF83BCB5), Color(0xFF7FFA88)],
+                colors: [AppColors.brandBlue, AppColors.brandGreen],
               ),
               borderRadius: BorderRadius.circular(60),
             ),
@@ -318,8 +352,8 @@ class _AICoachScreenState extends State<AICoachScreen> {
             'Your AI Fitness Coach',
             style: GoogleFonts.poppins(
               fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
+              fontWeight: FontWeight.w700,
+              color: isDarkMode ? Colors.white : AppColors.textPrimary,
             ),
           ),
           const SizedBox(height: 12),
@@ -328,7 +362,9 @@ class _AICoachScreenState extends State<AICoachScreen> {
             textAlign: TextAlign.center,
             style: GoogleFonts.inter(
               fontSize: 14,
-              color: Colors.white60,
+              color: isDarkMode
+                  ? const Color(0xFFB0B0B0)
+                  : AppColors.textSecondary,
               height: 1.5,
             ),
           ),
@@ -336,10 +372,16 @@ class _AICoachScreenState extends State<AICoachScreen> {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: const Color(0xFF171917),
+              color: isDarkMode
+                  ? const Color(0xFF262626)
+                  : const Color(0xFFF8F8F8),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: const Color(0xFF83BCB5).withOpacity(0.3),
+                color: (isDarkMode
+                        ? AppColors.brandGreen
+                        : AppColors.brandGreenDeep)
+                    .withOpacity(0.3),
+                width: 1.5,
               ),
             ),
             child: Column(
@@ -347,24 +389,28 @@ class _AICoachScreenState extends State<AICoachScreen> {
               children: [
                 Row(
                   children: [
-                    const Icon(Icons.check_circle,
-                        color: Color(0xFF7FFA88), size: 20),
+                    Icon(Icons.check_circle,
+                        color: isDarkMode
+                            ? AppColors.brandGreen
+                            : AppColors.brandGreenDeep,
+                        size: 20),
                     const SizedBox(width: 8),
                     Text(
                       'AI has access to:',
                       style: GoogleFonts.poppins(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
-                        color: Colors.white,
+                        color:
+                            isDarkMode ? Colors.white : AppColors.textPrimary,
                       ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 12),
-                _buildDataPoint('Your body measurements & BMI'),
-                _buildDataPoint('Current meal & exercise plans'),
-                _buildDataPoint('Progress tracking over time'),
-                _buildDataPoint('Your fitness goals'),
+                _buildDataPoint('Your body measurements & BMI', isDarkMode),
+                _buildDataPoint('Current meal & exercise plans', isDarkMode),
+                _buildDataPoint('Progress tracking over time', isDarkMode),
+                _buildDataPoint('Your fitness goals', isDarkMode),
               ],
             ),
           ),
@@ -375,7 +421,7 @@ class _AICoachScreenState extends State<AICoachScreen> {
               style: GoogleFonts.poppins(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
-                color: Colors.white,
+                color: isDarkMode ? Colors.white : AppColors.textPrimary,
               ),
             ),
             const SizedBox(height: 16),
@@ -391,17 +437,25 @@ class _AICoachScreenState extends State<AICoachScreen> {
                       vertical: 12,
                     ),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF171917),
+                      color: isDarkMode
+                          ? const Color(0xFF262626)
+                          : const Color(0xFFF8F8F8),
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
-                        color: const Color(0xFF83BCB5).withOpacity(0.3),
+                        color: (isDarkMode
+                                ? AppColors.brandGreen
+                                : AppColors.brandGreenDeep)
+                            .withOpacity(0.3),
+                        width: 1.5,
                       ),
                     ),
                     child: Text(
                       prompt,
                       style: GoogleFonts.inter(
-                        color: Colors.white,
+                        color:
+                            isDarkMode ? Colors.white : AppColors.textPrimary,
                         fontSize: 13,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                   ),
@@ -414,7 +468,7 @@ class _AICoachScreenState extends State<AICoachScreen> {
     );
   }
 
-  Widget _buildDataPoint(String text) {
+  Widget _buildDataPoint(String text, bool isDarkMode) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Row(
@@ -423,8 +477,9 @@ class _AICoachScreenState extends State<AICoachScreen> {
           Container(
             width: 4,
             height: 4,
-            decoration: const BoxDecoration(
-              color: Color(0xFF83BCB5),
+            decoration: BoxDecoration(
+              color:
+                  isDarkMode ? AppColors.brandGreen : AppColors.brandGreenDeep,
               shape: BoxShape.circle,
             ),
           ),
@@ -434,7 +489,10 @@ class _AICoachScreenState extends State<AICoachScreen> {
               text,
               style: GoogleFonts.inter(
                 fontSize: 13,
-                color: Colors.white70,
+                color: isDarkMode
+                    ? const Color(0xFFB0B0B0)
+                    : AppColors.textSecondary,
+                fontWeight: FontWeight.w500,
               ),
             ),
           ),
@@ -443,7 +501,7 @@ class _AICoachScreenState extends State<AICoachScreen> {
     );
   }
 
-  Widget _buildMessageBubble(ChatMessage message) {
+  Widget _buildMessageBubble(ChatMessage message, bool isDarkMode) {
     final isUser = message.role == 'user';
 
     return Padding(
@@ -459,7 +517,7 @@ class _AICoachScreenState extends State<AICoachScreen> {
               height: 32,
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
-                  colors: [Color(0xFF83BCB5), Color(0xFF7FFA88)],
+                  colors: [AppColors.brandBlue, AppColors.brandGreen],
                 ),
                 borderRadius: BorderRadius.circular(16),
               ),
@@ -476,8 +534,12 @@ class _AICoachScreenState extends State<AICoachScreen> {
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     color: isUser
-                        ? const Color(0xFF7FFA88)
-                        : const Color(0xFF171917),
+                        ? (isDarkMode
+                            ? AppColors.brandGreen
+                            : AppColors.brandGreenDeep)
+                        : (isDarkMode
+                            ? const Color(0xFF262626)
+                            : const Color(0xFFF0F0F0)),
                     borderRadius: BorderRadius.only(
                       topLeft: const Radius.circular(20),
                       topRight: const Radius.circular(20),
@@ -488,8 +550,11 @@ class _AICoachScreenState extends State<AICoachScreen> {
                   child: Text(
                     message.content,
                     style: GoogleFonts.inter(
-                      color: Colors.white,
+                      color: isUser
+                          ? Colors.white
+                          : (isDarkMode ? Colors.white : AppColors.textPrimary),
                       fontSize: 15,
+                      fontWeight: FontWeight.w500,
                       height: 1.4,
                     ),
                   ),
@@ -499,7 +564,10 @@ class _AICoachScreenState extends State<AICoachScreen> {
                   DateFormat('h:mm a').format(message.timestamp),
                   style: GoogleFonts.inter(
                     fontSize: 11,
-                    color: Colors.white38,
+                    color: isDarkMode
+                        ? const Color(0xFF595959)
+                        : const Color(0xFFC0C0C0),
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
               ],
@@ -512,12 +580,15 @@ class _AICoachScreenState extends State<AICoachScreen> {
               backgroundImage: widget.user.avatarUrl != null
                   ? NetworkImage(widget.user.avatarUrl!)
                   : null,
-              backgroundColor: const Color(0xFF171917),
+              backgroundColor: isDarkMode
+                  ? const Color(0xFF262626)
+                  : const Color(0xFFF0F0F0),
               child: widget.user.avatarUrl == null
                   ? Text(
                       widget.user.name[0].toUpperCase(),
                       style: GoogleFonts.poppins(
-                        color: Colors.white,
+                        color:
+                            isDarkMode ? Colors.white : AppColors.textPrimary,
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
                       ),
@@ -530,34 +601,57 @@ class _AICoachScreenState extends State<AICoachScreen> {
     );
   }
 
-  Widget _buildInputArea() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: const BoxDecoration(
-        color: Color(0xFF171917),
-        border: Border(
-          top: BorderSide(color: Color(0xFF1F2120)),
+  Widget _buildInputArea(bool isDarkMode) {
+    return SafeArea(
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: isDarkMode ? const Color(0xFF262626) : Colors.white,
+          border: Border(
+            top: BorderSide(
+              color: isDarkMode
+                  ? const Color(0xFF3A3A3A)
+                  : const Color(0xFFE0E0E0),
+              width: 1,
+            ),
+          ),
         ),
-      ),
-      child: SafeArea(
         child: Row(
           children: [
             Expanded(
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF1F2120),
+                  color: isDarkMode
+                      ? const Color(0xFF1A1A1A)
+                      : const Color(0xFFF8F8F8),
                   borderRadius: BorderRadius.circular(24),
+                  border: Border.all(
+                    color: isDarkMode
+                        ? const Color(0xFF3A3A3A)
+                        : const Color(0xFFE0E0E0),
+                    width: 1,
+                  ),
                 ),
                 child: TextField(
                   controller: _messageController,
-                  style: GoogleFonts.inter(color: Colors.white),
+                  style: GoogleFonts.inter(
+                    color: isDarkMode ? Colors.white : AppColors.textPrimary,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
                   maxLines: null,
                   textInputAction: TextInputAction.send,
                   onSubmitted: _sendMessage,
                   decoration: InputDecoration(
                     hintText: 'Ask me anything...',
-                    hintStyle: GoogleFonts.inter(color: Colors.white38),
+                    hintStyle: GoogleFonts.inter(
+                      color: isDarkMode
+                          ? const Color(0xFF595959)
+                          : const Color(0xFFC0C0C0),
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
                     border: InputBorder.none,
                   ),
                 ),
@@ -567,12 +661,12 @@ class _AICoachScreenState extends State<AICoachScreen> {
             Container(
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
-                  colors: [Color(0xFF83BCB5), Color(0xFF7FFA88)],
+                  colors: [AppColors.brandBlue, AppColors.brandGreen],
                 ),
                 borderRadius: BorderRadius.circular(24),
               ),
               child: IconButton(
-                icon: const Icon(Icons.send, color: Colors.white),
+                icon: const Icon(Icons.send, color: Colors.white, size: 20),
                 onPressed: () => _sendMessage(_messageController.text),
               ),
             ),

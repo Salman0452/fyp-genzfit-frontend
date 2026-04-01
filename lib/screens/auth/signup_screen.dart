@@ -8,6 +8,8 @@ import '../../utils/helpers.dart';
 import '../../widgets/custom_button.dart';
 import '../../widgets/custom_text_field.dart';
 import '../onboarding/onboarding_screen.dart';
+import 'otp_verification_screen.dart';
+import '../../services/otp_service.dart';
 
 class SignupScreen extends StatefulWidget {
   final UserRole role;
@@ -83,43 +85,84 @@ class _SignupScreenState extends State<SignupScreen> {
       return;
     }
 
+    final email = _emailController.text.trim();
+    final password = _passwordController.text;
+    final name = _nameController.text.trim();
+
+    // Step 1: Create temporary account and send OTP
     final authProvider = context.read<AuthProvider>();
+    final otpService = OTPService();
 
-    final success = await authProvider.signUp(
-      email: _emailController.text.trim(),
-      password: _passwordController.text,
-      name: _nameController.text.trim(),
-      role: widget.role,
-      goals: _selectedGoal,
-      expertise: _selectedExpertise.isEmpty ? null : _selectedExpertise,
-      hourlyRate: _hourlyRateController.text.isEmpty
-          ? null
-          : double.tryParse(_hourlyRateController.text),
-    );
-
-    if (!mounted) return;
-
-    if (success) {
-      Helpers.showSnackBar(context, 'Account created successfully!');
-
-      // Navigate based on role - clear all previous routes
-      if (widget.role == UserRole.client) {
-        // New clients → onboarding flow
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(builder: (_) => const OnboardingScreen()),
-          (route) => false,
-        );
-      } else if (widget.role == UserRole.trainer) {
-        Navigator.pushNamedAndRemoveUntil(
-            context, '/trainer-home', (route) => false);
-      }
-    } else {
-      Helpers.showSnackBar(
-        context,
-        authProvider.error ?? 'Sign up failed',
-        isError: true,
+    try {
+      // Create account (but mark as unverified)
+      final success = await authProvider.signUp(
+        email: email,
+        password: password,
+        name: name,
+        role: widget.role,
+        goals: _selectedGoal,
+        expertise: _selectedExpertise.isEmpty ? null : _selectedExpertise,
+        hourlyRate: _hourlyRateController.text.isEmpty
+            ? null
+            : double.tryParse(_hourlyRateController.text),
+        emailVerified: false, // Mark as unverified
       );
+
+      if (!mounted) return;
+
+      if (success) {
+        // Generate and send OTP
+        final otp = otpService.generateOTP();
+        final otpSent = await otpService.sendOTP(email: email, otp: otp);
+
+        if (!mounted) return;
+
+        if (otpSent) {
+          // Navigate to OTP verification screen
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => OTPVerificationScreen(
+                email: email,
+                onVerified: (verified) {
+                  if (verified) {
+                    // Update user as verified
+                    authProvider.markEmailAsVerified();
+
+                    // Clean up OTP
+                    otpService.deleteOTP(email: email);
+
+                    // Navigate based on role
+                    if (widget.role == UserRole.client) {
+                      Navigator.pushAndRemoveUntil(
+                        context,
+                        MaterialPageRoute(
+                            builder: (_) => const OnboardingScreen()),
+                        (route) => false,
+                      );
+                    } else if (widget.role == UserRole.trainer) {
+                      Navigator.pushNamedAndRemoveUntil(
+                          context, '/trainer-home', (route) => false);
+                    }
+                  }
+                },
+              ),
+            ),
+          );
+        } else {
+          Helpers.showSnackBar(context,
+              'Failed to send OTP. Please check your email and try again.',
+              isError: true);
+        }
+      } else {
+        Helpers.showSnackBar(
+          context,
+          authProvider.error ?? 'Sign up failed',
+          isError: true,
+        );
+      }
+    } catch (e) {
+      Helpers.showSnackBar(context, 'Error: $e', isError: true);
     }
   }
 

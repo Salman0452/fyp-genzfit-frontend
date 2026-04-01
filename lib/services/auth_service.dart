@@ -24,6 +24,7 @@ class AuthService {
     String? goals,
     List<String>? expertise,
     double? hourlyRate,
+    bool emailVerified = false,
   }) async {
     try {
       // Create user with Firebase Auth
@@ -48,6 +49,7 @@ class AuthService {
         role: role,
         createdAt: DateTime.now(),
         status: 'active',
+        emailVerified: emailVerified,
         goals: role == UserRole.client ? goals : null,
         expertise: role == UserRole.trainer ? expertise : null,
         hourlyRate: role == UserRole.trainer ? hourlyRate : null,
@@ -167,7 +169,8 @@ class AuthService {
       await _firestore.collection('users').doc(user.uid).delete();
 
       // If trainer, delete trainer profile
-      final trainerDoc = await _firestore.collection('trainers').doc(user.uid).get();
+      final trainerDoc =
+          await _firestore.collection('trainers').doc(user.uid).get();
       if (trainerDoc.exists) {
         await _firestore.collection('trainers').doc(user.uid).delete();
       }
@@ -232,6 +235,18 @@ class AuthService {
       await user.reauthenticateWithCredential(credential);
     } catch (e) {
       throw Exception('Reauthentication failed: ${e.toString()}');
+    }
+  }
+
+  // Mark email as verified after OTP verification
+  Future<void> markEmailAsVerified(String userId) async {
+    try {
+      await _firestore.collection('users').doc(userId).update({
+        'emailVerified': true,
+      });
+      print('✅ Email marked as verified for user: $userId');
+    } catch (e) {
+      throw Exception('Failed to mark email as verified: ${e.toString()}');
     }
   }
 }

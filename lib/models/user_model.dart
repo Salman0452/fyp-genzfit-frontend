@@ -10,6 +10,7 @@ class UserModel {
   final UserRole role;
   final DateTime createdAt;
   final String status; // active or suspended
+  final bool emailVerified; // Email OTP verification status
 
   // Client-specific fields
   final String? goals; // fitness, weightGain, weightLoss
@@ -36,6 +37,7 @@ class UserModel {
     required this.role,
     required this.createdAt,
     this.status = 'active',
+    this.emailVerified = false,
     this.goals,
     this.skinTone,
     this.preferences,
@@ -87,6 +89,7 @@ class UserModel {
       'role': roleToString(role),
       'createdAt': Timestamp.fromDate(createdAt),
       'status': status,
+      'emailVerified': emailVerified,
       if (role == UserRole.client) ...{
         'goals': goals,
         'skinTone': skinTone ?? 'medium',
@@ -117,6 +120,7 @@ class UserModel {
       role: stringToRole(map['role'] ?? 'client'),
       createdAt: (map['createdAt'] as Timestamp).toDate(),
       status: map['status'] ?? 'active',
+      emailVerified: map['emailVerified'] ?? false,
       goals: map['goals'],
       skinTone: map['skinTone'] as String?,
       preferences: map['preferences'],
@@ -155,6 +159,7 @@ class UserModel {
     UserRole? role,
     DateTime? createdAt,
     String? status,
+    bool? emailVerified,
     String? goals,
     String? skinTone,
     Map<String, dynamic>? preferences,
@@ -177,6 +182,7 @@ class UserModel {
       role: role ?? this.role,
       createdAt: createdAt ?? this.createdAt,
       status: status ?? this.status,
+      emailVerified: emailVerified ?? this.emailVerified,
       goals: goals ?? this.goals,
       skinTone: skinTone ?? this.skinTone,
       preferences: preferences ?? this.preferences,
