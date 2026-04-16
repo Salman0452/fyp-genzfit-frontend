@@ -382,8 +382,8 @@ class _TrainerVerificationScreenState extends State<TrainerVerificationScreen> {
             Expanded(
               child: _buildStatItem(
                 Icons.attach_money,
-                'Rate/hr',
-                '\$${trainer.hourlyRate?.toStringAsFixed(0) ?? '0'}',
+                'Month Rate',
+                'PKR ${trainer.monthlyRate?.toStringAsFixed(0) ?? '0'}',
               ),
             ),
           ],
@@ -426,7 +426,7 @@ class _TrainerVerificationScreenState extends State<TrainerVerificationScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Hourly Rate',
+                          'Monthly Rate',
                           style: GoogleFonts.inter(
                             fontSize: 12,
                             color:
@@ -438,7 +438,7 @@ class _TrainerVerificationScreenState extends State<TrainerVerificationScreen> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          'PKR ${trainer.hourlyRate?.toStringAsFixed(0) ?? '0'}/hr',
+                          'PKR ${trainer.monthlyRate?.toStringAsFixed(0) ?? '0'}/month',
                           style: GoogleFonts.poppins(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,

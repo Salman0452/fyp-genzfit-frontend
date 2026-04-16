@@ -14,10 +14,10 @@ class TrainerRatesPricingScreen extends StatefulWidget {
 }
 
 class _TrainerRatesPricingScreenState extends State<TrainerRatesPricingScreen> {
-  late TextEditingController _hourlyRateController;
+  late TextEditingController _monthlyRateController;
   late TextEditingController _packageNameController;
   late TextEditingController _packagePriceController;
-  late TextEditingController _packageSessionsController;
+  late TextEditingController _packageDurationController;
 
   List<Map<String, dynamic>> _packages = [];
   bool _isLoading = false;
@@ -26,19 +26,19 @@ class _TrainerRatesPricingScreenState extends State<TrainerRatesPricingScreen> {
   @override
   void initState() {
     super.initState();
-    _hourlyRateController = TextEditingController();
+    _monthlyRateController = TextEditingController();
     _packageNameController = TextEditingController();
     _packagePriceController = TextEditingController();
-    _packageSessionsController = TextEditingController();
+    _packageDurationController = TextEditingController();
     _loadRatesAndPricing();
   }
 
   @override
   void dispose() {
-    _hourlyRateController.dispose();
+    _monthlyRateController.dispose();
     _packageNameController.dispose();
     _packagePriceController.dispose();
-    _packageSessionsController.dispose();
+    _packageDurationController.dispose();
     super.dispose();
   }
 
@@ -58,7 +58,7 @@ class _TrainerRatesPricingScreenState extends State<TrainerRatesPricingScreen> {
 
       if (userDoc.exists) {
         final userData = userDoc.data() as Map<String, dynamic>;
-        _hourlyRateController.text = (userData['hourlyRate'] ?? 0).toString();
+        _monthlyRateController.text = (userData['monthlyRate'] ?? 0).toString();
       }
 
       final trainerSnapshot = await FirebaseFirestore.instance
@@ -69,7 +69,8 @@ class _TrainerRatesPricingScreenState extends State<TrainerRatesPricingScreen> {
 
       if (trainerSnapshot.docs.isNotEmpty) {
         final trainerData = trainerSnapshot.docs.first.data();
-        final packages = trainerData['packages'] as List<dynamic>? ?? [];
+        final packages =
+            trainerData['subscriptionPlans'] as List<dynamic>? ?? [];
 
         setState(() {
           _packages =
@@ -84,10 +85,10 @@ class _TrainerRatesPricingScreenState extends State<TrainerRatesPricingScreen> {
   }
 
   Future<void> _saveRatesAndPricing() async {
-    if (_hourlyRateController.text.isEmpty) {
+    if (_monthlyRateController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Please enter hourly rate'),
+          content: Text('Please enter monthly subscription rate'),
           backgroundColor: AppColors.error,
         ),
       );
@@ -102,15 +103,15 @@ class _TrainerRatesPricingScreenState extends State<TrainerRatesPricingScreen> {
 
       if (userId == null) throw Exception('User not authenticated');
 
-      final hourlyRate = double.parse(_hourlyRateController.text);
+      final monthlyRate = double.parse(_monthlyRateController.text);
 
-      // Update user hourly rate
+      // Update user monthly rate
       await FirebaseFirestore.instance
           .collection('users')
           .doc(userId)
-          .update({'hourlyRate': hourlyRate});
+          .update({'monthlyRate': monthlyRate});
 
-      // Update trainer packages
+      // Update trainer subscription plans
       final trainerSnapshot = await FirebaseFirestore.instance
           .collection('trainers')
           .where('userId', isEqualTo: userId)
@@ -122,13 +123,13 @@ class _TrainerRatesPricingScreenState extends State<TrainerRatesPricingScreen> {
         await FirebaseFirestore.instance
             .collection('trainers')
             .doc(trainerId)
-            .update({'packages': _packages});
+            .update({'subscriptionPlans': _packages});
       }
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Rates and pricing updated successfully!'),
+            content: Text('Monthly subscription pricing updated successfully!'),
             backgroundColor: AppColors.success,
           ),
         );
@@ -151,7 +152,7 @@ class _TrainerRatesPricingScreenState extends State<TrainerRatesPricingScreen> {
   void _addPackage() {
     if (_packageNameController.text.isEmpty ||
         _packagePriceController.text.isEmpty ||
-        _packageSessionsController.text.isEmpty) {
+        _packageDurationController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please fill all package fields'),
@@ -165,11 +166,11 @@ class _TrainerRatesPricingScreenState extends State<TrainerRatesPricingScreen> {
       _packages.add({
         'name': _packageNameController.text,
         'price': double.parse(_packagePriceController.text),
-        'sessions': int.parse(_packageSessionsController.text),
+        'duration': int.parse(_packageDurationController.text), // in months
       });
       _packageNameController.clear();
       _packagePriceController.clear();
-      _packageSessionsController.clear();
+      _packageDurationController.clear();
     });
   }
 
@@ -192,9 +193,9 @@ class _TrainerRatesPricingScreenState extends State<TrainerRatesPricingScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Hourly Rate Section
+                  // Monthly Subscription Rate Section
                   Text(
-                    'Hourly Rate',
+                    'Monthly Subscription Rate',
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
@@ -203,13 +204,23 @@ class _TrainerRatesPricingScreenState extends State<TrainerRatesPricingScreen> {
                           : AppColors.textPrimary,
                     ),
                   ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Your standard monthly coaching fee (PKR)',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? const Color(0xFFB0B0B0)
+                          : AppColors.textSecondary,
+                    ),
+                  ),
                   const SizedBox(height: 12),
                   TextField(
-                    controller: _hourlyRateController,
+                    controller: _monthlyRateController,
                     keyboardType: TextInputType.number,
                     decoration: InputDecoration(
-                      hintText: 'Enter hourly rate',
-                      prefixText: '\$ ',
+                      hintText: 'Enter monthly subscription rate',
+                      prefixText: 'PKR ',
                       border: OutlineInputBorder(
                         borderRadius:
                             BorderRadius.circular(AppSizes.borderRadius),
@@ -226,9 +237,9 @@ class _TrainerRatesPricingScreenState extends State<TrainerRatesPricingScreen> {
                   ),
                   const SizedBox(height: 32),
 
-                  // Packages Section
+                  // Subscription Plans Section
                   Text(
-                    'Package Pricing',
+                    'Subscription Plans (Optional)',
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
@@ -293,10 +304,10 @@ class _TrainerRatesPricingScreenState extends State<TrainerRatesPricingScreen> {
                           children: [
                             Expanded(
                               child: TextField(
-                                controller: _packageSessionsController,
+                                controller: _packageDurationController,
                                 keyboardType: TextInputType.number,
                                 decoration: InputDecoration(
-                                  hintText: 'Sessions',
+                                  hintText: 'Duration (months)',
                                   border: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(8),
                                   ),
@@ -391,7 +402,7 @@ class _TrainerRatesPricingScreenState extends State<TrainerRatesPricingScreen> {
                                     ),
                                     const SizedBox(height: 8),
                                     Text(
-                                      '${package['sessions']} sessions - \$${package['price']}',
+                                      '${package['duration']} months - PKR ${package['price']}',
                                       style: TextStyle(
                                         fontSize: 12,
                                         color: Theme.of(context).brightness ==

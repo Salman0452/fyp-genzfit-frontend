@@ -9,6 +9,7 @@ import 'package:genzfit/widgets/loading_widget.dart';
 import 'package:genzfit/screens/client/settings_screen.dart';
 import 'package:genzfit/screens/client/measurement_detail_screen.dart';
 import 'package:genzfit/screens/client/body_scan_screen.dart';
+import 'package:genzfit/screens/client/manual_measurement_dialog.dart';
 import 'package:genzfit/screens/client/edit_profile_screen.dart';
 import 'package:intl/intl.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -86,6 +87,23 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
     ).then((_) => _loadMeasurements());
   }
 
+  void _showManualMeasurementDialog() {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final userId = authProvider.user?.uid;
+
+    if (userId != null) {
+      showDialog(
+        context: context,
+        builder: (context) => ManualMeasurementDialog(
+          userId: userId,
+          existingMeasurement:
+              _measurements.isNotEmpty ? _measurements.first : null,
+          onMeasurementSaved: _loadMeasurements,
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
@@ -128,11 +146,34 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
                     if (_measurements.isNotEmpty) ...[
                       _buildLatestMeasurementCard(_measurements.first),
                       const SizedBox(height: 16),
-                      // Update measurement button
+                      // Update measurement button - Camera Scan
                       CustomButton(
-                        text: 'Update Measurements',
+                        text: 'Camera Scan',
                         onPressed: _navigateToBodyScan,
                         icon: Icons.camera_alt,
+                      ),
+                      const SizedBox(height: 12),
+                      // Manual Entry button
+                      SizedBox(
+                        width: double.infinity,
+                        height: 56,
+                        child: OutlinedButton.icon(
+                          onPressed: _showManualMeasurementDialog,
+                          icon: const Icon(Icons.edit),
+                          label: const Text('Manual Entry'),
+                          style: OutlinedButton.styleFrom(
+                            side: BorderSide(
+                              color: (Theme.of(context).brightness ==
+                                          Brightness.dark
+                                      ? AppColors.brandGreen
+                                      : AppColors.brandGreenDeep)
+                                  .withOpacity(0.5),
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                        ),
                       ),
                     ] else ...[
                       Container(
@@ -176,7 +217,7 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
                             ),
                             const SizedBox(height: 8),
                             Text(
-                              'Take your first body scan to start tracking',
+                              'Take your first body scan or enter measurements manually to start tracking',
                               textAlign: TextAlign.center,
                               style: TextStyle(
                                 fontSize: 14,
@@ -188,9 +229,31 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
                             ),
                             const SizedBox(height: 20),
                             CustomButton(
-                              text: 'Take Body Scan',
+                              text: 'Camera Scan',
                               onPressed: _navigateToBodyScan,
                               icon: Icons.camera_alt,
+                            ),
+                            const SizedBox(height: 12),
+                            SizedBox(
+                              width: double.infinity,
+                              height: 56,
+                              child: OutlinedButton.icon(
+                                onPressed: _showManualMeasurementDialog,
+                                icon: const Icon(Icons.edit),
+                                label: const Text('Manual Entry'),
+                                style: OutlinedButton.styleFrom(
+                                  side: BorderSide(
+                                    color: (Theme.of(context).brightness ==
+                                                Brightness.dark
+                                            ? AppColors.brandGreen
+                                            : AppColors.brandGreenDeep)
+                                        .withOpacity(0.5),
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                              ),
                             ),
                           ],
                         ),

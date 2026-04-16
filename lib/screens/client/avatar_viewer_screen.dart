@@ -10,6 +10,14 @@ import '../../services/smpl_avatar_service.dart';
 import '../../utils/constants.dart';
 import '../../widgets/avatar_progress_slider.dart';
 
+const List<Map<String, String>> _avatarPoseOptions = [
+  {'value': 'front_double_biceps', 'label': 'Front Double Biceps'},
+  {'value': 'front_lat_spread', 'label': 'Front Lat Spread'},
+  {'value': 'chest_flex', 'label': 'Chest Flex'},
+  {'value': 'most_muscular', 'label': 'Most Muscular'},
+  {'value': 'classic_relaxed', 'label': 'Relaxed Stand'},
+];
+
 class AvatarViewerScreen extends StatefulWidget {
   const AvatarViewerScreen({super.key});
 
@@ -30,6 +38,8 @@ class _AvatarViewerScreenState extends State<AvatarViewerScreen>
   bool _isGenerating = false;
   bool _backendAvailable = false;
   String _statusMessage = '';
+  bool _isFirstBuild = true;
+  String _selectedPoseStyle = 'front_double_biceps';
 
   // Hint visibility
   bool _showHint = false;
@@ -54,6 +64,17 @@ class _AvatarViewerScreenState extends State<AvatarViewerScreen>
 
     _init();
     _checkHint();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Refresh avatar history when returning to this screen (not on first build)
+    if (!_isFirstBuild) {
+      _init();
+    } else {
+      _isFirstBuild = false;
+    }
   }
 
   @override
@@ -121,7 +142,9 @@ class _AvatarViewerScreenState extends State<AvatarViewerScreen>
     // If the snapshot already carries the URL (loaded from Firestore), use it
     // directly without a network round-trip.
     if (snap.glbUrl != null && snap.glbUrl!.isNotEmpty) {
-      if (mounted) setState(() => _currentGlbUrl = snap.glbUrl);
+      if (mounted) {
+        setState(() => _currentGlbUrl = _cacheBust(snap.glbUrl!));
+      }
       return;
     }
 
@@ -134,7 +157,7 @@ class _AvatarViewerScreenState extends State<AvatarViewerScreen>
       );
       if (mounted)
         setState(() {
-          _currentGlbUrl = url;
+          _currentGlbUrl = _cacheBust(url);
           _statusMessage = '';
         });
     } catch (e) {
@@ -173,12 +196,13 @@ class _AvatarViewerScreenState extends State<AvatarViewerScreen>
                 .userModel
                 ?.skinTone ??
             'medium',
+        poseStyle: _selectedPoseStyle,
       );
       _snapshots = await _smplService.getAvatarHistory(userId);
       _selectedIndex = _snapshots.length - 1;
       if (mounted) {
         setState(() {
-          _currentGlbUrl = glbUrl;
+          _currentGlbUrl = glbUrl == null ? null : _cacheBust(glbUrl);
           _isGenerating = false;
           _statusMessage = '';
         });
@@ -235,6 +259,28 @@ class _AvatarViewerScreenState extends State<AvatarViewerScreen>
         ),
       ),
       actions: [
+        PopupMenuButton<String>(
+          tooltip: 'Choose pose',
+          icon: Icon(
+            Icons.fitness_center,
+            color: Theme.of(context).brightness == Brightness.dark
+                ? const Color(0xFFFFFFFF)
+                : AppColors.textPrimary,
+          ),
+          initialValue: _selectedPoseStyle,
+          onSelected: (value) {
+            setState(() => _selectedPoseStyle = value);
+            _showSnack('Pose set to ${_poseLabel(value)}', success: true);
+          },
+          itemBuilder: (context) => _avatarPoseOptions
+              .map(
+                (pose) => PopupMenuItem<String>(
+                  value: pose['value']!,
+                  child: Text(pose['label']!),
+                ),
+              )
+              .toList(),
+        ),
         Padding(
           padding: const EdgeInsets.only(right: 4),
           child: Center(
@@ -359,6 +405,115 @@ class _AvatarViewerScreenState extends State<AvatarViewerScreen>
                   ),
 
                   // ── Progress timeline ─────────────────────────────────────
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 6, 20, 6),
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 12,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? const Color(0xFF232323)
+                            : AppColors.surface,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color:
+                              (Theme.of(context).brightness == Brightness.dark
+                                      ? AppColors.accent
+                                      : AppColors.brandGreenDeep)
+                                  .withOpacity(0.18),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.fitness_center,
+                            size: 18,
+                            color:
+                                Theme.of(context).brightness == Brightness.dark
+                                    ? AppColors.accent
+                                    : AppColors.brandGreenDeep,
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              'Pose: ${_poseLabel(_selectedPoseStyle)}',
+                              style: TextStyle(
+                                color: Theme.of(context).brightness ==
+                                        Brightness.dark
+                                    ? const Color(0xFFFFFFFF)
+                                    : AppColors.textPrimary,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                          TextButton(
+                            onPressed: _isGenerating
+                                ? null
+                                : () async {
+                                    final selected =
+                                        await showModalBottomSheet<String>(
+                                      context: context,
+                                      backgroundColor: Theme.of(context)
+                                          .scaffoldBackgroundColor,
+                                      shape: const RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.vertical(
+                                          top: Radius.circular(20),
+                                        ),
+                                      ),
+                                      builder: (_) {
+                                        return SafeArea(
+                                          child: ListView(
+                                            shrinkWrap: true,
+                                            children: _avatarPoseOptions
+                                                .map(
+                                                  (pose) => ListTile(
+                                                    leading: const Icon(
+                                                        Icons.fitness_center),
+                                                    title: Text(pose['label']!),
+                                                    trailing:
+                                                        _selectedPoseStyle ==
+                                                                pose['value']
+                                                            ? Icon(
+                                                                Icons.check,
+                                                                color: Theme.of(context)
+                                                                            .brightness ==
+                                                                        Brightness
+                                                                            .dark
+                                                                    ? AppColors
+                                                                        .accent
+                                                                    : AppColors
+                                                                        .brandGreenDeep,
+                                                              )
+                                                            : null,
+                                                    onTap: () => Navigator.pop(
+                                                      context,
+                                                      pose['value'],
+                                                    ),
+                                                  ),
+                                                )
+                                                .toList(),
+                                          ),
+                                        );
+                                      },
+                                    );
+                                    if (selected != null && mounted) {
+                                      setState(
+                                          () => _selectedPoseStyle = selected);
+                                      _showSnack(
+                                          'Pose set to ${_poseLabel(selected)}',
+                                          success: true);
+                                    }
+                                  },
+                            child: const Text('Change'),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
                   if (_snapshots.isNotEmpty)
                     Container(
                       color: Theme.of(context).brightness == Brightness.dark
@@ -692,7 +847,7 @@ class _AvatarViewerScreenState extends State<AvatarViewerScreen>
     return Container(
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: color!.withOpacity(0.1),
+        color: color.withOpacity(0.1),
         borderRadius: BorderRadius.circular(10),
         border: Border.all(color: color.withOpacity(0.3)),
       ),
@@ -797,6 +952,31 @@ class _AvatarViewerScreenState extends State<AvatarViewerScreen>
                         : AppColors.textPrimary,
                     fontSize: 24,
                     fontWeight: FontWeight.bold)),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? const Color(0xFF232323)
+                    : AppColors.surface,
+                borderRadius: BorderRadius.circular(999),
+                border: Border.all(
+                  color: (Theme.of(context).brightness == Brightness.dark
+                          ? AppColors.accent
+                          : AppColors.brandGreenDeep)
+                      .withOpacity(0.18),
+                ),
+              ),
+              child: Text(
+                'Pose: ${_poseLabel(_selectedPoseStyle)}',
+                style: TextStyle(
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? const Color(0xFFFFFFFF)
+                      : AppColors.textPrimary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
             const SizedBox(height: 12),
             Text(
               'Your body measurements will be used to generate a realistic SMPL-X avatar. '
@@ -939,6 +1119,23 @@ class _AvatarViewerScreenState extends State<AvatarViewerScreen>
   String _fmt(dynamic v) {
     if (v == null) return '—';
     return '${(v as num).toStringAsFixed(0)} cm';
+  }
+
+  String _cacheBust(String url, [String? seed]) {
+    final uri = Uri.parse(url);
+    final queryParameters = Map<String, String>.from(uri.queryParameters);
+    queryParameters['_cb'] =
+        seed ?? DateTime.now().millisecondsSinceEpoch.toString();
+    return uri.replace(queryParameters: queryParameters).toString();
+  }
+
+  String _poseLabel(String value) {
+    for (final pose in _avatarPoseOptions) {
+      if (pose['value'] == value) {
+        return pose['label'] ?? value;
+      }
+    }
+    return value;
   }
 
   void _showSnack(String msg, {bool success = false}) {

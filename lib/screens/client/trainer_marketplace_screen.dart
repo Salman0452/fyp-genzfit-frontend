@@ -493,7 +493,7 @@ class _TrainerMarketplaceScreenState extends State<TrainerMarketplaceScreen> {
     final avatarUrl = userData['avatarUrl'] ?? '';
     final bio = trainerData['bio'] ?? 'No bio available';
     final rating = (trainerData['rating'] ?? 0.0).toDouble();
-    final hourlyRate = (trainerData['hourlyRate'] ?? 0.0).toDouble();
+    final monthlyRate = (trainerData['monthlyRate'] ?? 0.0).toDouble();
     final clients = trainerData['clients'] ?? 0;
     final expertise = List<String>.from(trainerData['expertise'] ?? []);
 
@@ -701,7 +701,7 @@ class _TrainerMarketplaceScreenState extends State<TrainerMarketplaceScreen> {
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
                         Text(
-                          'PKR ${hourlyRate.toStringAsFixed(0)}',
+                          'PKR ${monthlyRate.toStringAsFixed(0)}',
                           style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w700,
@@ -711,7 +711,7 @@ class _TrainerMarketplaceScreenState extends State<TrainerMarketplaceScreen> {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          'per hour',
+                          'per month',
                           style: TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.w500,

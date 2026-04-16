@@ -56,6 +56,20 @@ SKIN_TONES: dict[str, list[int]] = {
     "dark":   [110,  70,  45, 255],
 }
 
+POSE_STYLES = {
+    "classic_relaxed": "classic_relaxed",
+    "relaxed": "classic_relaxed",
+    "standing": "classic_relaxed",
+    "front_double_biceps": "front_double_biceps",
+    "double_biceps": "front_double_biceps",
+    "front_lat_spread": "front_lat_spread",
+    "lat_spread": "front_lat_spread",
+    "chest_flex": "chest_flex",
+    "side_chest": "chest_flex",
+    "most_muscular": "most_muscular",
+    "most_muscular_front": "most_muscular",
+}
+
 # In-memory snapshot store {user_id: [{date, betas, measurements, glb_path}]}
 _avatar_store: dict = {}
 
@@ -96,6 +110,10 @@ class AvatarRequest(BaseModel):
     height: float         = Field(..., ge=100.0, le=250.0, description="Height in cm")
     weight: float         = Field(..., ge=20.0,  le=300.0, description="Weight in kg")
     skin_tone: str        = Field("medium", description="light | medium | brown | dark")
+    pose_style: str       = Field(
+        "classic_relaxed",
+        description="classic_relaxed | front_double_biceps | front_lat_spread | chest_flex | most_muscular",
+    )
     body_measurements: Optional[dict] = Field(None, description="Anthropometric measurements in cm")
 
 class AvatarResponse(BaseModel):
@@ -103,6 +121,7 @@ class AvatarResponse(BaseModel):
     user_id: str
     model_base64: str
     betas: list
+    pose_style: str
     body_measurements: dict
     pipeline: str
     glb_url: Optional[str] = None   # Cloudinary public URL (None if upload skipped)
@@ -643,9 +662,10 @@ def generate_avatar(req: AvatarRequest) -> AvatarResponse:
     snap_date = req.date or date.today().isoformat()
     meas = req.body_measurements or _fallback_measurements(req.height, req.weight, req.gender)
     betas = _measurements_to_betas(req.height, req.weight, req.gender, meas)
+    pose_style = _normalize_pose_style(req.pose_style)
 
     if _SMPLX_AVAILABLE:
-        verts, faces = _run_smplx(betas, req.gender)
+        verts, faces = _run_smplx(betas, req.gender, pose_style)
         verts = _scale_to_height(verts, req.height)
         glb = _build_textured_glb(verts, faces, req.skin_tone, req.gender)
         pipeline = "SMPL-X"
@@ -653,7 +673,8 @@ def generate_avatar(req: AvatarRequest) -> AvatarResponse:
         from services.mesh_generator import generate_mesh
         glb = generate_mesh(betas=betas, height_cm=req.height, gender=req.gender,
                             skin_tone=req.skin_tone,
-                            measurements={**meas, "weight": req.weight})
+                            measurements={**meas, "weight": req.weight},
+                            pose_style=pose_style)
         pipeline = "geometric-fallback"
 
     # Upload to Cloudinary (raw resource so .glb is preserved)
@@ -681,6 +702,7 @@ def generate_avatar(req: AvatarRequest) -> AvatarResponse:
         snap = {
             "date": snap_date,
             "betas": betas,
+            "pose_style": pose_style,
             "measurements": meas,
             "glb_path": str(glb_path),
             "glb_url": glb_url,
@@ -695,6 +717,7 @@ def generate_avatar(req: AvatarRequest) -> AvatarResponse:
         user_id=req.user_id or "",
         model_base64=base64.b64encode(glb).decode(),
         betas=betas,
+        pose_style=pose_style,
         body_measurements=meas,
         pipeline=pipeline,
         glb_url=glb_url,
@@ -707,6 +730,7 @@ def get_avatar_history(user_id: str):
         {
             "date": s["date"],
             "betas": s["betas"],
+            "pose_style": s.get("pose_style", "classic_relaxed"),
             "measurements": s["measurements"],
             "glb_url": s.get("glb_url"),
         }
@@ -753,6 +777,53 @@ def _measurements_to_betas(height_cm, weight_kg, gender, m) -> list:
     if th: b[9] = (th - 56.0) / 4.0
     return [max(-3.0, min(3.0, x)) for x in b]
 
+def _normalize_pose_style(pose_style: str | None) -> str:
+    key = (pose_style or "classic_relaxed").strip().lower().replace("-", "_").replace(" ", "_")
+    return POSE_STYLES.get(key, "classic_relaxed")
+
+def _build_body_pose(pose_style: str):
+    import torch
+
+    body_pose = torch.zeros(1, 63, dtype=torch.float32)
+
+    def _set_joint(index: int, x: float = 0.0, y: float = 0.0, z: float = 0.0):
+        body_pose[0, index * 3 + 0] = x
+        body_pose[0, index * 3 + 1] = y
+        body_pose[0, index * 3 + 2] = z
+
+    # Default upright, confident standing pose.
+    _set_joint(12, -0.18, 0.42, 0.0)
+    _set_joint(13, 0.18, 0.42, 0.0)
+    _set_joint(15, 0.0, 0.0, 0.04)
+    _set_joint(16, 0.0, 0.0, -0.04)
+
+    if pose_style == "front_double_biceps":
+        _set_joint(12, -0.62, 1.00, -0.22)
+        _set_joint(13, 0.62, 1.00, 0.22)
+        _set_joint(15, 0.08, 0.06, 1.05)
+        _set_joint(16, -0.08, 0.06, -1.05)
+        _set_joint(17, 0.18, 0.0, 0.32)
+        _set_joint(18, -0.18, 0.0, -0.32)
+    elif pose_style == "front_lat_spread":
+        _set_joint(12, -0.28, 0.76, -0.48)
+        _set_joint(13, 0.28, 0.76, 0.48)
+        _set_joint(15, 0.24, 0.12, 0.42)
+        _set_joint(16, -0.24, 0.12, -0.42)
+    elif pose_style == "chest_flex":
+        _set_joint(12, -0.22, 0.58, -0.12)
+        _set_joint(13, 0.22, 0.58, 0.12)
+        _set_joint(15, 0.12, -0.02, 0.18)
+        _set_joint(16, -0.12, -0.02, -0.18)
+    elif pose_style == "most_muscular":
+        _set_joint(12, -0.10, 0.48, -0.08)
+        _set_joint(13, 0.10, 0.48, 0.08)
+        _set_joint(15, 0.50, -0.08, 0.62)
+        _set_joint(16, -0.50, -0.08, -0.62)
+        _set_joint(17, 0.40, 0.0, 0.18)
+        _set_joint(18, -0.40, 0.0, -0.18)
+
+    return body_pose
+
 def _fallback_measurements(height, weight, gender) -> dict:
     bmi = weight / (height/100)**2
     m = gender.lower() == "male"
@@ -766,7 +837,7 @@ def _fallback_measurements(height, weight, gender) -> dict:
         "thigh":         round(max((50+(weight-70)*0.2) if m else (52+(weight-60)*0.25), 38.0), 1),
     }
 
-def _run_smplx(betas, gender):
+def _run_smplx(betas, gender, pose_style="classic_relaxed"):
     import torch
     g = gender.lower()
     if g not in ("male","female","neutral"): g = "neutral"
@@ -775,29 +846,7 @@ def _run_smplx(betas, gender):
         use_pca=False, num_betas=10, batch_size=1, flat_hand_mean=True,
     ).to(torch.device("cpu"))
 
-    # ── Natural pose: arms lowered toward body ───────────────────────────────
-    # SMPL-X body_pose has 21 joints × 3 axis-angle values = 63 floats.
-    # Joint indices (0-based): 16=left shoulder, 17=right shoulder
-    #                           18=left elbow,   19=right elbow
-    # Positive Z-rotation lowers the left arm; negative Z lowers the right.
-    body_pose = torch.zeros(1, 63, dtype=torch.float32)
-
-    # Arms down naturally
-    body_pose[0, 12*3 + 2] = -1.2   # left shoulder Z: down
-    body_pose[0, 13*3 + 2] =  1.2   # right shoulder Z: down
-
-    # Shoulder shape — very small value only
-    body_pose[0, 12*3 + 0] = -0.08  # left shoulder X
-    body_pose[0, 13*3 + 0] =  0.08  # right shoulder X
-
-    # Elbow
-    body_pose[0, 15*3 + 2] =  0.1   # left elbow
-    body_pose[0, 16*3 + 2] = -0.1   # right elbow
-
-    # Wrist — only set ONCE
-    body_pose[0, 17*3 + 2] = -0.05
-    body_pose[0, 18*3 + 2] =  0.05
-    # ────────────────────────────────────────────────────────────────────────
+    body_pose = _build_body_pose(pose_style)
 
     with torch.no_grad():
         out = model(

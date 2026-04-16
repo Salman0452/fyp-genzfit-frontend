@@ -31,10 +31,12 @@ class SmplAvatarService {
   ///
   /// [skinTone] must be one of: light | medium | brown | dark.
   /// Defaults to "medium" if not provided.
+  /// [poseStyle] selects a bodybuilding-style pose preset.
   Future<String?> generateAvatar({
     required String userId,
     required MeasurementModel measurement,
     String skinTone = 'medium',
+    String poseStyle = 'classic_relaxed',
   }) async {
     final payload = <String, dynamic>{
       'user_id': userId,
@@ -42,6 +44,7 @@ class SmplAvatarService {
       'height': measurement.height,
       'weight': measurement.weight,
       'skin_tone': skinTone,
+      'pose_style': poseStyle,
     };
 
     if (measurement.estimatedMeasurements.isNotEmpty) {
@@ -93,6 +96,7 @@ class SmplAvatarService {
       },
       glbUrl: glbUrl,
       skinTone: skinTone,
+      poseStyle: poseStyle,
     );
 
     return glbUrl;
@@ -160,6 +164,7 @@ class SmplAvatarService {
     required Map<String, dynamic> measurements,
     String? glbUrl,
     String skinTone = 'medium',
+    String poseStyle = 'classic_relaxed',
   }) async {
     final existing = await _firestore
         .collection('avatar_snapshots')
@@ -174,6 +179,7 @@ class SmplAvatarService {
       'measurements': measurements,
       'glbUrl': glbUrl, // Cloudinary public URL
       'skinTone': skinTone,
+      'poseStyle': poseStyle,
       'updatedAt': Timestamp.now(),
     };
 
@@ -199,12 +205,16 @@ class AvatarSnapshot {
   /// Cloudinary https:// URL for the .glb file. Null if upload failed.
   final String? glbUrl;
 
+  /// Pose preset used when the avatar was generated.
+  final String poseStyle;
+
   const AvatarSnapshot({
     required this.id,
     required this.userId,
     required this.date,
     required this.measurements,
     this.glbUrl,
+    this.poseStyle = 'classic_relaxed',
   });
 
   factory AvatarSnapshot.fromFirestore(DocumentSnapshot doc) {
@@ -215,6 +225,7 @@ class AvatarSnapshot {
       date: d['date'] as String,
       measurements: Map<String, dynamic>.from(d['measurements'] as Map? ?? {}),
       glbUrl: d['glbUrl'] as String?,
+      poseStyle: d['poseStyle'] as String? ?? 'classic_relaxed',
     );
   }
 

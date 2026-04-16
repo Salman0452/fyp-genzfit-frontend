@@ -80,13 +80,19 @@ class _AvatarProgressSliderState extends State<AvatarProgressSlider> {
             children: [
               const Icon(Icons.timeline, color: AppColors.accent, size: 18),
               const SizedBox(width: 8),
-              const Text(
-                'Progress Timeline',
-                style: TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                ),
+              Builder(
+                builder: (context) {
+                  final isDarkMode =
+                      Theme.of(context).brightness == Brightness.dark;
+                  return Text(
+                    'Progress Timeline',
+                    style: TextStyle(
+                      color: isDarkMode ? Colors.white : AppColors.textPrimary,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  );
+                },
               ),
               const Spacer(),
               Text(
@@ -155,7 +161,7 @@ class _DateChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final dt = DateTime.tryParse(snapshot.date);
     final label = dt != null ? DateFormat('MMM d').format(dt) : snapshot.date;
-    final year  = dt != null ? dt.year.toString() : '';
+    final year = dt != null ? dt.year.toString() : '';
 
     return GestureDetector(
       onTap: onTap,
@@ -183,22 +189,31 @@ class _DateChip extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(
-              label,
-              style: TextStyle(
-                color: isSelected ? Colors.white : AppColors.textSecondary,
-                fontSize: 12,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-              ),
+            Builder(
+              builder: (context) {
+                return Text(
+                  label,
+                  style: TextStyle(
+                    color: isSelected ? Colors.white : AppColors.textSecondary,
+                    fontSize: 12,
+                    fontWeight:
+                        isSelected ? FontWeight.bold : FontWeight.normal,
+                  ),
+                );
+              },
             ),
-            Text(
-              year,
-              style: TextStyle(
-                color: isSelected
-                    ? Colors.white.withOpacity(0.8)
-                    : AppColors.textSecondary.withOpacity(0.6),
-                fontSize: 10,
-              ),
+            Builder(
+              builder: (context) {
+                return Text(
+                  year,
+                  style: TextStyle(
+                    color: isSelected
+                        ? Colors.white.withOpacity(0.8)
+                        : AppColors.textSecondary.withOpacity(0.6),
+                    fontSize: 10,
+                  ),
+                );
+              },
             ),
             if (isSelected)
               Container(
@@ -228,9 +243,10 @@ class _DeltaBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final weightDelta = _delta(current.weight, first.weight);
-    final waistDelta  = _delta(current.waist,  first.waist);
+    final waistDelta = _delta(current.waist, first.waist);
 
-    if (weightDelta == null && waistDelta == null) return const SizedBox.shrink();
+    if (weightDelta == null && waistDelta == null)
+      return const SizedBox.shrink();
 
     return Container(
       margin: const EdgeInsets.fromLTRB(20, 12, 20, 0),
@@ -275,7 +291,7 @@ class _DeltaItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isPositive = delta > 0;
-    final isNeutral  = delta.abs() < 0.1;
+    final isNeutral = delta.abs() < 0.1;
     final color = isNeutral
         ? AppColors.textSecondary
         : (isPositive ? Colors.redAccent : Colors.greenAccent);

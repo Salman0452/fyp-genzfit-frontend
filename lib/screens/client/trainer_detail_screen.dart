@@ -110,7 +110,7 @@ class _TrainerDetailScreenState extends State<TrainerDetailScreen> {
     final avatarUrl = userData['avatarUrl'] ?? '';
     final bio = trainerData['bio'] ?? '';
     final rating = (trainerData['rating'] ?? 0.0).toDouble();
-    final hourlyRate = (trainerData['hourlyRate'] ?? 0.0).toDouble();
+    final monthlyRate = (trainerData['monthlyRate'] ?? 0.0).toDouble();
     final clients = trainerData['clients'] ?? 0;
     final expertise = List<String>.from(trainerData['expertise'] ?? []);
     final certifications =
@@ -363,7 +363,7 @@ class _TrainerDetailScreenState extends State<TrainerDetailScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Hourly Rate',
+                              'Monthly Rate',
                               style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
@@ -375,7 +375,7 @@ class _TrainerDetailScreenState extends State<TrainerDetailScreen> {
                             ),
                             const SizedBox(height: 8),
                             Text(
-                              'PKR ${hourlyRate.toStringAsFixed(0)}',
+                              'PKR ${monthlyRate.toStringAsFixed(0)}/month',
                               style: TextStyle(
                                 fontSize: 28,
                                 fontWeight: FontWeight.w800,
@@ -671,11 +671,11 @@ class _TrainerDetailScreenState extends State<TrainerDetailScreen> {
           ),
         ],
       ),
-      bottomNavigationBar: _buildBottomBar(hourlyRate),
+      bottomNavigationBar: _buildBottomBar(monthlyRate),
     );
   }
 
-  Widget _buildBottomBar(double hourlyRate) {
+  Widget _buildBottomBar(double monthlyRate) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final accentColor =
         isDarkMode ? AppColors.brandGreen : AppColors.brandGreenDeep;
@@ -731,7 +731,7 @@ class _TrainerDetailScreenState extends State<TrainerDetailScreen> {
               child: ElevatedButton.icon(
                 onPressed: _isLoading || _hasActiveSession || _hasPendingRequest
                     ? null
-                    : () => _handleHireTrainer(hourlyRate),
+                    : () => _handleHireTrainer(monthlyRate),
                 icon: Icon(
                   _hasActiveSession
                       ? Icons.check_circle
@@ -814,7 +814,7 @@ class _TrainerDetailScreenState extends State<TrainerDetailScreen> {
     }
   }
 
-  Future<void> _handleHireTrainer(double hourlyRate) async {
+  Future<void> _handleHireTrainer(double monthlyRate) async {
     try {
       // Get trainer details
       final trainerDoc = await FirebaseFirestore.instance
@@ -832,29 +832,29 @@ class _TrainerDetailScreenState extends State<TrainerDetailScreen> {
         ...trainerDoc.data()!,
       });
 
-      // Generate session ID for payment tracking
-      final sessionId =
-          FirebaseFirestore.instance.collection('sessions').doc().id;
+      // Generate subscription ID for payment tracking
+      final subscriptionId =
+          FirebaseFirestore.instance.collection('subscriptions').doc().id;
 
       if (mounted) {
-        // Navigate to payment checkout screen
+        // Navigate to payment checkout screen for monthly subscription
         final transactionId = await Navigator.push<String>(
           context,
           MaterialPageRoute(
             builder: (context) => PaymentCheckoutScreen(
               trainer: trainerUser,
-              sessionAmount: hourlyRate,
-              sessionId: sessionId,
+              sessionAmount: monthlyRate,
+              sessionId: subscriptionId,
             ),
           ),
         );
 
-        // If payment was submitted, create the session
+        // If payment was submitted, create the subscription
         if (transactionId != null && mounted) {
           await _createSessionAfterPayment(
-            sessionId,
+            subscriptionId,
             transactionId,
-            hourlyRate,
+            monthlyRate,
           );
         }
       }

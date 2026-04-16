@@ -45,6 +45,7 @@ def generate_mesh(
     skin_tone: str = "medium",
     show_muscles: bool = True,
     measurements: Optional[dict] = None,
+    pose_style: str = "classic_relaxed",
 ) -> bytes:
     """
     Generate a GLB body mesh.
@@ -61,7 +62,7 @@ def generate_mesh(
         return _generate_smplx_glb(betas, height_cm, gender, skin_tone, show_muscles)
 
     # ── Tier 2: Capsule fallback ───────────────────────────────────────────
-    return _generate_capsule_glb(betas, height_cm, gender, skin_tone, show_muscles)
+    return _generate_capsule_glb(betas, height_cm, gender, skin_tone, show_muscles, pose_style)
 
 
 # ─── SMPL-X path ──────────────────────────────────────────────────────────────
@@ -121,6 +122,7 @@ def _generate_capsule_glb(
     gender: str,
     skin_tone: str,
     show_muscles: bool,
+    pose_style: str = "classic_relaxed",
 ) -> bytes:
     """
     Build a stylised human body from geometric primitives using trimesh.

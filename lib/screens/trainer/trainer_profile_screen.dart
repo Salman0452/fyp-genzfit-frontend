@@ -444,7 +444,7 @@ class _TrainerProfileScreenState extends State<TrainerProfileScreen> {
                 ),
                 const SizedBox(width: 4),
                 Text(
-                  '${user?.hourlyRate ?? 0}/hour',
+                  '${user?.monthlyRate ?? 0}/month',
                   style: TextStyle(
                     color: accentColor,
                     fontWeight: FontWeight.bold,

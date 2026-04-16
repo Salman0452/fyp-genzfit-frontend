@@ -21,7 +21,7 @@ class _TrainerEditProfileScreenState extends State<TrainerEditProfileScreen> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _bioController = TextEditingController();
-  final TextEditingController _hourlyRateController = TextEditingController();
+  final TextEditingController _monthlyRateController = TextEditingController();
   final StorageService _storageService = StorageService();
 
   File? _selectedImage;
@@ -40,7 +40,7 @@ class _TrainerEditProfileScreenState extends State<TrainerEditProfileScreen> {
 
     _nameController.text = user?.name ?? '';
     _emailController.text = user?.email ?? '';
-    _hourlyRateController.text = (user?.hourlyRate ?? 0).toString();
+    _monthlyRateController.text = (user?.monthlyRate ?? 0).toString();
     _bioController.text = ''; // Will be loaded from trainer data
   }
 
@@ -88,7 +88,7 @@ class _TrainerEditProfileScreenState extends State<TrainerEditProfileScreen> {
       // Update Firestore user
       final updates = <String, dynamic>{
         'name': _nameController.text.trim(),
-        'hourlyRate': double.parse(_hourlyRateController.text.trim()),
+        'monthlyRate': double.parse(_monthlyRateController.text.trim()),
         'bio': _bioController.text.trim(),
         'updatedAt': FieldValue.serverTimestamp(),
       };
@@ -116,7 +116,7 @@ class _TrainerEditProfileScreenState extends State<TrainerEditProfileScreen> {
             .doc(trainerId)
             .update({
           'bio': _bioController.text.trim(),
-          'hourlyRate': double.parse(_hourlyRateController.text.trim()),
+          'monthlyRate': double.parse(_monthlyRateController.text.trim()),
         });
       }
 
@@ -154,7 +154,7 @@ class _TrainerEditProfileScreenState extends State<TrainerEditProfileScreen> {
     _nameController.dispose();
     _emailController.dispose();
     _bioController.dispose();
-    _hourlyRateController.dispose();
+    _monthlyRateController.dispose();
     super.dispose();
   }
 
@@ -340,9 +340,9 @@ class _TrainerEditProfileScreenState extends State<TrainerEditProfileScreen> {
               ),
               const SizedBox(height: 20),
 
-              // Hourly rate field
+              // Monthly rate field
               Text(
-                'Hourly Rate (\$)',
+                'Monthly Subscription Rate (PKR)',
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
@@ -353,11 +353,11 @@ class _TrainerEditProfileScreenState extends State<TrainerEditProfileScreen> {
               ),
               const SizedBox(height: 8),
               TextFormField(
-                controller: _hourlyRateController,
+                controller: _monthlyRateController,
                 keyboardType: TextInputType.number,
                 decoration: InputDecoration(
-                  hintText: 'Enter your hourly rate',
-                  prefixText: '\$ ',
+                  hintText: 'Enter your monthly subscription rate',
+                  prefixText: 'PKR ',
                   filled: true,
                   fillColor: Theme.of(context).brightness == Brightness.dark
                       ? const Color(0xFF1A1A1A)
@@ -381,7 +381,7 @@ class _TrainerEditProfileScreenState extends State<TrainerEditProfileScreen> {
                 ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Hourly rate is required';
+                    return 'Monthly rate is required';
                   }
                   if (double.tryParse(value) == null) {
                     return 'Enter a valid number';
