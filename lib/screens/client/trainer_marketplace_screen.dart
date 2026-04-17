@@ -593,7 +593,7 @@ class _TrainerMarketplaceScreenState extends State<TrainerMarketplaceScreen> {
                       children: [
                         Row(
                           children: [
-                            Expanded(
+                            Flexible(
                               child: Text(
                                 name,
                                 style: TextStyle(
@@ -610,19 +610,15 @@ class _TrainerMarketplaceScreenState extends State<TrainerMarketplaceScreen> {
                             if (trainerData['verified'] == true) ...[
                               const SizedBox(width: 6),
                               Container(
-                                width: 18,
-                                height: 18,
+                                padding: const EdgeInsets.all(4),
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
-                                  color: isDarkMode
-                                      ? AppColors.brandGreen
-                                      : AppColors.brandGreenDeep,
+                                  color: AppColors.brandGreenDeep,
                                   boxShadow: [
                                     BoxShadow(
-                                      color: isDarkMode
-                                          ? AppColors.brandGreen
-                                          : AppColors.brandGreenDeep,
-                                      blurRadius: 6,
+                                      color: AppColors.brandGreenDeep
+                                          .withOpacity(0.25),
+                                      blurRadius: 3,
                                       offset: const Offset(0, 1),
                                     ),
                                   ],
@@ -630,7 +626,7 @@ class _TrainerMarketplaceScreenState extends State<TrainerMarketplaceScreen> {
                                 child: const Icon(
                                   Icons.check_rounded,
                                   color: Colors.white,
-                                  size: 11,
+                                  size: 14,
                                 ),
                               ),
                             ],

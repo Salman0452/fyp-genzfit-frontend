@@ -205,7 +205,7 @@ class _TrainerDashboardScreenState extends State<TrainerDashboardScreen> {
               child: _buildStatCard(
                 icon: Icons.attach_money,
                 label: 'Total Earnings',
-                value: '\$${_totalEarnings.toStringAsFixed(0)}',
+                value: 'Rs. ${_totalEarnings.toStringAsFixed(0)}',
                 color: const Color(0xFF7FFA88),
               ),
             ),
@@ -720,7 +720,7 @@ class _TrainerDashboardScreenState extends State<TrainerDashboardScreen> {
           ),
           if (session.amount != null)
             Text(
-              '\$${session.amount!.toStringAsFixed(0)}',
+              'Rs. ${session.amount!.toStringAsFixed(0)}',
               style: GoogleFonts.poppins(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,

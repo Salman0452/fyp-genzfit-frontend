@@ -368,55 +368,65 @@ class _MeasurementDetailScreenState extends State<MeasurementDetailScreen> {
 
                   // Body measurements
                   if (widget.measurement.estimatedMeasurements.isNotEmpty) ...[
-                    const Text(
+                    Text(
                       'Body Measurements',
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
-                        color: AppColors.textPrimary,
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? const Color(0xFFFFFFFF)
+                            : AppColors.textPrimary,
                       ),
                     ),
                     const SizedBox(height: 12),
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: AppColors.surface,
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? const Color(0xFF1A1A1A)
+                            : AppColors.surface,
                         borderRadius: BorderRadius.circular(
                           AppSizes.borderRadius,
                         ),
                       ),
                       child: Column(
-                        children:
-                            widget.measurement.estimatedMeasurements.entries
-                                .map(
-                                  (entry) => Padding(
-                                    padding: const EdgeInsets.only(
-                                      bottom: 12,
+                        children: widget
+                            .measurement.estimatedMeasurements.entries
+                            .map(
+                              (entry) => Padding(
+                                padding: const EdgeInsets.only(
+                                  bottom: 12,
+                                ),
+                                child: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      _formatMeasurementName(entry.key),
+                                      style: TextStyle(
+                                        color: Theme.of(context).brightness ==
+                                                Brightness.dark
+                                            ? const Color(0xFFB0B0B0)
+                                            : AppColors.textSecondary,
+                                        fontSize: 16,
+                                      ),
                                     ),
-                                    child: Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Text(
-                                          _formatMeasurementName(entry.key),
-                                          style: const TextStyle(
-                                            color: AppColors.textSecondary,
-                                            fontSize: 16,
-                                          ),
-                                        ),
-                                        Text(
-                                          '${entry.value.toStringAsFixed(1)} cm',
-                                          style: const TextStyle(
-                                            color: AppColors.textPrimary,
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 16,
-                                          ),
-                                        ),
-                                      ],
+                                    Text(
+                                      '${entry.value.toStringAsFixed(1)} cm',
+                                      style: TextStyle(
+                                        color: Theme.of(context).brightness ==
+                                                Brightness.dark
+                                            ? const Color(0xFFFFFFFF)
+                                            : AppColors.textPrimary,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
+                                      ),
                                     ),
-                                  ),
-                                )
-                                .toList(),
+                                  ],
+                                ),
+                              ),
+                            )
+                            .toList(),
                       ),
                     ),
                     const SizedBox(height: 24),

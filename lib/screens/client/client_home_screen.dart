@@ -298,7 +298,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                   ),
                   TextButton(
                     onPressed: () {
-                      setState(() => _currentIndex = 3);
+                      setState(() => _currentIndex = 1);
                     },
                     child: Text(
                       'View All',
@@ -639,7 +639,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                 Icons.search,
                 AppColors.accentTeal,
                 () {
-                  setState(() => _currentIndex = 1);
+                  setState(() => _currentIndex = 2);
                 },
               ),
             ),

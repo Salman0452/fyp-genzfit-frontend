@@ -163,10 +163,12 @@ class _PaymentCheckoutScreenState extends State<PaymentCheckoutScreen> {
         backgroundColor: Theme.of(context).brightness == Brightness.dark
             ? const Color(0xFF1A1A1A)
             : AppColors.surface,
-        title: const Text(
+        title: Text(
           'Payment Submitted',
           style: TextStyle(
-            color: AppColors.textPrimary,
+            color: Theme.of(context).brightness == Brightness.dark
+                ? const Color(0xFFFFFFFF)
+                : AppColors.textPrimary,
             fontWeight: FontWeight.bold,
           ),
         ),

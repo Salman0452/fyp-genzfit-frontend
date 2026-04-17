@@ -474,8 +474,7 @@ class _TrainerProfileScreenState extends State<TrainerProfileScreen> {
   }
 
   Widget _buildVerificationStatus(user, DocumentSnapshot? trainerDoc) {
-    final trainerData = trainerDoc?.data() as Map<String, dynamic>?;
-    final isVerified = trainerData?['verified'] ?? false;
+    final isVerified = user?.verified ?? false;
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -566,7 +565,7 @@ class _TrainerProfileScreenState extends State<TrainerProfileScreen> {
           Expanded(
             child: _buildStatItem(
               'Earnings',
-              '\$${totalEarnings.toStringAsFixed(0)}',
+              'Rs. ${totalEarnings.toStringAsFixed(0)}',
               Icons.monetization_on,
               accentColor,
             ),

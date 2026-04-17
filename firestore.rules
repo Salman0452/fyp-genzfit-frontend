@@ -129,7 +129,7 @@ service cloud.firestore {
       
       // Messages subcollection
       match /messages/{messageId} {
-        // Allow message reads if user is authenticated
+        // Allow message reads if user is signed in (parent chat rule protects access)
         allow read: if isSignedIn();
         
         // Allow message creation if user is authenticated and is the sender

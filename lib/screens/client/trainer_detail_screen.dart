@@ -6,7 +6,6 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../../models/user_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../services/chat_service.dart';
-import '../../services/hiring_service.dart';
 import '../shared/loading_widget.dart';
 import '../chat/chat_detail_screen.dart';
 import 'payment_checkout_screen.dart';
@@ -27,7 +26,6 @@ class TrainerDetailScreen extends StatefulWidget {
 
 class _TrainerDetailScreenState extends State<TrainerDetailScreen> {
   final ChatService _chatService = ChatService();
-  final HiringService _hiringService = HiringService();
   final TextEditingController _notesController = TextEditingController();
   bool _isLoading = false;
   bool _hasActiveSession = false;
@@ -49,15 +47,32 @@ class _TrainerDetailScreenState extends State<TrainerDetailScreen> {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final currentUserId = authProvider.user?.uid ?? '';
 
-    final hasExisting = await _hiringService.hasExistingRequest(
-      currentUserId,
-      widget.userId,
-    );
+    try {
+      final snapshot = await FirebaseFirestore.instance
+          .collection('sessions')
+          .where('clientId', isEqualTo: currentUserId)
+          .where('trainerId', isEqualTo: widget.userId)
+          .get();
 
-    setState(() {
-      _hasActiveSession = hasExisting;
-      _hasPendingRequest = hasExisting;
-    });
+      bool hasActive = false;
+      bool hasPending = false;
+
+      for (var doc in snapshot.docs) {
+        final status = doc.data()['status'] as String?;
+        if (status == 'active') {
+          hasActive = true;
+        } else if (status == 'requested') {
+          hasPending = true;
+        }
+      }
+
+      setState(() {
+        _hasActiveSession = hasActive;
+        _hasPendingRequest = hasPending;
+      });
+    } catch (e) {
+      print('Error checking session status: $e');
+    }
   }
 
   @override

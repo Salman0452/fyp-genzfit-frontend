@@ -306,7 +306,7 @@ class _TrainerHomeScreenState extends State<TrainerHomeScreen> {
               ),
               _buildStatItem(
                 'Earnings',
-                '\$${user?.totalEarnings ?? 0}',
+                'Rs. ${user?.totalEarnings ?? 0}',
                 Icons.monetization_on,
                 AppColors.success,
               ),

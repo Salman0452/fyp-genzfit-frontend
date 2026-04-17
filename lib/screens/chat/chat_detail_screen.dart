@@ -1,7 +1,4 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
-import 'package:flutter_chat_ui/flutter_chat_ui.dart';
 import 'package:genzfit/utils/constants.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
@@ -33,12 +30,18 @@ class ChatDetailScreen extends StatefulWidget {
 class _ChatDetailScreenState extends State<ChatDetailScreen> {
   final ChatService _chatService = ChatService();
   final ImagePicker _imagePicker = ImagePicker();
-  bool _isUploading = false;
+  final TextEditingController _messageController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     _markMessagesAsRead();
+  }
+
+  @override
+  void dispose() {
+    _messageController.dispose();
+    super.dispose();
   }
 
   Future<void> _markMessagesAsRead() async {
@@ -47,303 +50,381 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
     await _chatService.markMessagesAsRead(widget.chatId, currentUserId);
   }
 
+  Future<void> _handleAttachmentPressed(String userId) async {
+    // Implement attachment handling
+    showModalBottomSheet(
+      context: context,
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.image),
+              title: const Text('Image'),
+              onTap: () async {
+                Navigator.pop(context);
+                final image =
+                    await _imagePicker.pickImage(source: ImageSource.gallery);
+                if (image != null) {
+                  // Handle image upload
+                }
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.file_copy),
+              title: const Text('File'),
+              onTap: () async {
+                Navigator.pop(context);
+                final result = await FilePicker.platform.pickFiles();
+                if (result != null) {
+                  // Handle file upload
+                }
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _sendMessage() async {
+    if (_messageController.text.isEmpty) return;
+
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final userId = authProvider.user?.uid ?? '';
+
+    try {
+      await _chatService.sendTextMessage(
+        chatId: widget.chatId,
+        senderId: userId,
+        otherUserId: widget.otherUserId,
+        text: _messageController.text,
+      );
+      _messageController.clear();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error sending message: $e')),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final authProvider = Provider.of<AuthProvider>(context);
     final currentUserId = authProvider.user?.uid ?? '';
-    final currentUser = authProvider.currentUser;
-
-    final user = types.User(
-      id: currentUserId,
-      firstName: currentUser?.name ?? 'You',
-      imageUrl: currentUser?.avatarUrl,
-    );
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor:
-            isDarkMode ? const Color(0xFF1A1A1A) : AppColors.surface,
-        elevation: 0,
+        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
         leading: IconButton(
           icon: Icon(
-            Icons.arrow_back,
+            Icons.arrow_back_ios_new,
             color: isDarkMode ? const Color(0xFFFFFFFF) : AppColors.textPrimary,
           ),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Row(
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: (isDarkMode
-                          ? AppColors.brandGreen
-                          : AppColors.brandGreenDeep)
-                      .withOpacity(0.3),
-                  width: 1.5,
-                ),
-              ),
-              child: CircleAvatar(
-                radius: 20,
-                backgroundColor: isDarkMode
-                    ? const Color(0xFF2A2A2A)
-                    : const Color(0xFFE0E0E0),
-                backgroundImage: widget.otherUserAvatar != null &&
-                        widget.otherUserAvatar!.isNotEmpty
-                    ? CachedNetworkImageProvider(widget.otherUserAvatar!)
-                    : null,
-                child: widget.otherUserAvatar == null ||
-                        widget.otherUserAvatar!.isEmpty
-                    ? Text(
-                        widget.otherUserName[0].toUpperCase(),
-                        style: TextStyle(
-                          color: isDarkMode
-                              ? const Color(0xFFFFFFFF)
-                              : AppColors.textPrimary,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      )
-                    : null,
+            Text(
+              widget.otherUserName,
+              style: TextStyle(
+                color: isDarkMode
+                    ? const Color(0xFFFFFFFF)
+                    : AppColors.textPrimary,
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                letterSpacing: -0.3,
               ),
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    widget.otherUserName,
-                    style: TextStyle(
-                      color: isDarkMode
-                          ? const Color(0xFFFFFFFF)
-                          : AppColors.textPrimary,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: -0.3,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    'Active now',
-                    style: TextStyle(
-                      color: isDarkMode
-                          ? const Color(0xFF9F9F9F)
-                          : AppColors.textSecondary,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
+            const SizedBox(height: 2),
+            Text(
+              'Active now',
+              style: TextStyle(
+                color: isDarkMode
+                    ? const Color(0xFF9F9F9F)
+                    : AppColors.textSecondary,
+                fontSize: 11,
+                fontWeight: FontWeight.w500,
               ),
             ),
           ],
         ),
+        elevation: 0,
       ),
-      body: Stack(
+      body: Column(
         children: [
-          StreamBuilder<List<MessageModel>>(
-            stream: _chatService.getChatMessages(widget.chatId),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(child: LoadingWidget());
-              }
+          // Messages List
+          Expanded(
+            child: StreamBuilder<List<MessageModel>>(
+              stream: _chatService.getChatMessages(widget.chatId),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: LoadingWidget());
+                }
 
-              if (snapshot.hasError) {
-                return Center(
-                  child: Text(
-                    'Error loading messages',
-                    style: TextStyle(
-                      color: Theme.of(context).brightness == Brightness.dark
-                          ? const Color(0xFFB0B0B0)
-                          : AppColors.textSecondary,
+                if (snapshot.hasError) {
+                  return Center(
+                    child: Text(
+                      'Error loading messages',
+                      style: TextStyle(
+                        color: isDarkMode
+                            ? const Color(0xFFB0B0B0)
+                            : AppColors.textSecondary,
+                      ),
                     ),
+                  );
+                }
+
+                final messages = snapshot.data ?? [];
+                if (messages.isEmpty) {
+                  return Center(
+                    child: Text(
+                      'No messages yet. Start the conversation!',
+                      style: TextStyle(
+                        color: isDarkMode
+                            ? const Color(0xFFB0B0B0)
+                            : AppColors.textSecondary,
+                      ),
+                    ),
+                  );
+                }
+
+                return ListView.builder(
+                  reverse: true,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 12,
                   ),
+                  itemCount:
+                      messages.length * 2, // Account for potential separators
+                  itemBuilder: (context, index) {
+                    // Calculate the actual message index (reverse order)
+                    final messageIndex = index ~/ 2;
+
+                    // Check if we need to show a date separator
+                    final shouldShowSeparator = index % 2 == 1;
+
+                    if (messageIndex >= messages.length) {
+                      return const SizedBox.shrink();
+                    }
+
+                    final message = messages[messageIndex];
+                    final isSentByUser = message.senderId == currentUserId;
+
+                    // Check if next message (in chronological order, previous in reversed list) is on different day
+                    bool showDateSeparator = false;
+                    if (shouldShowSeparator &&
+                        messageIndex + 1 < messages.length) {
+                      final currentMessageDay = DateTime(
+                        message.timestamp.year,
+                        message.timestamp.month,
+                        message.timestamp.day,
+                      );
+                      final nextMessageDay = DateTime(
+                        messages[messageIndex + 1].timestamp.year,
+                        messages[messageIndex + 1].timestamp.month,
+                        messages[messageIndex + 1].timestamp.day,
+                      );
+                      showDateSeparator = currentMessageDay != nextMessageDay;
+                    }
+
+                    if (showDateSeparator) {
+                      return _buildDateSeparator(
+                        messages[messageIndex].timestamp,
+                        isDarkMode,
+                      );
+                    }
+
+                    return _buildMessageBubble(
+                      message,
+                      isSentByUser,
+                      isDarkMode,
+                    );
+                  },
                 );
-              }
-
-              final messages = snapshot.data ?? [];
-              final chatMessages = messages
-                  .map((msg) => _convertToFlutterChatMessage(msg))
-                  .toList();
-
-              return Chat(
-                messages: chatMessages,
-                onSendPressed: (message) => _handleSendPressed(
-                  message,
-                  currentUserId,
-                ),
-                onAttachmentPressed: () =>
-                    _handleAttachmentPressed(currentUserId),
-                onMessageLongPress: (context, message) =>
-                    _handleMessageLongPress(
-                  context,
-                  message,
-                  currentUserId,
-                ),
-                user: user,
-                theme: DarkChatTheme(
-                  backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-                  primaryColor: Theme.of(context).brightness == Brightness.dark
-                      ? AppColors.brandGreen
-                      : AppColors.brandGreenDeep,
-                  secondaryColor:
-                      Theme.of(context).brightness == Brightness.dark
-                          ? const Color(0xFF1A1A1A)
-                          : AppColors.surface,
-                  inputBackgroundColor:
-                      Theme.of(context).brightness == Brightness.dark
-                          ? const Color(0xFF1A1A1A)
-                          : AppColors.surface,
-                  inputTextColor:
-                      Theme.of(context).brightness == Brightness.dark
-                          ? const Color(0xFFFFFFFF)
-                          : AppColors.textPrimary,
-                  inputPadding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 16,
-                  ),
-                  inputMargin: const EdgeInsets.fromLTRB(
-                    12,
-                    16,
-                    12,
-                    20,
-                  ),
-                  messageBorderRadius: 12,
-                  sendButtonMargin: const EdgeInsets.fromLTRB(8, 8, 8, 8),
-                  userAvatarNameColors: [
-                    Theme.of(context).brightness == Brightness.dark
+              },
+            ),
+          ),
+          // Input Field
+          Container(
+            color: isDarkMode ? const Color(0xFF1A1A1A) : AppColors.surface,
+            padding: const EdgeInsets.all(12),
+            child: Row(
+              children: [
+                IconButton(
+                  onPressed: () => _handleAttachmentPressed(currentUserId),
+                  icon: Icon(
+                    Icons.add_circle_outline,
+                    color: isDarkMode
                         ? AppColors.brandGreen
                         : AppColors.brandGreenDeep,
-                    const Color(0xFF6C63FF),
-                  ],
+                  ),
                 ),
-                showUserAvatars: true,
-                showUserNames: false,
-              );
-            },
-          ),
-          if (_isUploading)
-            Container(
-              color: (Theme.of(context).brightness == Brightness.dark
-                      ? const Color(0xFF000000)
-                      : const Color(0xFFFFFFFF))
-                  .withOpacity(0.5),
-              child: const Center(
-                child: LoadingWidget(),
-              ),
+                Expanded(
+                  child: TextField(
+                    controller: _messageController,
+                    maxLines: null,
+                    style: TextStyle(
+                      color: isDarkMode
+                          ? const Color(0xFFFFFFFF)
+                          : AppColors.textPrimary,
+                    ),
+                    decoration: InputDecoration(
+                      hintText: 'Type a message...',
+                      hintStyle: TextStyle(
+                        color: isDarkMode
+                            ? const Color(0xFF9F9F9F)
+                            : AppColors.textSecondary,
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(24),
+                        borderSide: BorderSide(
+                          color: isDarkMode
+                              ? const Color(0xFF333333)
+                              : const Color(0xFFE0E0E0),
+                        ),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(24),
+                        borderSide: BorderSide(
+                          color: isDarkMode
+                              ? AppColors.brandGreen
+                              : AppColors.brandGreenDeep,
+                          width: 2,
+                        ),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                GestureDetector(
+                  onTap: _sendMessage,
+                  child: Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: isDarkMode
+                          ? AppColors.brandGreen
+                          : AppColors.brandGreenDeep,
+                    ),
+                    child: Icon(
+                      Icons.send_rounded,
+                      color: Colors.white,
+                      size: 18,
+                    ),
+                  ),
+                ),
+              ],
             ),
+          ),
         ],
       ),
     );
   }
 
-  types.Message _convertToFlutterChatMessage(MessageModel message) {
-    final author = types.User(id: message.senderId);
-
-    switch (message.type) {
-      case MessageType.text:
-        return types.TextMessage(
-          author: author,
-          createdAt: message.timestamp.millisecondsSinceEpoch,
-          id: message.id,
-          text: message.text ?? '',
-        );
-      case MessageType.image:
-        return types.ImageMessage(
-          author: author,
-          createdAt: message.timestamp.millisecondsSinceEpoch,
-          id: message.id,
-          name: 'image',
-          size: 0,
-          uri: message.imageUrl ?? '',
-        );
-      case MessageType.video:
-        return types.FileMessage(
-          author: author,
-          createdAt: message.timestamp.millisecondsSinceEpoch,
-          id: message.id,
-          name: '🎥 Video',
-          size: 0,
-          uri: message.videoUrl ?? '',
-        );
-      case MessageType.file:
-        return types.FileMessage(
-          author: author,
-          createdAt: message.timestamp.millisecondsSinceEpoch,
-          id: message.id,
-          name: message.fileName ?? 'file',
-          size: 0,
-          uri: message.fileUrl ?? '',
-        );
-    }
-  }
-
-  Future<void> _handleSendPressed(
-    types.PartialText message,
-    String currentUserId,
-  ) async {
-    try {
-      await _chatService.sendTextMessage(
-        chatId: widget.chatId,
-        senderId: currentUserId,
-        text: message.text,
-        otherUserId: widget.otherUserId,
-      );
-    } catch (e) {
-      _showErrorSnackBar('Failed to send message');
-    }
-  }
-
-  Future<void> _handleAttachmentPressed(String currentUserId) async {
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: isDarkMode ? const Color(0xFF1A1A1A) : AppColors.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+  Widget _buildDateSeparator(DateTime dateTime, bool isDarkMode) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 16),
+      child: Center(
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+          decoration: BoxDecoration(
+            color:
+                isDarkMode ? const Color(0xFF2A2A2A) : const Color(0xFFE8E8E8),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Text(
+            _formatDateSeparator(dateTime),
+            style: TextStyle(
+              color: isDarkMode
+                  ? const Color(0xFF9F9F9F)
+                  : AppColors.textSecondary,
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
       ),
-      builder: (context) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
-          child: Wrap(
-            spacing: 16,
-            runSpacing: 16,
+    );
+  }
+
+  Widget _buildMessageBubble(
+    MessageModel message,
+    bool isSentByUser,
+    bool isDarkMode,
+  ) {
+    return Padding(
+      padding: EdgeInsets.only(
+        left: isSentByUser ? 60 : 12,
+        right: isSentByUser ? 12 : 60,
+        bottom: 8,
+      ),
+      child: Align(
+        alignment: isSentByUser ? Alignment.centerRight : Alignment.centerLeft,
+        child: Container(
+          padding: const EdgeInsets.symmetric(
+            horizontal: 14,
+            vertical: 10,
+          ),
+          decoration: BoxDecoration(
+            color: isSentByUser
+                ? (isDarkMode ? AppColors.brandGreen : AppColors.brandGreenDeep)
+                : (isDarkMode
+                    ? const Color(0xFF2A2A2A)
+                    : const Color(0xFFE8E8E8)),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildAttachmentOption(
-                context,
-                Icons.photo_library_rounded,
-                'Photo',
-                isDarkMode ? AppColors.brandGreen : AppColors.brandGreenDeep,
-                () {
-                  Navigator.pop(context);
-                  _pickImage(currentUserId);
-                },
-              ),
-              _buildAttachmentOption(
-                context,
-                Icons.videocam_rounded,
-                'Video',
-                const Color(0xFF10B981),
-                () {
-                  Navigator.pop(context);
-                  _pickVideo(currentUserId);
-                },
-              ),
-              _buildAttachmentOption(
-                context,
-                Icons.attach_file_rounded,
-                'File',
-                const Color(0xFFFFA500),
-                () {
-                  Navigator.pop(context);
-                  _pickFile(currentUserId);
-                },
+              if (message.type == MessageType.text)
+                Text(
+                  message.text ?? '',
+                  style: TextStyle(
+                    color: isSentByUser
+                        ? const Color(0xFF000000)
+                        : (isDarkMode
+                            ? const Color(0xFFFFFFFF)
+                            : AppColors.textPrimary),
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              if (message.type == MessageType.image && message.imageUrl != null)
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: CachedNetworkImage(
+                    imageUrl: message.imageUrl!,
+                    width: 200,
+                    height: 200,
+                    fit: BoxFit.cover,
+                    placeholder: (context, url) => const LoadingWidget(),
+                    errorWidget: (context, url, error) =>
+                        const Icon(Icons.error),
+                  ),
+                ),
+              const SizedBox(height: 4),
+              Text(
+                _formatTimeOnly(message.timestamp),
+                style: TextStyle(
+                  color: isSentByUser
+                      ? const Color(0xFF000000).withOpacity(0.6)
+                      : (isDarkMode
+                          ? const Color(0xFF9F9F9F)
+                          : AppColors.textSecondary),
+                  fontSize: 11,
+                  fontWeight: FontWeight.w400,
+                ),
               ),
             ],
           ),
@@ -352,248 +433,22 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
     );
   }
 
-  Widget _buildAttachmentOption(
-    BuildContext context,
-    IconData icon,
-    String label,
-    Color color,
-    VoidCallback onTap,
-  ) {
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 100,
-        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
-        decoration: BoxDecoration(
-          color: color.withOpacity(0.12),
-          borderRadius: BorderRadius.circular(AppSizes.borderRadius),
-          border: Border.all(
-            color: color.withOpacity(0.2),
-            width: 1.5,
-          ),
-        ),
-        child: Column(
-          children: [
-            Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: color.withOpacity(0.15),
-              ),
-              child: Icon(
-                icon,
-                color: color,
-                size: 24,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              label,
-              style: TextStyle(
-                color: isDarkMode
-                    ? const Color(0xFFFFFFFF)
-                    : AppColors.textPrimary,
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+  String _formatTimeOnly(DateTime dateTime) {
+    return '${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
   }
 
-  Future<void> _pickImage(String currentUserId) async {
-    try {
-      final XFile? image = await _imagePicker.pickImage(
-        source: ImageSource.gallery,
-        imageQuality: 80,
-      );
+  String _formatDateSeparator(DateTime dateTime) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final yesterday = DateTime(now.year, now.month, now.day - 1);
+    final messageDay = DateTime(dateTime.year, dateTime.month, dateTime.day);
 
-      if (image != null) {
-        setState(() => _isUploading = true);
-        await _chatService.sendImageMessage(
-          chatId: widget.chatId,
-          senderId: currentUserId,
-          imageFile: File(image.path),
-          otherUserId: widget.otherUserId,
-        );
-      }
-    } catch (e) {
-      _showErrorSnackBar('Failed to send image');
-    } finally {
-      setState(() => _isUploading = false);
-    }
-  }
-
-  Future<void> _pickVideo(String currentUserId) async {
-    try {
-      final XFile? video = await _imagePicker.pickVideo(
-        source: ImageSource.gallery,
-      );
-
-      if (video != null) {
-        setState(() => _isUploading = true);
-        await _chatService.sendVideoMessage(
-          chatId: widget.chatId,
-          senderId: currentUserId,
-          videoFile: File(video.path),
-          otherUserId: widget.otherUserId,
-        );
-      }
-    } catch (e) {
-      _showErrorSnackBar('Failed to send video');
-    } finally {
-      setState(() => _isUploading = false);
-    }
-  }
-
-  Future<void> _pickFile(String currentUserId) async {
-    try {
-      final result = await FilePicker.platform.pickFiles();
-
-      if (result != null && result.files.single.path != null) {
-        final file = File(result.files.single.path!);
-        final fileName = result.files.single.name;
-
-        setState(() => _isUploading = true);
-        await _chatService.sendFileMessage(
-          chatId: widget.chatId,
-          senderId: currentUserId,
-          file: file,
-          fileName: fileName,
-          otherUserId: widget.otherUserId,
-        );
-      }
-    } catch (e) {
-      _showErrorSnackBar('Failed to send file');
-    } finally {
-      setState(() => _isUploading = false);
-    }
-  }
-
-  void _showErrorSnackBar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: const Color(0xFFE53935),
-      ),
-    );
-  }
-
-  Future<void> _handleMessageLongPress(
-    BuildContext context,
-    types.Message message,
-    String currentUserId,
-  ) async {
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-
-    // Only allow deletion of messages sent by the current user
-    if (message.author.id != currentUserId) {
-      _showErrorSnackBar('You can only delete your own messages');
-      return;
-    }
-
-    // Show confirmation dialog
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor:
-            isDarkMode ? const Color(0xFF1A1A1A) : AppColors.surface,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppSizes.borderRadius),
-        ),
-        title: Row(
-          children: [
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: const Color(0xFFFF5C5C).withOpacity(0.15),
-              ),
-              child: const Icon(
-                Icons.delete_outline,
-                color: Color(0xFFFF5C5C),
-                size: 20,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Text(
-              'Delete Message',
-              style: TextStyle(
-                color: isDarkMode
-                    ? const Color(0xFFFFFFFF)
-                    : AppColors.textPrimary,
-                fontWeight: FontWeight.w700,
-                fontSize: 16,
-              ),
-            ),
-          ],
-        ),
-        content: Text(
-          'Are you sure you want to delete this message?',
-          style: TextStyle(
-            color:
-                isDarkMode ? const Color(0xFFB0B0B0) : AppColors.textSecondary,
-            fontSize: 13,
-            height: 1.4,
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            style: TextButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            ),
-            child: Text(
-              'Cancel',
-              style: TextStyle(
-                color: isDarkMode
-                    ? AppColors.brandGreen
-                    : AppColors.brandGreenDeep,
-                fontWeight: FontWeight.w600,
-                fontSize: 13,
-              ),
-            ),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: TextButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            ),
-            child: const Text(
-              'Delete',
-              style: TextStyle(
-                color: Color(0xFFFF5C5C),
-                fontWeight: FontWeight.w700,
-                fontSize: 13,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmed == true && context.mounted) {
-      try {
-        await _chatService.deleteMessage(widget.chatId, message.id);
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: const Text('Message deleted'),
-              backgroundColor: Theme.of(context).brightness == Brightness.dark
-                  ? AppColors.brandGreen
-                  : AppColors.brandGreenDeep,
-              duration: const Duration(seconds: 2),
-            ),
-          );
-        }
-      } catch (e) {
-        _showErrorSnackBar('Failed to delete message: ${e.toString()}');
-      }
+    if (messageDay == today) {
+      return 'Today';
+    } else if (messageDay == yesterday) {
+      return 'Yesterday';
+    } else {
+      return '${dateTime.day}/${dateTime.month}/${dateTime.year}';
     }
   }
 }

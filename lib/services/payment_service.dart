@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:cloudinary_public/cloudinary_public.dart';
 import 'dart:io';
 import '../models/transaction_model.dart';
 import '../models/bank_details_model.dart';
@@ -7,7 +8,6 @@ import '../models/payout_model.dart';
 
 class PaymentService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final FirebaseStorage _storage = FirebaseStorage.instance;
 
   static const double platformCommissionRate = 0.10; // 10% platform fee
   static const String transactionsCollection = 'transactions';
@@ -73,21 +73,44 @@ class PaymentService {
     required PaymentMethod paymentMethod,
   }) async {
     try {
-      // Upload receipt image to Firebase Storage
-      final fileName =
-          'transaction_proofs/$transactionId/${DateTime.now().millisecondsSinceEpoch}.jpg';
-      final Reference ref = _storage.ref().child(fileName);
-      await ref.putFile(proofImage);
-      final downloadUrl = await ref.getDownloadURL();
+      // Upload receipt image to Cloudinary
+      final cloudName = dotenv.env['CLOUDINARY_CLOUD_NAME'];
+      final uploadPreset = dotenv.env['CLOUDINARY_UPLOAD_PRESET'];
 
-      // Update transaction with proof URL and payment method
-      await _firestore
-          .collection(transactionsCollection)
-          .doc(transactionId)
-          .update({
-        'clientPaymentProofUrl': downloadUrl,
-        'paymentMethod': paymentMethod.value,
-      });
+      if (cloudName == null || uploadPreset == null) {
+        throw Exception('Cloudinary configuration missing');
+      }
+
+      final cloudinary = CloudinaryPublic(
+        cloudName,
+        uploadPreset,
+        cache: false,
+      );
+
+      try {
+        final response = await cloudinary.uploadFile(
+          CloudinaryFile.fromFile(
+            proofImage.path,
+            resourceType: CloudinaryResourceType.Image,
+            folder: 'payment_proofs/$transactionId',
+          ),
+        );
+
+        final downloadUrl = response.secureUrl;
+
+        // Update transaction with proof URL and payment method
+        await _firestore
+            .collection(transactionsCollection)
+            .doc(transactionId)
+            .update({
+          'clientPaymentProofUrl': downloadUrl,
+          'paymentMethod': paymentMethod.value,
+        });
+      } catch (cloudinaryError) {
+        print('Cloudinary upload error: $cloudinaryError');
+        throw Exception(
+            'Cloudinary upload failed: $cloudinaryError. Please ensure upload preset is configured in Cloudinary dashboard.');
+      }
     } catch (e) {
       throw Exception('Failed to record payment proof: $e');
     }
@@ -101,6 +124,11 @@ class PaymentService {
     String? rejectionReason,
   }) async {
     try {
+      final transaction = await getTransaction(transactionId);
+      if (transaction == null) {
+        throw Exception('Transaction not found');
+      }
+
       final updateData = {
         'status': approved
             ? TransactionStatus.verified.value
@@ -116,19 +144,134 @@ class PaymentService {
           .update(updateData);
 
       if (approved) {
+        // Get session details
+        final sessionDoc = await _firestore
+            .collection('sessions')
+            .doc(transaction.sessionId)
+            .get();
+
+        if (!sessionDoc.exists) {
+          throw Exception('Session not found');
+        }
+
+        final sessionData = sessionDoc.data() as Map<String, dynamic>;
+        final clientId = transaction.clientId;
+        final trainerId = transaction.trainerId;
+
         // Update session status to active
-        final transaction = await getTransaction(transactionId);
         await _firestore
             .collection('sessions')
-            .doc(transaction!.sessionId)
+            .doc(transaction.sessionId)
             .update({
           'paymentStatus': 'paid',
           'paymentVerifiedAt': Timestamp.now(),
           'status': 'active',
+          'startDate': Timestamp.now(),
+          'endDate': Timestamp.fromDate(
+            DateTime.now().add(const Duration(days: 30)),
+          ),
         });
+
+        // Create notifications for both client and trainer
+        await _createSessionApprovalNotification(
+          clientId: clientId,
+          trainerId: trainerId,
+          sessionId: transaction.sessionId,
+          trainerName: sessionData['trainerName'] ?? 'Your Trainer',
+          clientName: sessionData['clientName'] ?? 'Your Client',
+        );
+
+        // Update trainer's earnings and active sessions count
+        await _firestore.collection('users').doc(trainerId).update({
+          'activeSessionCount': FieldValue.increment(1),
+          'totalEarnings': FieldValue.increment(transaction.trainerAmount),
+        });
+
+        // Update client's active sessions count
+        await _firestore.collection('users').doc(clientId).update({
+          'activeSessionCount': FieldValue.increment(1),
+        });
+
+        // Store transaction in ledger for admin tracking
+        await _firestore.collection('earnings_ledger').add({
+          'trainerId': trainerId,
+          'clientId': clientId,
+          'sessionId': transaction.sessionId,
+          'transactionId': transactionId,
+          'amount': transaction.trainerAmount,
+          'platformFee': transaction.platformFee,
+          'totalAmount': transaction.amount,
+          'createdAt': Timestamp.now(),
+          'status': 'active',
+          'type': 'session_payment',
+        });
+      } else {
+        // Send rejection notification
+        await _createPaymentRejectionNotification(
+          clientId: transaction.clientId,
+          reason: rejectionReason ?? 'Payment verification failed',
+        );
       }
     } catch (e) {
       throw Exception('Failed to verify payment: $e');
+    }
+  }
+
+  /// Create notification for session approval
+  Future<void> _createSessionApprovalNotification({
+    required String clientId,
+    required String trainerId,
+    required String sessionId,
+    required String trainerName,
+    required String clientName,
+  }) async {
+    try {
+      // Notification for client
+      await _firestore.collection('notifications').add({
+        'userId': clientId,
+        'type': 'session_approved',
+        'title': 'Session Approved!',
+        'message':
+            '$trainerName has been connected to you. Your session starts today!',
+        'sessionId': sessionId,
+        'trainerId': trainerId,
+        'createdAt': Timestamp.now(),
+        'read': false,
+      });
+
+      // Notification for trainer
+      await _firestore.collection('notifications').add({
+        'userId': trainerId,
+        'type': 'session_approved',
+        'title': 'New Client Connected!',
+        'message':
+            'You are now connected with $clientName. Your session starts today!',
+        'sessionId': sessionId,
+        'clientId': clientId,
+        'createdAt': Timestamp.now(),
+        'read': false,
+      });
+    } catch (e) {
+      print('Error creating session approval notification: $e');
+    }
+  }
+
+  /// Create notification for payment rejection
+  Future<void> _createPaymentRejectionNotification({
+    required String clientId,
+    required String reason,
+  }) async {
+    try {
+      await _firestore.collection('notifications').add({
+        'userId': clientId,
+        'type': 'payment_rejected',
+        'title': 'Payment Verification Failed',
+        'message': 'Your payment could not be verified. Reason: $reason',
+        'createdAt': Timestamp.now(),
+        'read': false,
+      });
+    } catch (e) {
+      print('Error creating payment rejection notification: $e');
     }
   }
 
