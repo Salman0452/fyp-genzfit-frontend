@@ -13,6 +13,7 @@ import 'package:cloudinary_public/cloudinary_public.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:genzfit/screens/trainer/trainer_settings_screen.dart';
 import 'package:genzfit/screens/trainer/trainer_edit_profile_screen.dart';
+import 'package:genzfit/models/session_model.dart';
 
 class TrainerProfileScreen extends StatefulWidget {
   const TrainerProfileScreen({super.key});
@@ -532,47 +533,102 @@ class _TrainerProfileScreenState extends State<TrainerProfileScreen> {
         : AppColors.brandGreenDeep;
     final trainerData = trainerDoc?.data() as Map<String, dynamic>?;
     final rating = (trainerData?['rating'] ?? 0.0).toDouble();
-    final clients = trainerData?['clients'] ?? 0;
     final totalEarnings = (trainerData?['totalEarnings'] ?? 0.0).toDouble();
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Theme.of(context).brightness == Brightness.dark
-            ? const Color(0xFF1A1A1A)
-            : AppColors.surface,
-        borderRadius: BorderRadius.circular(AppSizes.borderRadius),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: _buildStatItem(
-              'Rating',
-              rating.toStringAsFixed(1),
-              Icons.star,
-              accentColor,
-            ),
+
+    // Get trainer ID from user
+    final userId = user?.id ?? '';
+
+    return FutureBuilder<Map<String, dynamic>>(
+      future: _getTrainerStats(userId),
+      builder: (context, statsSnapshot) {
+        final clients = statsSnapshot.data?['totalClients'] ?? 0;
+
+        return Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Theme.of(context).brightness == Brightness.dark
+                ? const Color(0xFF1A1A1A)
+                : AppColors.surface,
+            borderRadius: BorderRadius.circular(AppSizes.borderRadius),
           ),
-          Container(width: 1, height: 40, color: AppColors.charcoal),
-          Expanded(
-            child: _buildStatItem(
-              'Clients',
-              '$clients',
-              Icons.people,
-              accentColor,
-            ),
+          child: Row(
+            children: [
+              Expanded(
+                child: _buildStatItem(
+                  'Rating',
+                  rating.toStringAsFixed(1),
+                  Icons.star,
+                  accentColor,
+                ),
+              ),
+              Container(width: 1, height: 40, color: AppColors.charcoal),
+              Expanded(
+                child: _buildStatItem(
+                  'Clients',
+                  '$clients',
+                  Icons.people,
+                  accentColor,
+                ),
+              ),
+              Container(width: 1, height: 40, color: AppColors.charcoal),
+              Expanded(
+                child: _buildStatItem(
+                  'Earnings',
+                  'Rs. ${totalEarnings.toStringAsFixed(0)}',
+                  Icons.monetization_on,
+                  accentColor,
+                ),
+              ),
+            ],
           ),
-          Container(width: 1, height: 40, color: AppColors.charcoal),
-          Expanded(
-            child: _buildStatItem(
-              'Earnings',
-              'Rs. ${totalEarnings.toStringAsFixed(0)}',
-              Icons.monetization_on,
-              accentColor,
-            ),
-          ),
-        ],
-      ),
+        );
+      },
     );
+  }
+
+  Future<Map<String, dynamic>> _getTrainerStats(String trainerId) async {
+    try {
+      final snapshot = await FirebaseFirestore.instance
+          .collection('sessions')
+          .where('trainerId', isEqualTo: trainerId)
+          .get();
+
+      int activeSessions = 0;
+      int completedSessions = 0;
+      double totalEarnings = 0.0;
+      Set<String> uniqueClients = {};
+
+      for (var doc in snapshot.docs) {
+        final session = SessionModel.fromFirestore(doc);
+        uniqueClients.add(session.clientId);
+
+        if (session.status == SessionStatus.active) {
+          activeSessions++;
+        } else if (session.status == SessionStatus.completed) {
+          completedSessions++;
+          if (session.amount != null) {
+            totalEarnings += session.amount!;
+          }
+        }
+      }
+
+      return {
+        'totalSessions': snapshot.docs.length,
+        'activeSessions': activeSessions,
+        'completedSessions': completedSessions,
+        'totalClients': uniqueClients.length,
+        'totalEarnings': totalEarnings,
+      };
+    } catch (e) {
+      print('Error getting trainer stats: $e');
+      return {
+        'totalSessions': 0,
+        'activeSessions': 0,
+        'completedSessions': 0,
+        'totalClients': 0,
+        'totalEarnings': 0.0,
+      };
+    }
   }
 
   Widget _buildStatItem(

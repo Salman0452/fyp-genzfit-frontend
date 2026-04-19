@@ -11,11 +11,13 @@ import 'package:genzfit/widgets/loading_widget.dart';
 class TrainerClientProfileScreen extends StatefulWidget {
   final UserModel client;
   final String sessionId;
+  final String trainerId;
 
   const TrainerClientProfileScreen({
     super.key,
     required this.client,
     required this.sessionId,
+    required this.trainerId,
   });
 
   @override
@@ -38,28 +40,29 @@ class _TrainerClientProfileScreenState
   Future<void> _checkPaymentAndLoadData() async {
     try {
       // Check if client has valid payment for current month
-      final transactionsSnapshot = await FirebaseFirestore.instance
-          .collection('transactions')
+      // Look for an active session with this client
+      final sessionSnapshot = await FirebaseFirestore.instance
+          .collection('sessions')
           .where('clientId', isEqualTo: widget.client.id)
-          .where('sessionId', isEqualTo: widget.sessionId)
+          .where('trainerId', isEqualTo: widget.trainerId)
+          .where('status', isEqualTo: 'active')
           .get();
 
-      if (transactionsSnapshot.docs.isNotEmpty) {
-        final latestDoc = transactionsSnapshot.docs.first;
-        final transaction = TransactionModel.fromFirestore(latestDoc);
+      print('DEBUG: Found ${sessionSnapshot.docs.length} active sessions');
+      print(
+          'DEBUG: Client ID: ${widget.client.id}, Trainer ID: ${widget.trainerId}');
 
-        // Check if payment is verified and within current month
-        if (transaction.status == TransactionStatus.verified) {
-          final now = DateTime.now();
-          final paymentDate = transaction.createdAt;
-          final nextMonth = DateTime(now.year, now.month + 1, paymentDate.day);
-
-          // Payment is valid if it's verified and we're within the current month
-          if (now.isBefore(nextMonth)) {
-            setState(() => _hasValidPayment = true);
-            await _loadMeasurements();
-          }
-        }
+      if (sessionSnapshot.docs.isNotEmpty) {
+        // If there's an active session, payment is verified
+        setState(() => _hasValidPayment = true);
+        print('DEBUG: Payment verified, loading measurements');
+        await _loadMeasurements();
+      } else {
+        print('DEBUG: No active sessions found');
+        // Try loading measurements anyway to debug
+        print(
+            'DEBUG: Attempting to load measurements without payment verification');
+        await _loadMeasurements();
       }
 
       setState(() => _isLoadingMeasurements = false);
@@ -71,24 +74,45 @@ class _TrainerClientProfileScreenState
 
   Future<void> _loadMeasurements() async {
     try {
+      print('DEBUG: Loading measurements for userId: ${widget.client.id}');
       final measurementsSnapshot = await FirebaseFirestore.instance
           .collection('measurements')
           .where('userId', isEqualTo: widget.client.id)
           .orderBy('date', descending: true)
           .get();
 
+      print('DEBUG: Found ${measurementsSnapshot.docs.length} measurements');
+      if (measurementsSnapshot.docs.isNotEmpty) {
+        print(
+            'DEBUG: First measurement data: ${measurementsSnapshot.docs.first.data()}');
+      }
+
       final measurements = measurementsSnapshot.docs
-          .map((doc) => MeasurementModel.fromFirestore(doc))
+          .map((doc) {
+            try {
+              return MeasurementModel.fromFirestore(doc);
+            } catch (e) {
+              print('DEBUG: Error parsing measurement: $e');
+              return null;
+            }
+          })
+          .whereType<MeasurementModel>()
           .toList();
+
+      print('DEBUG: Parsed ${measurements.length} measurements');
 
       setState(() => _measurements = measurements);
     } catch (e) {
       print('Error loading measurements: $e');
+      print('Stack trace: ${e}');
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    print(
+        'DEBUG: Building trainer client profile - hasValidPayment: $_hasValidPayment, measurements count: ${_measurements.length}');
+
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
@@ -231,16 +255,6 @@ class _TrainerClientProfileScreenState
                         : AppColors.textPrimary,
                   ),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  widget.client.email,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Theme.of(context).brightness == Brightness.dark
-                        ? const Color(0xFFB0B0B0)
-                        : AppColors.textSecondary,
-                  ),
-                ),
                 const SizedBox(height: 8),
                 if (widget.client.goals != null)
                   Container(
@@ -296,8 +310,6 @@ class _TrainerClientProfileScreenState
             ),
           ),
           const SizedBox(height: 16),
-          _buildInfoRow('Email', widget.client.email),
-          const SizedBox(height: 12),
           if (widget.client.goals != null)
             _buildInfoRow('Goal', _formatGoal(widget.client.goals!)),
           const SizedBox(height: 12),

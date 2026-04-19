@@ -13,6 +13,7 @@ import 'package:genzfit/screens/trainer/trainer_change_password_screen.dart';
 import 'package:genzfit/screens/trainer/trainer_availability_screen.dart';
 import 'package:genzfit/screens/trainer/trainer_rates_pricing_screen.dart';
 import 'package:genzfit/screens/trainer/trainer_certifications_screen.dart';
+import 'package:genzfit/screens/trainer/trainer_earnings_screen.dart';
 
 class TrainerSettingsScreen extends StatelessWidget {
   const TrainerSettingsScreen({super.key});
@@ -391,6 +392,20 @@ class TrainerSettingsScreen extends StatelessWidget {
                     context,
                     MaterialPageRoute(
                       builder: (_) => const TrainerCertificationsScreen(),
+                    ),
+                  );
+                },
+              ),
+              _buildSettingItem(
+                context,
+                icon: Icons.account_balance_wallet,
+                title: 'Earnings & Withdrawals',
+                subtitle: 'View earnings and manage withdrawals',
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const TrainerEarningsScreen(),
                     ),
                   );
                 },

@@ -123,6 +123,7 @@ class _TrainerClientsScreenState extends State<TrainerClientsScreen> {
                     client,
                     clientId,
                     sessionDoc.id,
+                    trainerId,
                   );
                 },
               );
@@ -138,6 +139,7 @@ class _TrainerClientsScreenState extends State<TrainerClientsScreen> {
     UserModel client,
     String clientId,
     String sessionId,
+    String trainerId,
   ) {
     return GestureDetector(
       onTap: () {
@@ -147,6 +149,7 @@ class _TrainerClientsScreenState extends State<TrainerClientsScreen> {
             builder: (context) => TrainerClientProfileScreen(
               client: client,
               sessionId: sessionId,
+              trainerId: trainerId,
             ),
           ),
         );
@@ -225,16 +228,6 @@ class _TrainerClientsScreenState extends State<TrainerClientsScreen> {
                           : AppColors.textPrimary,
                     ),
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    client.email,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Theme.of(context).brightness == Brightness.dark
-                          ? const Color(0xFFB0B0B0)
-                          : AppColors.textSecondary,
-                    ),
-                  ),
                   const SizedBox(height: 8),
                   if (client.goals != null)
                     Container(
@@ -249,9 +242,7 @@ class _TrainerClientsScreenState extends State<TrainerClientsScreen> {
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
-                        client.goals!
-                            .replaceAll(RegExp('[A-Z]'), ' \${event}')
-                            .trim(),
+                        _formatGoal(client.goals!),
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w500,
@@ -276,5 +267,18 @@ class _TrainerClientsScreenState extends State<TrainerClientsScreen> {
         ),
       ),
     );
+  }
+
+  String _formatGoal(String goal) {
+    switch (goal) {
+      case 'fitness':
+        return 'General Fitness';
+      case 'weightGain':
+        return 'Weight Gain';
+      case 'weightLoss':
+        return 'Weight Loss';
+      default:
+        return goal;
+    }
   }
 }
