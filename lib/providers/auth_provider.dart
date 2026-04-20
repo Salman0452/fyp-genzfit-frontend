@@ -12,6 +12,7 @@ class AuthProvider extends ChangeNotifier {
   User? _firebaseUser;
   bool _isLoading = false;
   String? _error;
+  bool _lastSocialAuthIsNewUser = false;
 
   UserModel? get currentUser => _currentUser;
   UserModel? get userModel => _currentUser;
@@ -19,6 +20,7 @@ class AuthProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get error => _error;
   bool get isAuthenticated => _currentUser != null;
+  bool get lastSocialAuthIsNewUser => _lastSocialAuthIsNewUser;
 
   AuthProvider() {
     _initializeAuthState();
@@ -90,6 +92,7 @@ class AuthProvider extends ChangeNotifier {
         hourlyRate: hourlyRate,
         emailVerified: emailVerified,
       );
+      _lastSocialAuthIsNewUser = false;
 
       _isLoading = false;
       notifyListeners();
@@ -102,17 +105,72 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  // Mark email as verified after OTP verification
-  Future<void> markEmailAsVerified() async {
+  // Send email verification link to currently signed in user
+  Future<bool> sendEmailVerificationLink() async {
     try {
-      if (_currentUser != null) {
-        await _authService.markEmailAsVerified(_currentUser!.id);
-        _currentUser = _currentUser!.copyWith(emailVerified: true);
-        notifyListeners();
-      }
-    } catch (e) {
-      _error = e.toString();
+      _isLoading = true;
+      _error = null;
       notifyListeners();
+
+      await _authService.sendEmailVerificationLink();
+
+      _isLoading = false;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _error = e.toString().replaceFirst('Exception: ', '');
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
+  // Check and sync email verification state from Firebase Auth to Firestore
+  Future<bool> syncEmailVerificationStatus() async {
+    try {
+      _isLoading = true;
+      _error = null;
+      notifyListeners();
+
+      final verified = await _authService.syncEmailVerificationStatus();
+      if (verified && _currentUser != null) {
+        _currentUser = _currentUser!.copyWith(emailVerified: true);
+      }
+
+      _isLoading = false;
+      notifyListeners();
+      return verified;
+    } catch (e) {
+      _error = e.toString().replaceFirst('Exception: ', '');
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
+  // Resend verification link for email/password credentials
+  Future<bool> resendEmailVerificationForCredentials({
+    required String email,
+    required String password,
+  }) async {
+    try {
+      _isLoading = true;
+      _error = null;
+      notifyListeners();
+
+      await _authService.resendEmailVerificationForCredentials(
+        email: email,
+        password: password,
+      );
+
+      _isLoading = false;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _error = e.toString().replaceFirst('Exception: ', '');
+      _isLoading = false;
+      notifyListeners();
+      return false;
     }
   }
 
@@ -130,12 +188,81 @@ class AuthProvider extends ChangeNotifier {
         email: email,
         password: password,
       );
+      _lastSocialAuthIsNewUser = false;
 
       _isLoading = false;
       notifyListeners();
       return true;
     } catch (e) {
       _error = e.toString();
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
+  // Sign in / sign up with Google
+  Future<bool> signInWithGoogle({
+    UserRole? role,
+    String? goals,
+    List<String>? expertise,
+    double? hourlyRate,
+    String? nameOverride,
+  }) async {
+    try {
+      _isLoading = true;
+      _error = null;
+      notifyListeners();
+
+      final socialResult = await _authService.signInWithGoogle(
+        role: role,
+        goals: goals,
+        expertise: expertise,
+        hourlyRate: hourlyRate,
+        nameOverride: nameOverride,
+      );
+      _currentUser = socialResult.user;
+      _lastSocialAuthIsNewUser = socialResult.isNewUser;
+
+      _isLoading = false;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _error = e.toString().replaceFirst('Exception: ', '');
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
+  // Sign in / sign up with Facebook
+  Future<bool> signInWithFacebook({
+    UserRole? role,
+    String? goals,
+    List<String>? expertise,
+    double? hourlyRate,
+    String? nameOverride,
+  }) async {
+    try {
+      _isLoading = true;
+      _error = null;
+      notifyListeners();
+
+      final socialResult = await _authService.signInWithFacebook(
+        role: role,
+        goals: goals,
+        expertise: expertise,
+        hourlyRate: hourlyRate,
+        nameOverride: nameOverride,
+      );
+      _currentUser = socialResult.user;
+      _lastSocialAuthIsNewUser = socialResult.isNewUser;
+
+      _isLoading = false;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _error = e.toString().replaceFirst('Exception: ', '');
       _isLoading = false;
       notifyListeners();
       return false;
@@ -150,6 +277,7 @@ class AuthProvider extends ChangeNotifier {
 
       await _authService.signOut();
       _currentUser = null;
+      _lastSocialAuthIsNewUser = false;
 
       _isLoading = false;
       notifyListeners();

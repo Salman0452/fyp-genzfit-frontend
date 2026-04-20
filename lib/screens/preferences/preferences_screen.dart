@@ -149,12 +149,17 @@ class _PreferencesScreenState extends State<PreferencesScreen> {
     try {
       await _prefsService.savePreferences(userId: userId, preferences: prefs);
       if (mounted) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+          SnackBar(
             content: Text(
               'Preferences saved. Your AI plans will now be personalised.',
+              style: TextStyle(
+                color: isDark ? AppColors.textPrimary : AppColors.textOnBrand,
+              ),
             ),
-            backgroundColor: Color(0xFF10B981),
+            backgroundColor:
+                isDark ? AppColors.brandGreen : AppColors.brandGreenDeep,
             duration: Duration(seconds: 3),
           ),
         );

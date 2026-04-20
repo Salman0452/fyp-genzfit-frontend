@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'constants.dart';
 
 class Helpers {
   // Format date
@@ -35,10 +36,19 @@ class Helpers {
   // Show snackbar
   static void showSnackBar(BuildContext context, String message,
       {bool isError = false}) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final successColor = isDark ? AppColors.brandGreen : AppColors.brandGreenDeep;
+    final successTextColor = isDark ? AppColors.textPrimary : AppColors.textOnBrand;
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(message),
-        backgroundColor: isError ? Colors.red : Colors.green,
+        content: Text(
+          message,
+          style: TextStyle(
+            color: isError ? AppColors.textOnBrand : successTextColor,
+          ),
+        ),
+        backgroundColor: isError ? AppColors.error : successColor,
         behavior: SnackBarBehavior.floating,
         duration: const Duration(seconds: 3),
       ),

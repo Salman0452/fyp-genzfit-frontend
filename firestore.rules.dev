@@ -81,6 +81,11 @@ service cloud.firestore {
       allow read, write: if isSignedIn();
     }
 
+    match /user_preferences/{userId} {
+      allow read: if isSignedIn() && (request.auth.uid == userId || isAnyAdminRole());
+      allow write: if isSignedIn() && request.auth.uid == userId;
+    }
+
     match /recommendations/{recommendationId} {
       allow read, write: if isSignedIn();
     }

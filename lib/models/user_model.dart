@@ -76,6 +76,8 @@ class UserModel {
         return UserRole.trainer;
       case 'admin':
         return UserRole.admin;
+      case 'super_admin':
+        return UserRole.admin;
       case 'finance_admin':
       case 'moderator':
       case 'support':
@@ -216,6 +218,7 @@ class UserModel {
   bool get isSupport => roleKey == 'support';
   bool get isAnyAdminRole =>
       roleKey == 'admin' ||
+      roleKey == 'super_admin' ||
       roleKey == 'finance_admin' ||
       roleKey == 'moderator' ||
       roleKey == 'support';

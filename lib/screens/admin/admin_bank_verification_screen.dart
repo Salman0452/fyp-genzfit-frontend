@@ -226,7 +226,7 @@ class _AdminBankVerificationScreenState extends State<AdminBankVerificationScree
                 const SizedBox(height: 12),
                 _row('Account Holder', accountHolderName),
                 _row('Bank', bankName),
-                _row('Account', _maskAccount(accountNumber)),
+                _row('Account', accountNumber),
                 if (iban != null && iban.isNotEmpty) _row('IBAN', iban),
                 _row('Transfer Method', transferMethod),
                 if (verificationStatus == 'rejected' && (rejectionReason ?? '').isNotEmpty)
@@ -316,12 +316,6 @@ class _AdminBankVerificationScreenState extends State<AdminBankVerificationScree
       default:
         return Colors.grey;
     }
-  }
-
-  String _maskAccount(String accountNumber) {
-    if (accountNumber.length <= 4) return accountNumber;
-    final hidden = '*' * (accountNumber.length - 4);
-    return '$hidden${accountNumber.substring(accountNumber.length - 4)}';
   }
 
   Future<void> _verifyBankDetails({

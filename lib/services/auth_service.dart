@@ -1,10 +1,23 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
 import '../models/user_model.dart';
+
+class SocialAuthResult {
+  final UserModel user;
+  final bool isNewUser;
+
+  SocialAuthResult({
+    required this.user,
+    required this.isNewUser,
+  });
+}
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final GoogleSignIn _googleSignIn = GoogleSignIn(scopes: ['email']);
 
   // Get current user
   User? get currentUser => _auth.currentUser;
@@ -101,26 +114,237 @@ class AuthService {
         throw Exception('Failed to sign in');
       }
 
+      await user.reload();
+      final refreshedUser = _auth.currentUser;
+      if (refreshedUser == null) {
+        throw Exception('Failed to refresh user session. Please try again.');
+      }
+
+      if (!refreshedUser.emailVerified) {
+        await _auth.signOut();
+        throw Exception(
+          'Please verify your email first. We sent you a verification link.',
+        );
+      }
+
       // Get user data from Firestore
-      final doc = await _firestore.collection('users').doc(user.uid).get();
+      final doc = await _firestore.collection('users').doc(refreshedUser.uid).get();
       if (!doc.exists) {
         throw Exception('User data not found');
+      }
+
+      if ((doc.data()?['emailVerified'] as bool?) != true) {
+        await _firestore.collection('users').doc(refreshedUser.uid).update({
+          'emailVerified': true,
+        });
       }
 
       return UserModel.fromMap(doc.data()!);
     } on FirebaseAuthException catch (e) {
       throw _handleAuthException(e);
     } catch (e) {
+      if (e.toString().contains('Please verify your email first')) {
+        rethrow;
+      }
       throw Exception('Login failed. Please try again.');
+    }
+  }
+
+  // Send verification email link for currently signed-in email/password user
+  Future<void> sendEmailVerificationLink() async {
+    try {
+      final user = _auth.currentUser;
+      if (user == null || user.email == null) {
+        throw Exception('No user signed in');
+      }
+
+      if (!user.emailVerified) {
+        await user.sendEmailVerification();
+      }
+    } on FirebaseAuthException catch (e) {
+      throw _handleAuthException(e);
+    } catch (e) {
+      throw Exception('Failed to send verification email. Please try again.');
+    }
+  }
+
+  // Sign in temporarily to resend verification email, then sign out
+  Future<void> resendEmailVerificationForCredentials({
+    required String email,
+    required String password,
+  }) async {
+    try {
+      final userCredential = await _auth.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+
+      final user = userCredential.user;
+      if (user == null) {
+        throw Exception('No user found for provided credentials.');
+      }
+
+      if (!user.emailVerified) {
+        await user.sendEmailVerification();
+      }
+
+      await _auth.signOut();
+    } on FirebaseAuthException catch (e) {
+      throw _handleAuthException(e);
+    } catch (e) {
+      throw Exception('Failed to resend verification email. Please try again.');
+    }
+  }
+
+  // Refresh Firebase user and sync verified state to Firestore
+  Future<bool> syncEmailVerificationStatus() async {
+    try {
+      final user = _auth.currentUser;
+      if (user == null) {
+        return false;
+      }
+
+      await user.reload();
+      final refreshedUser = _auth.currentUser;
+      if (refreshedUser == null || !refreshedUser.emailVerified) {
+        return false;
+      }
+
+      await _firestore.collection('users').doc(refreshedUser.uid).set({
+        'emailVerified': true,
+      }, SetOptions(merge: true));
+
+      return true;
+    } catch (e) {
+      throw Exception('Failed to check email verification status.');
     }
   }
 
   // Sign out
   Future<void> signOut() async {
     try {
+      await _googleSignIn.signOut();
+      await FacebookAuth.instance.logOut();
       await _auth.signOut();
     } catch (e) {
       throw Exception('Sign out failed: ${e.toString()}');
+    }
+  }
+
+  // Sign in / sign up with Google
+  Future<SocialAuthResult> signInWithGoogle({
+    UserRole? role,
+    String? goals,
+    List<String>? expertise,
+    double? hourlyRate,
+    String? nameOverride,
+  }) async {
+    try {
+      final googleUser = await _googleSignIn.signIn();
+      if (googleUser == null) {
+        throw Exception('Google sign in was cancelled.');
+      }
+
+      final googleAuth = await googleUser.authentication;
+      if (googleAuth.idToken == null && googleAuth.accessToken == null) {
+        throw Exception('Google authentication failed. Please try again.');
+      }
+
+      final credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+
+      final userCredential = await _auth.signInWithCredential(credential);
+      final firebaseUser = userCredential.user;
+
+      if (firebaseUser == null) {
+        throw Exception('Failed to sign in with Google.');
+      }
+
+      return _getOrCreateSocialUser(
+        firebaseUser,
+        role: role,
+        goals: goals,
+        expertise: expertise,
+        hourlyRate: hourlyRate,
+        nameOverride: nameOverride,
+        emailVerified: true,
+      );
+    } on FirebaseAuthException catch (e) {
+      throw _handleAuthException(e);
+    } catch (e) {
+      if (e.toString().contains('cancelled')) {
+        rethrow;
+      }
+      throw Exception('Google sign in failed: ${e.toString()}');
+    }
+  }
+
+  // Sign in / sign up with Facebook
+  Future<SocialAuthResult> signInWithFacebook({
+    UserRole? role,
+    String? goals,
+    List<String>? expertise,
+    double? hourlyRate,
+    String? nameOverride,
+  }) async {
+    try {
+      final loginResult = await FacebookAuth.instance.login(
+        permissions: const ['email', 'public_profile'],
+      );
+
+      if (loginResult.status == LoginStatus.cancelled) {
+        throw Exception('Facebook sign in was cancelled.');
+      }
+
+      if (loginResult.status != LoginStatus.success ||
+          loginResult.accessToken == null) {
+        throw Exception(
+          'Facebook sign in failed: ${loginResult.message ?? loginResult.status.name}',
+        );
+      }
+
+      final credential = FacebookAuthProvider.credential(
+        loginResult.accessToken!.tokenString,
+      );
+
+      final userCredential = await _auth.signInWithCredential(credential);
+      final firebaseUser = userCredential.user;
+
+      if (firebaseUser == null) {
+        throw Exception('Failed to sign in with Facebook.');
+      }
+
+      final userData = await FacebookAuth.instance.getUserData(
+        fields: 'name,email,picture.width(200)',
+      );
+      final facebookEmail = userData['email'] as String?;
+      final facebookName = userData['name'] as String?;
+
+      if ((firebaseUser.email == null || firebaseUser.email!.isEmpty) &&
+          (facebookEmail == null || facebookEmail.isEmpty)) {
+        throw Exception(
+            'Facebook account did not provide an email. Please add an email to Facebook and try again.');
+      }
+
+      return _getOrCreateSocialUser(
+        firebaseUser,
+        role: role,
+        goals: goals,
+        expertise: expertise,
+        hourlyRate: hourlyRate,
+        nameOverride: nameOverride ?? facebookName,
+        emailOverride: facebookEmail,
+        emailVerified: true,
+      );
+    } on FirebaseAuthException catch (e) {
+      throw _handleAuthException(e);
+    } catch (e) {
+      if (e.toString().contains('Facebook sign in was cancelled')) {
+        rethrow;
+      }
+      throw Exception('Facebook sign in failed: ${e.toString()}');
     }
   }
 
@@ -238,15 +462,71 @@ class AuthService {
     }
   }
 
-  // Mark email as verified after OTP verification
-  Future<void> markEmailAsVerified(String userId) async {
-    try {
-      await _firestore.collection('users').doc(userId).update({
-        'emailVerified': true,
-      });
-      print('✅ Email marked as verified for user: $userId');
-    } catch (e) {
-      throw Exception('Failed to mark email as verified: ${e.toString()}');
+  Future<SocialAuthResult> _getOrCreateSocialUser(
+    User firebaseUser, {
+    UserRole? role,
+    String? goals,
+    List<String>? expertise,
+    double? hourlyRate,
+    String? nameOverride,
+    String? emailOverride,
+    bool emailVerified = true,
+  }) async {
+    final docRef = _firestore.collection('users').doc(firebaseUser.uid);
+    final existingDoc = await docRef.get();
+
+    if (existingDoc.exists) {
+      return SocialAuthResult(
+        user: UserModel.fromMap(existingDoc.data()!),
+        isNewUser: false,
+      );
     }
+
+    final selectedRole = role ?? UserRole.client;
+    final email = emailOverride ?? firebaseUser.email;
+    final name = nameOverride ?? firebaseUser.displayName ?? 'GenZFit User';
+
+    if (email == null || email.isEmpty) {
+      throw Exception('No email found for this account.');
+    }
+
+    final userModel = UserModel(
+      id: firebaseUser.uid,
+      email: email,
+      name: name,
+      avatarUrl: firebaseUser.photoURL,
+      role: selectedRole,
+      createdAt: DateTime.now(),
+      status: 'active',
+      emailVerified: emailVerified,
+      goals: selectedRole == UserRole.client ? goals : null,
+      expertise: selectedRole == UserRole.trainer ? expertise : null,
+      hourlyRate: selectedRole == UserRole.trainer ? hourlyRate : null,
+      rating: selectedRole == UserRole.trainer ? 0.0 : null,
+      verified: selectedRole == UserRole.trainer ? false : null,
+    );
+
+    await docRef.set(userModel.toMap());
+
+    if (selectedRole == UserRole.trainer) {
+      await _firestore.collection('trainers').doc(firebaseUser.uid).set({
+        'userId': firebaseUser.uid,
+        'bio': '',
+        'expertise': expertise ?? [],
+        'certifications': [],
+        'videoUrls': [],
+        'hourlyRate': hourlyRate ?? 0.0,
+        'rating': 0.0,
+        'clients': 0,
+        'totalEarnings': 0.0,
+        'verified': false,
+        'availability': {},
+      });
+    }
+
+    return SocialAuthResult(
+      user: userModel,
+      isNewUser: true,
+    );
   }
 }

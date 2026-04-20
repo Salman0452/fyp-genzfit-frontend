@@ -1,14 +1,113 @@
 const functions = require("firebase-functions");
 const nodemailer = require("nodemailer");
+const admin = require("firebase-admin");
+
+if (!admin.apps.length) {
+  admin.initializeApp();
+}
+
+const runtimeConfig = functions.config();
+const gmailUser = process.env.GMAIL_USER || runtimeConfig.gmail?.user;
+const gmailAppPassword =
+  process.env.GMAIL_APP_PASSWORD || runtimeConfig.gmail?.app_password;
 
 // Configure your email service here
 // Option 1: Gmail
 const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
-    user: process.env.GMAIL_USER,
-    pass: process.env.GMAIL_APP_PASSWORD, // Use app-specific password, not main password
+    user: gmailUser,
+    pass: gmailAppPassword, // Use app-specific password, not main password
   },
+});
+
+const bootstrapAdminSecret =
+  process.env.BOOTSTRAP_ADMIN_SECRET || runtimeConfig.bootstrap?.secret;
+
+exports.bootstrapAdmin = functions.https.onRequest(async (req, res) => {
+  res.set("Access-Control-Allow-Origin", "*");
+  res.set("Access-Control-Allow-Methods", "POST, OPTIONS");
+  res.set("Access-Control-Allow-Headers", "Content-Type");
+
+  if (req.method === "OPTIONS") {
+    res.status(204).send("");
+    return;
+  }
+
+  try {
+    if (!bootstrapAdminSecret) {
+      return res.status(500).json({
+        success: false,
+        message: "Bootstrap secret is not configured",
+      });
+    }
+
+    const { secret, email, password, name, role = "super_admin" } = req.body || {};
+
+    if (secret !== bootstrapAdminSecret) {
+      return res.status(403).json({
+        success: false,
+        message: "Invalid bootstrap secret",
+      });
+    }
+
+    if (!email || !password || !name) {
+      return res.status(400).json({
+        success: false,
+        message: "Email, password, and name are required",
+      });
+    }
+
+    let userRecord;
+    try {
+      userRecord = await admin.auth().getUserByEmail(email);
+    } catch (error) {
+      if (error.code !== "auth/user-not-found") {
+        throw error;
+      }
+      userRecord = await admin.auth().createUser({
+        email,
+        password,
+        displayName: name,
+        emailVerified: true,
+      });
+    }
+
+    const allowedRoles = new Set(["admin", "super_admin", "finance_admin", "moderator", "support"]);
+    const normalizedRole = allowedRoles.has(role) ? role : "super_admin";
+
+    await admin.auth().setCustomUserClaims(userRecord.uid, {
+      admin: true,
+      role: normalizedRole,
+    });
+
+    await admin.firestore().collection("users").doc(userRecord.uid).set(
+      {
+        id: userRecord.uid,
+        email,
+        name,
+        role: normalizedRole,
+        roleKey: normalizedRole,
+        status: "active",
+        emailVerified: true,
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      },
+      { merge: true },
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: `Admin account is ready with role ${normalizedRole}`,
+      uid: userRecord.uid,
+    });
+  } catch (error) {
+    console.error("Error bootstrapping admin:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to bootstrap admin",
+      error: error.message,
+    });
+  }
 });
 
 // Option 2: Mailtrap (uncomment to use instead)
@@ -34,6 +133,13 @@ exports.sendOTPEmail = functions.https.onRequest(async (req, res) => {
   }
 
   try {
+    if (!gmailUser || !gmailAppPassword) {
+      return res.status(500).json({
+        success: false,
+        message: "Email sender is not configured",
+      });
+    }
+
     const { email, otp } = req.body;
 
     if (!email || !otp) {
@@ -86,7 +192,7 @@ exports.sendOTPEmail = functions.https.onRequest(async (req, res) => {
 
     // Send email
     await transporter.sendMail({
-      from: '"GenZFit" <noreply@genzfit.com>',
+      from: `"GenZFit" <${gmailUser}>`,
       to: email,
       subject: "Your GenZFit Verification Code: " + otp,
       html: htmlContent,

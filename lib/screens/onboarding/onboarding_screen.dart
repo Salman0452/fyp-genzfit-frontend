@@ -7,6 +7,7 @@ import '../../models/onboarding_data.dart';
 import '../../providers/auth_provider.dart';
 import '../../services/user_preferences_service.dart';
 import '../../screens/client/client_home_screen.dart';
+import '../../utils/constants.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Theme constants for onboarding — aligned with AppColors / AppConstants
@@ -14,7 +15,18 @@ import '../../screens/client/client_home_screen.dart';
 class _OC {
   static const bg = Color(0xFF0A0B0A); // AppConstants.primaryBlack
   static const surface = Color(0xFF171917); // AppConstants.charcoalGray
-  static const accent = Color(0xFF7FFA88); // AppConstants.primaryGold
+  static Color get accent {
+    final isDark =
+        WidgetsBinding.instance.platformDispatcher.platformBrightness ==
+            Brightness.dark;
+    return isDark ? AppColors.brandGreen : AppColors.brandGreenDeep;
+  }
+  static Color get onAccent {
+    final isDark =
+        WidgetsBinding.instance.platformDispatcher.platformBrightness ==
+            Brightness.dark;
+    return isDark ? AppColors.textPrimary : AppColors.textOnBrand;
+  }
   static const teal = Color(0xFF83BCB5); // AppConstants.accentGold
   static const white = Color(0xFFFFFFFF);
   static const muted = Color(0xFF5E625F); // AppConstants.textGray
@@ -250,8 +262,8 @@ class _GradientButton extends StatelessWidget {
         child: Center(
           child: Text(
             label,
-            style: const TextStyle(
-              color: _OC.bg,
+            style: TextStyle(
+              color: _OC.onAccent,
               fontSize: 18,
               fontWeight: FontWeight.bold,
               letterSpacing: 0.5,
@@ -385,7 +397,7 @@ class _WelcomePageState extends State<_WelcomePage>
                     style: TextStyle(color: _OC.muted, fontSize: 17),
                   ),
                   const SizedBox(height: 10),
-                  const Text(
+                  Text(
                     'Takes only 2 minutes',
                     textAlign: TextAlign.center,
                     style: TextStyle(
@@ -595,7 +607,7 @@ class _AnimatedGoalCardState extends State<_AnimatedGoalCard>
                         ? Container(
                             width: 24,
                             height: 24,
-                            decoration: const BoxDecoration(
+                            decoration: BoxDecoration(
                               color: _OC.accent,
                               shape: BoxShape.circle,
                             ),
@@ -784,7 +796,7 @@ class _LevelCard extends StatelessWidget {
                               ),
                               child: Text(
                                 b,
-                                style: const TextStyle(
+                                style: TextStyle(
                                     color: _OC.accent,
                                     fontSize: 11,
                                     fontWeight: FontWeight.w500),
@@ -800,7 +812,7 @@ class _LevelCard extends StatelessWidget {
                 Container(
                   width: 24,
                   height: 24,
-                  decoration: const BoxDecoration(
+                  decoration: BoxDecoration(
                       color: _OC.accent, shape: BoxShape.circle),
                   child: const Icon(Icons.check, color: _OC.bg, size: 14),
                 ),
@@ -966,7 +978,7 @@ class _WorkoutLocationPageState extends State<_WorkoutLocationPage> {
                           Container(
                             width: 26,
                             height: 26,
-                            decoration: const BoxDecoration(
+                            decoration: BoxDecoration(
                                 color: _OC.accent, shape: BoxShape.circle),
                             child: const Icon(Icons.check,
                                 color: _OC.bg, size: 14),
@@ -997,12 +1009,12 @@ class _WorkoutLocationPageState extends State<_WorkoutLocationPage> {
                             border:
                                 Border.all(color: _OC.accent.withOpacity(0.3)),
                           ),
-                          child: const Row(
+                          child: Row(
                             children: [
                               Icon(Icons.directions_run,
                                   color: _OC.accent, size: 22),
-                              SizedBox(width: 12),
-                              Expanded(
+                              const SizedBox(width: 12),
+                              const Expanded(
                                 child: Text(
                                   "We'll create bodyweight workouts tailored for outdoor training",
                                   style:
@@ -1358,7 +1370,7 @@ class _BodyMeasurementsPageState extends State<_BodyMeasurementsPage> {
           const SizedBox(height: 6),
           Text(
             '${widget.data.workoutDurationMinutes} minutes',
-            style: const TextStyle(
+            style: TextStyle(
                 color: _OC.accent, fontSize: 20, fontWeight: FontWeight.bold),
           ),
           SliderTheme(
@@ -1849,8 +1861,8 @@ class _CelebrationPageState extends State<_CelebrationPage>
                         child: done
                             ? const Icon(Icons.check, color: _OC.bg, size: 16)
                             : inProgress
-                                ? const Padding(
-                                    padding: EdgeInsets.all(4),
+                                ? Padding(
+                                    padding: const EdgeInsets.all(4),
                                     child: CircularProgressIndicator(
                                       color: _OC.accent,
                                       strokeWidth: 2.5,

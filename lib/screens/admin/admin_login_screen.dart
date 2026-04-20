@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:genzfit/models/user_model.dart';
 import 'package:genzfit/screens/admin/admin_dashboard_screen.dart';
+import 'package:genzfit/screens/admin/quick_admin_setup_screen.dart';
 import 'package:genzfit/utils/constants.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -14,6 +15,9 @@ class AdminLoginScreen extends StatefulWidget {
 }
 
 class _AdminLoginScreenState extends State<AdminLoginScreen> {
+  // Temporary migration helper: delete this entry point after admin bootstrap.
+  static const bool _enableQuickAdminSetup = true;
+
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -54,6 +58,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
       final role = userData['role'] as String?;
       const allowedAdminRoles = {
         'admin',
+        'super_admin',
         'finance_admin',
         'moderator',
         'support',
@@ -280,6 +285,29 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                                 ),
                         ),
                       ),
+                      if (_enableQuickAdminSetup) ...[
+                        const SizedBox(height: 12),
+                        TextButton.icon(
+                          onPressed: _isLoading
+                              ? null
+                              : () {
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (_) =>
+                                          const QuickAdminSetupScreen(),
+                                    ),
+                                  );
+                                },
+                          icon: const Icon(Icons.build_circle_outlined),
+                          label: Text(
+                            'Quick Admin Setup (Temporary)',
+                            style: GoogleFonts.inter(
+                              fontWeight: FontWeight.w600,
+                              color: brandGreen,
+                            ),
+                          ),
+                        ),
+                      ],
                       const SizedBox(height: 16),
 
                       // Warning Text

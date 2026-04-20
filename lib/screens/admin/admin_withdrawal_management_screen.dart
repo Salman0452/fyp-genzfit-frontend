@@ -236,7 +236,7 @@ class _AdminWithdrawalManagementScreenState
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  'Account: ${(bankData['accountNumber'] as String?)?.replaceRange(0, (bankData['accountNumber'] as String).length - 4, '*' * ((bankData['accountNumber'] as String).length - 4)) ?? ''}',
+                                  'Account: ${bankData['accountNumber'] ?? ''}',
                                   style: TextStyle(
                                     fontSize: 12,
                                     color: Theme.of(context).brightness ==
@@ -247,7 +247,7 @@ class _AdminWithdrawalManagementScreenState
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  'Holder: ${bankData['accountName'] ?? ''}',
+                                  'Holder: ${bankData['accountHolderName'] ?? bankData['accountName'] ?? ''}',
                                   style: TextStyle(
                                     fontSize: 12,
                                     color: Theme.of(context).brightness ==

@@ -1,10 +1,9 @@
-import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:genzfit/models/user_model.dart';
-import 'package:genzfit/models/measurement_model.dart';
-import 'package:intl/intl.dart';
+import 'package:flutter/material.dart';
+import 'package:genzfit/screens/admin/admin_client_insights_screen.dart';
 import 'package:genzfit/utils/constants.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 
 class UserManagementScreen extends StatefulWidget {
   const UserManagementScreen({super.key});
@@ -16,8 +15,9 @@ class UserManagementScreen extends StatefulWidget {
 class _UserManagementScreenState extends State<UserManagementScreen> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final TextEditingController _searchController = TextEditingController();
+
   String _searchQuery = '';
-  String _roleFilter = 'all'; // all, client, trainer
+  String _roleFilter = 'all';
 
   @override
   void dispose() {
@@ -27,104 +27,145 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryText =
+        isDark ? const Color(0xFFFFFFFF) : AppColors.textPrimary;
+    final cardBackground = isDark ? const Color(0xFF1A1A1A) : AppColors.surface;
+
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Theme.of(context).brightness == Brightness.dark
-            ? const Color(0xFF171917)
-            : AppColors.surface,
+        backgroundColor: cardBackground,
         elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios,
-              color: Theme.of(context).brightness == Brightness.dark
-                  ? const Color(0xFFFFFFFF)
-                  : AppColors.textPrimary),
-          onPressed: () => Navigator.pop(context),
-        ),
         title: Text(
-          'User Management',
+          'Users',
           style: GoogleFonts.poppins(
-            fontSize: 20,
+            fontSize: 22,
             fontWeight: FontWeight.bold,
-            color: Theme.of(context).brightness == Brightness.dark
-                ? const Color(0xFFFFFFFF)
-                : AppColors.textPrimary,
+            color: primaryText,
           ),
         ),
       ),
       body: Column(
         children: [
-          _buildSearchAndFilters(),
+          _buildTopBar(),
           Expanded(
-            child: _buildUsersList(),
+            child: StreamBuilder<QuerySnapshot>(
+              stream: _firestore.collection('users').snapshots(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                if (snapshot.hasError) {
+                  return Center(
+                    child: Text(
+                      'Failed to load users: ${snapshot.error}',
+                      style: GoogleFonts.inter(color: Colors.red),
+                    ),
+                  );
+                }
+
+                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                  return Center(
+                    child: Text(
+                      'No users found',
+                      style: GoogleFonts.inter(color: primaryText),
+                    ),
+                  );
+                }
+
+                final users = snapshot.data!.docs
+                    .map((doc) => {'id': doc.id, ...doc.data() as Map<String, dynamic>})
+                    .where(_applyFilter)
+                    .toList()
+                  ..sort((a, b) => _extractDate(b['createdAt'])
+                      .compareTo(_extractDate(a['createdAt'])));
+
+                if (users.isEmpty) {
+                  return Center(
+                    child: Text(
+                      'No users match your search/filter',
+                      style: GoogleFonts.inter(color: primaryText),
+                    ),
+                  );
+                }
+
+                return _buildUsersTable(users);
+              },
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildSearchAndFilters() {
+  Widget _buildTopBar() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardBackground = isDark ? const Color(0xFF1A1A1A) : AppColors.surface;
+    final secondaryText =
+        isDark ? const Color(0xFFB0B0B0) : AppColors.textSecondary;
+
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
       color: Theme.of(context).scaffoldBackgroundColor,
       child: Column(
         children: [
-          // Search Bar
           TextField(
             controller: _searchController,
-            style: TextStyle(
-                color: Theme.of(context).brightness == Brightness.dark
-                    ? const Color(0xFFFFFFFF)
-                    : AppColors.textPrimary),
             decoration: InputDecoration(
-              hintText: 'Search by name or email...',
-              hintStyle: TextStyle(
-                  color: (Theme.of(context).brightness == Brightness.dark
-                          ? const Color(0xFFFFFFFF)
-                          : AppColors.textPrimary)
-                      .withOpacity(0.38)),
-              prefixIcon: Icon(Icons.search,
-                  color: Theme.of(context).brightness == Brightness.dark
-                      ? AppColors.brandGreen
-                      : AppColors.brandGreenDeep),
-              suffixIcon: _searchQuery.isNotEmpty
-                  ? IconButton(
-                      icon: Icon(Icons.clear,
-                          color:
-                              (Theme.of(context).brightness == Brightness.dark
-                                      ? const Color(0xFFFFFFFF)
-                                      : AppColors.textPrimary)
-                                  .withOpacity(0.38)),
+              hintText: 'Search by name, email, role or UID',
+              prefixIcon: const Icon(Icons.search),
+              suffixIcon: _searchQuery.isEmpty
+                  ? null
+                  : IconButton(
                       onPressed: () {
                         _searchController.clear();
                         setState(() => _searchQuery = '');
                       },
-                    )
-                  : null,
+                      icon: const Icon(Icons.clear),
+                    ),
               filled: true,
-              fillColor: Theme.of(context).brightness == Brightness.dark
-                  ? const Color(0xFF171917)
-                  : AppColors.surface,
+              fillColor: cardBackground,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide.none,
               ),
             ),
-            onChanged: (value) {
-              setState(() => _searchQuery = value.toLowerCase());
-            },
+            onChanged: (value) => setState(() => _searchQuery = value.trim().toLowerCase()),
           ),
-          const SizedBox(height: 12),
-
-          // Role Filters
+          const SizedBox(height: 10),
           Row(
             children: [
-              _buildRoleChip('All Users', 'all'),
+              Text(
+                'Role:',
+                style: GoogleFonts.inter(
+                  color: secondaryText,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(width: 10),
+              _buildRoleChip('All', 'all'),
               const SizedBox(width: 8),
-              _buildRoleChip('Clients', 'client'),
+              _buildRoleChip('Client', 'client'),
               const SizedBox(width: 8),
-              _buildRoleChip('Trainers', 'trainer'),
+              _buildRoleChip('Trainer', 'trainer'),
+              const SizedBox(width: 8),
+              _buildRoleChip('Admin', 'admin'),
+              const SizedBox(width: 8),
+              _buildRoleChip('Super Admin', 'super_admin'),
             ],
+          ),
+          const SizedBox(height: 8),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Text(
+              'Password values are never stored in plain text by Firebase Auth. "Not stored" is expected.',
+              style: GoogleFonts.inter(
+                fontSize: 12,
+                color: secondaryText,
+              ),
+            ),
           ),
         ],
       ),
@@ -133,608 +174,165 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
 
   Widget _buildRoleChip(String label, String value) {
     final isSelected = _roleFilter == value;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return FilterChip(
+      selected: isSelected,
+      onSelected: (_) => setState(() => _roleFilter = value),
       label: Text(
         label,
         style: GoogleFonts.inter(
-          color: isSelected
-              ? (Theme.of(context).brightness == Brightness.dark
-                  ? const Color(0xFF1A1A1A)
-                  : AppColors.textPrimary)
-              : (Theme.of(context).brightness == Brightness.dark
-                  ? const Color(0xFFFFFFFF)
-                  : AppColors.textPrimary),
           fontWeight: FontWeight.w600,
+          color: isSelected
+              ? (isDark ? const Color(0xFF1A1A1A) : Colors.white)
+              : (isDark ? const Color(0xFFFFFFFF) : AppColors.textPrimary),
         ),
       ),
-      selected: isSelected,
-      onSelected: (selected) {
-        setState(() => _roleFilter = value);
-      },
-      backgroundColor: Theme.of(context).brightness == Brightness.dark
-          ? const Color(0xFF171917)
-          : AppColors.surface,
-      selectedColor: Theme.of(context).brightness == Brightness.dark
-          ? AppColors.brandGreen
-          : AppColors.brandGreenDeep,
-      checkmarkColor: Theme.of(context).brightness == Brightness.dark
-          ? const Color(0xFF1A1A1A)
-          : AppColors.textPrimary,
-      side: BorderSide(
-        color: isSelected
-            ? (Theme.of(context).brightness == Brightness.dark
-                ? AppColors.brandGreen
-                : AppColors.brandGreenDeep)
-            : (Theme.of(context).brightness == Brightness.dark
-                    ? const Color(0xFFB0B0B0)
-                    : AppColors.textSecondary)
-                .withOpacity(0.24),
-      ),
+      backgroundColor: isDark ? const Color(0xFF1A1A1A) : AppColors.surface,
+      selectedColor: isDark ? AppColors.brandGreen : AppColors.brandGreenDeep,
     );
   }
 
-  Widget _buildUsersList() {
-    Query query = _firestore.collection('users');
+  Widget _buildUsersTable(List<Map<String, dynamic>> users) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardBackground = isDark ? const Color(0xFF1A1A1A) : AppColors.surface;
+    final secondaryText =
+        isDark ? const Color(0xFFB0B0B0) : AppColors.textSecondary;
 
-    if (_roleFilter != 'all') {
-      query = query.where('role', isEqualTo: _roleFilter);
-    }
+    final formatter = DateFormat('yyyy-MM-dd HH:mm');
 
-    return StreamBuilder<QuerySnapshot>(
-      stream: query.snapshots(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return Center(
-            child: CircularProgressIndicator(
-                color: Theme.of(context).brightness == Brightness.dark
-                    ? AppColors.brandGreen
-                    : AppColors.brandGreenDeep),
-          );
-        }
-
-        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.people_outline,
-                  size: 80,
-                  color: (Theme.of(context).brightness == Brightness.dark
-                          ? const Color(0xFFFFFFFF)
-                          : AppColors.textPrimary)
-                      .withOpacity(0.3),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'No users found',
-                  style: GoogleFonts.poppins(
-                    fontSize: 18,
-                    color: (Theme.of(context).brightness == Brightness.dark
-                            ? const Color(0xFFFFFFFF)
-                            : AppColors.textPrimary)
-                        .withOpacity(0.6),
-                  ),
-                ),
-              ],
-            ),
-          );
-        }
-
-        // Filter by search query
-        var filteredDocs = snapshot.data!.docs.where((doc) {
-          if (_searchQuery.isEmpty) return true;
-
-          final data = doc.data() as Map<String, dynamic>;
-          final name = (data['name'] as String? ?? '').toLowerCase();
-          final email = (data['email'] as String? ?? '').toLowerCase();
-
-          return name.contains(_searchQuery) || email.contains(_searchQuery);
-        }).toList();
-
-        if (filteredDocs.isEmpty) {
-          return Center(
-            child: Text(
-              'No users match your search',
-              style: GoogleFonts.inter(
-                  color: (Theme.of(context).brightness == Brightness.dark
-                          ? const Color(0xFFFFFFFF)
-                          : AppColors.textPrimary)
-                      .withOpacity(0.6)),
-            ),
-          );
-        }
-
-        return ListView.builder(
-          padding: const EdgeInsets.all(16),
-          itemCount: filteredDocs.length,
-          itemBuilder: (context, index) {
-            final user = UserModel.fromFirestore(filteredDocs[index]);
-            return _buildUserCard(user);
-          },
-        );
-      },
-    );
-  }
-
-  Widget _buildUserCard(UserModel user) {
-    return Card(
-      color: Theme.of(context).brightness == Brightness.dark
-          ? const Color(0xFF171917)
-          : AppColors.surface,
-      margin: const EdgeInsets.only(bottom: 12),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(
-          color: user.status == 'suspended'
-              ? Colors.red.withOpacity(0.3)
-              : (Theme.of(context).brightness == Brightness.dark
-                      ? const Color(0xFFFFFFFF)
-                      : AppColors.textPrimary)
-                  .withOpacity(0.12),
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Container(
+        decoration: BoxDecoration(
+          color: cardBackground,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: secondaryText.withOpacity(0.2)),
         ),
-      ),
-      child: ExpansionTile(
-        tilePadding: const EdgeInsets.all(16),
-        childrenPadding: const EdgeInsets.all(16),
-        leading: Stack(
-          children: [
-            CircleAvatar(
-              radius: 24,
-              backgroundImage:
-                  user.avatarUrl != null ? NetworkImage(user.avatarUrl!) : null,
-              backgroundColor: Theme.of(context).brightness == Brightness.dark
-                  ? const Color(0xFF1F2120)
-                  : AppColors.surface,
-              child: user.avatarUrl == null
-                  ? Text(
-                      user.name[0].toUpperCase(),
-                      style: GoogleFonts.poppins(
-                        color: Theme.of(context).brightness == Brightness.dark
-                            ? const Color(0xFFFFFFFF)
-                            : AppColors.textPrimary,
-                        fontWeight: FontWeight.bold,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: SingleChildScrollView(
+              child: DataTable(
+                headingTextStyle: GoogleFonts.poppins(fontWeight: FontWeight.w700),
+                dataTextStyle: GoogleFonts.inter(fontSize: 13),
+                columns: const [
+                  DataColumn(label: Text('Name')),
+                  DataColumn(label: Text('Email')),
+                  DataColumn(label: Text('Password')),
+                  DataColumn(label: Text('Role')),
+                  DataColumn(label: Text('Client Data')),
+                  DataColumn(label: Text('Active')),
+                  DataColumn(label: Text('Status')),
+                  DataColumn(label: Text('Email Verified')),
+                  DataColumn(label: Text('Created')),
+                  DataColumn(label: Text('UID')),
+                ],
+                rows: users.map((user) {
+                  final role = (user['role'] as String? ?? '-').trim();
+                  final status = (user['status'] as String? ?? 'active').trim();
+                  final isActive = _isUserActive(user);
+                  final createdAt = _extractDate(user['createdAt']);
+                  final password = (user['password'] as String?)?.trim();
+                  final isClient = role.toLowerCase() == 'client';
+
+                  return DataRow(
+                    cells: [
+                      DataCell(Text(_safeText(user['name']) == '-' ? '(no name)' : _safeText(user['name']))),
+                      DataCell(Text(_safeText(user['email']))),
+                      DataCell(Text(password == null || password.isEmpty ? 'Not stored' : password)),
+                      DataCell(Text(role.isEmpty ? '-' : role)),
+                      DataCell(
+                        isClient
+                            ? TextButton(
+                                onPressed: () {
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (_) => AdminClientInsightsScreen(
+                                        clientId: _safeText(user['id']),
+                                        clientData: user,
+                                      ),
+                                    ),
+                                  );
+                                },
+                                child: const Text('View'),
+                              )
+                            : const Text('-'),
                       ),
-                    )
-                  : null,
-            ),
-            if (user.status == 'suspended')
-              Positioned(
-                right: 0,
-                bottom: 0,
-                child: Container(
-                  padding: const EdgeInsets.all(2),
-                  decoration: const BoxDecoration(
-                    color: Colors.red,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.block,
-                    size: 12,
-                    color: Theme.of(context).brightness == Brightness.dark
-                        ? const Color(0xFFFFFFFF)
-                        : AppColors.textPrimary,
-                  ),
-                ),
+                      DataCell(Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: (isActive ? Colors.green : Colors.red).withOpacity(0.12),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(isActive ? 'Yes' : 'No'),
+                      )),
+                      DataCell(Text(status)),
+                      DataCell(Text((user['emailVerified'] == true).toString())),
+                      DataCell(Text(createdAt.year < 1971 ? '-' : formatter.format(createdAt))),
+                      DataCell(SizedBox(
+                        width: 210,
+                        child: Text(
+                          _safeText(user['id']),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      )),
+                    ],
+                  );
+                }).toList(),
               ),
-          ],
+            ),
+          ),
         ),
-        title: Row(
-          children: [
-            Expanded(
-              child: Text(
-                user.name,
-                style: GoogleFonts.poppins(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white,
-                ),
-              ),
-            ),
-            Chip(
-              label: Text(
-                user.role == UserRole.client ? 'CLIENT' : 'TRAINER',
-                style: GoogleFonts.inter(
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                  color: user.role == UserRole.client
-                      ? const Color(0xFF83BCB5)
-                      : const Color(0xFFFFD166),
-                ),
-              ),
-              backgroundColor: (user.role == UserRole.client
-                      ? const Color(0xFF83BCB5)
-                      : const Color(0xFFFFD166))
-                  .withOpacity(0.1),
-              side: BorderSide.none,
-              padding: EdgeInsets.zero,
-              visualDensity: VisualDensity.compact,
-            ),
-          ],
-        ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 4),
-            Text(
-              user.email,
-              style: GoogleFonts.inter(
-                fontSize: 13,
-                color: (Theme.of(context).brightness == Brightness.dark
-                        ? const Color(0xFFFFFFFF)
-                        : AppColors.textPrimary)
-                    .withOpacity(0.6),
-              ),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              'Joined: ${DateFormat('MMM d, yyyy').format(user.createdAt)}',
-              style: GoogleFonts.inter(
-                fontSize: 12,
-                color: (Theme.of(context).brightness == Brightness.dark
-                        ? const Color(0xFFFFFFFF)
-                        : AppColors.textPrimary)
-                    .withOpacity(0.38),
-              ),
-            ),
-            if (user.status == 'suspended') ...[
-              const SizedBox(height: 6),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: Colors.red.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(6),
-                  border: Border.all(color: Colors.red.withOpacity(0.3)),
-                ),
-                child: Text(
-                  'SUSPENDED',
-                  style: GoogleFonts.inter(
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.red,
-                  ),
-                ),
-              ),
-            ],
-          ],
-        ),
-        children: [
-          _buildUserDetails(user),
-        ],
       ),
     );
   }
 
-  Widget _buildUserDetails(UserModel user) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Divider(
-            color: (Theme.of(context).brightness == Brightness.dark
-                    ? const Color(0xFFFFFFFF)
-                    : AppColors.textPrimary)
-                .withOpacity(0.12)),
-        const SizedBox(height: 16),
-
-        // User-specific details
-        if (user.role == UserRole.client) ...[
-          _buildDetailRow('Goal', user.goals ?? 'Not set'),
-          const SizedBox(height: 12),
-          _buildMeasurementSection(user.id),
-        ] else if (user.role == UserRole.trainer) ...[
-          Row(
-            children: [
-              Expanded(
-                  child: _buildDetailRow('Clients', '${user.clients ?? 0}')),
-              Expanded(
-                  child: _buildDetailRow(
-                      'Rating', '${user.rating?.toStringAsFixed(1) ?? '0.0'}')),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                  child: _buildDetailRow('Hourly Rate',
-                      '\$${user.hourlyRate?.toStringAsFixed(0) ?? '0'}')),
-              Expanded(
-                  child: _buildDetailRow(
-                      'Verified', user.verified == true ? 'Yes' : 'No')),
-            ],
-          ),
-          const SizedBox(height: 12),
-          _buildDetailRow('Total Earnings',
-              '\$${user.totalEarnings?.toStringAsFixed(2) ?? '0.00'}'),
-        ],
-
-        const SizedBox(height: 20),
-
-        // Action Buttons
-        Row(
-          children: [
-            if (user.status != 'suspended')
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: () => _suspendUser(user),
-                  icon: const Icon(Icons.block),
-                  label: Text(
-                    'Suspend',
-                    style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
-                  ),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.red,
-                    side: const BorderSide(color: Colors.red),
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                ),
-              )
-            else
-              Expanded(
-                child: ElevatedButton.icon(
-                  onPressed: () => _activateUser(user),
-                  icon: const Icon(Icons.check_circle),
-                  label: Text(
-                    'Activate',
-                    style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor:
-                        Theme.of(context).brightness == Brightness.dark
-                            ? AppColors.brandGreen
-                            : AppColors.brandGreenDeep,
-                    foregroundColor:
-                        Theme.of(context).brightness == Brightness.dark
-                            ? const Color(0xFFFFFFFF)
-                            : AppColors.textPrimary,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                ),
-              ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: OutlinedButton.icon(
-                onPressed: () => _deleteUser(user),
-                icon: const Icon(Icons.delete_forever),
-                label: Text(
-                  'Delete',
-                  style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
-                ),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.red.shade900,
-                  side: BorderSide(color: Colors.red.shade900),
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildDetailRow(String label, String value) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          label,
-          style: GoogleFonts.inter(
-            fontSize: 13,
-            color: (Theme.of(context).brightness == Brightness.dark
-                    ? const Color(0xFFFFFFFF)
-                    : AppColors.textPrimary)
-                .withOpacity(0.6),
-          ),
-        ),
-        Text(
-          value,
-          style: GoogleFonts.poppins(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: Theme.of(context).brightness == Brightness.dark
-                ? const Color(0xFFFFFFFF)
-                : AppColors.textPrimary,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildMeasurementSection(String userId) {
-    return FutureBuilder<QuerySnapshot>(
-      future: _firestore
-          .collection('measurements')
-          .where('userId', isEqualTo: userId)
-          .orderBy('date', descending: true)
-          .limit(1)
-          .get(),
-      builder: (context, snapshot) {
-        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-          return _buildDetailRow('Latest Measurement', 'No data');
-        }
-
-        final measurement =
-            MeasurementModel.fromFirestore(snapshot.data!.docs.first);
-        return Column(
-          children: [
-            _buildDetailRow('Weight', '${measurement.weight} kg'),
-            const SizedBox(height: 8),
-            _buildDetailRow('Height', '${measurement.height} cm'),
-            const SizedBox(height: 8),
-            _buildDetailRow('BMI', measurement.bmi.toStringAsFixed(1)),
-          ],
-        );
-      },
-    );
-  }
-
-  Future<void> _suspendUser(UserModel user) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: Theme.of(context).brightness == Brightness.dark
-            ? const Color(0xFF171917)
-            : AppColors.surface,
-        title: Text('Suspend User?',
-            style: GoogleFonts.poppins(
-                color: Theme.of(context).brightness == Brightness.dark
-                    ? const Color(0xFFFFFFFF)
-                    : AppColors.textPrimary)),
-        content: Text(
-          'This will suspend ${user.name}\'s account. They won\'t be able to access the app.',
-          style: GoogleFonts.inter(
-              color: (Theme.of(context).brightness == Brightness.dark
-                      ? const Color(0xFFFFFFFF)
-                      : AppColors.textPrimary)
-                  .withOpacity(0.7)),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: Text('Cancel',
-                style: GoogleFonts.inter(
-                    color: Theme.of(context).brightness == Brightness.dark
-                        ? const Color(0xFFFFFFFF)
-                        : AppColors.textPrimary)),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: Text('Suspend', style: GoogleFonts.inter(color: Colors.red)),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmed == true) {
-      try {
-        await _firestore.collection('users').doc(user.id).update({
-          'status': 'suspended',
-          'updatedAt': FieldValue.serverTimestamp(),
-        });
-
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('${user.name} has been suspended'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-      } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Error: $e'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-      }
+  bool _applyFilter(Map<String, dynamic> user) {
+    final role = (user['role'] as String? ?? '').toLowerCase().trim();
+    if (_roleFilter != 'all' && role != _roleFilter) {
+      return false;
     }
+
+    if (_searchQuery.isEmpty) {
+      return true;
+    }
+
+    final haystack = [
+      _safeText(user['name']).toLowerCase(),
+      _safeText(user['email']).toLowerCase(),
+      _safeText(user['role']).toLowerCase(),
+      _safeText(user['id']).toLowerCase(),
+      _safeText(user['status']).toLowerCase(),
+    ].join(' ');
+
+    return haystack.contains(_searchQuery);
   }
 
-  Future<void> _activateUser(UserModel user) async {
-    try {
-      await _firestore.collection('users').doc(user.id).update({
-        'status': 'active',
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
+  bool _isUserActive(Map<String, dynamic> user) {
+    final status = (user['status'] as String? ?? 'active').toLowerCase();
+    final isActiveFlag = user['isActive'] as bool?;
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('${user.name} has been activated'),
-            backgroundColor: Theme.of(context).brightness == Brightness.dark
-                ? AppColors.brandGreen
-                : AppColors.brandGreenDeep,
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+    if (isActiveFlag != null) {
+      return isActiveFlag;
     }
+
+    return status != 'suspended' && status != 'inactive' && status != 'disabled';
   }
 
-  Future<void> _deleteUser(UserModel user) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: Theme.of(context).brightness == Brightness.dark
-            ? const Color(0xFF171917)
-            : AppColors.surface,
-        title: Text('Delete User?',
-            style: GoogleFonts.poppins(
-                color: Theme.of(context).brightness == Brightness.dark
-                    ? const Color(0xFFFFFFFF)
-                    : AppColors.textPrimary)),
-        content: Text(
-          'This will permanently delete ${user.name}\'s account and all associated data. This action cannot be undone.',
-          style: GoogleFonts.inter(
-              color: (Theme.of(context).brightness == Brightness.dark
-                      ? const Color(0xFFFFFFFF)
-                      : AppColors.textPrimary)
-                  .withOpacity(0.7)),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: Text('Cancel',
-                style: GoogleFonts.inter(
-                    color: Theme.of(context).brightness == Brightness.dark
-                        ? const Color(0xFFFFFFFF)
-                        : AppColors.textPrimary)),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: Text('Delete',
-                style: GoogleFonts.inter(color: Colors.red.shade900)),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmed == true) {
-      try {
-        // Delete user document
-        await _firestore.collection('users').doc(user.id).delete();
-
-        // Note: In production, you should also delete related data (measurements, sessions, etc.)
-        // This is a simplified version
-
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('${user.name}\'s account has been deleted'),
-              backgroundColor: Colors.red.shade900,
-            ),
-          );
-        }
-      } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Error: $e'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-      }
+  DateTime _extractDate(dynamic value) {
+    if (value is Timestamp) {
+      return value.toDate();
     }
+    if (value is DateTime) {
+      return value;
+    }
+    return DateTime.fromMillisecondsSinceEpoch(0);
+  }
+
+  String _safeText(dynamic value) {
+    final text = value?.toString().trim() ?? '';
+    return text.isEmpty ? '-' : text;
   }
 }

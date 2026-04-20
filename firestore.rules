@@ -239,7 +239,8 @@ service cloud.firestore {
     
     // User preferences collection
     match /user_preferences/{userId} {
-      allow read, write: if isOwner(userId);
+      allow read: if isOwner(userId) || isAnyAdminRole();
+      allow write: if isOwner(userId);
     }
 
     // Chatbot history collection

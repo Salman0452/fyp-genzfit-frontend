@@ -5,10 +5,11 @@ import '../../providers/auth_provider.dart';
 import '../../utils/constants.dart';
 import '../../utils/validators.dart';
 import '../../utils/helpers.dart';
-import '../../utils/design_utils.dart';
 import '../../widgets/custom_button.dart';
 import '../../widgets/custom_text_field.dart';
 import '../../models/user_model.dart';
+import '../onboarding/onboarding_screen.dart';
+import '../../services/user_preferences_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -21,6 +22,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final UserPreferencesService _preferencesService = UserPreferencesService();
 
   @override
   void dispose() {
@@ -44,33 +46,27 @@ class _LoginScreenState extends State<LoginScreen> {
     if (!mounted) return;
 
     if (success) {
-      final user = authProvider.currentUser;
-      if (user == null) return;
-
-      // Navigate based on role - clear all previous routes
-      if (user.role == UserRole.client) {
-        Navigator.pushNamedAndRemoveUntil(
-          context,
-          '/client-home',
-          (route) => false,
-        );
-      } else if (user.role == UserRole.trainer) {
-        Navigator.pushNamedAndRemoveUntil(
-          context,
-          '/trainer-home',
-          (route) => false,
-        );
-      } else if (user.role == UserRole.admin) {
-        Navigator.pushNamedAndRemoveUntil(
-          context,
-          '/admin-dashboard',
-          (route) => false,
-        );
-      }
+      await _navigateByRole(authProvider.currentUser);
     } else {
+      final error = authProvider.error ?? 'Login failed';
+
+      if (error.contains('Please verify your email first')) {
+        final resendSuccess = await authProvider
+            .resendEmailVerificationForCredentials(
+          email: _emailController.text.trim(),
+          password: _passwordController.text,
+        );
+        if (resendSuccess) {
+          Helpers.showSnackBar(
+            context,
+            'Verification link resent. Please verify your email and sign in again.',
+          );
+        }
+      }
+
       Helpers.showSnackBar(
         context,
-        authProvider.error ?? 'Login failed',
+        error,
         isError: true,
       );
     }
@@ -78,6 +74,94 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _handleForgotPassword() async {
     Navigator.pushNamed(context, '/forgot-password');
+  }
+
+  Future<void> _handleGoogleSignIn() async {
+    final authProvider = context.read<AuthProvider>();
+    final success = await authProvider.signInWithGoogle();
+
+    if (!mounted) return;
+
+    if (success) {
+      final user = authProvider.currentUser;
+      if (authProvider.lastSocialAuthIsNewUser && user?.role == UserRole.client) {
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (_) => const OnboardingScreen()),
+          (route) => false,
+        );
+      } else {
+        await _navigateByRole(user);
+      }
+    } else {
+      Helpers.showSnackBar(
+        context,
+        authProvider.error ?? 'Google sign in failed',
+        isError: true,
+      );
+    }
+  }
+
+  Future<void> _handleFacebookSignIn() async {
+    final authProvider = context.read<AuthProvider>();
+    final success = await authProvider.signInWithFacebook();
+
+    if (!mounted) return;
+
+    if (success) {
+      final user = authProvider.currentUser;
+      if (authProvider.lastSocialAuthIsNewUser && user?.role == UserRole.client) {
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (_) => const OnboardingScreen()),
+          (route) => false,
+        );
+      } else {
+        await _navigateByRole(user);
+      }
+    } else {
+      Helpers.showSnackBar(
+        context,
+        authProvider.error ?? 'Facebook sign in failed',
+        isError: true,
+      );
+    }
+  }
+
+  Future<void> _navigateByRole(UserModel? user) async {
+    if (user == null) return;
+
+    if (user.role == UserRole.client) {
+      final hasPreferences = await _preferencesService.hasPreferences(user.id);
+
+      if (!mounted) return;
+
+      if (hasPreferences) {
+        Navigator.pushNamedAndRemoveUntil(
+          context,
+          '/client-home',
+          (route) => false,
+        );
+      } else {
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (_) => const OnboardingScreen()),
+          (route) => false,
+        );
+      }
+    } else if (user.role == UserRole.trainer) {
+      Navigator.pushNamedAndRemoveUntil(
+        context,
+        '/trainer-home',
+        (route) => false,
+      );
+    } else if (user.role == UserRole.admin) {
+      Navigator.pushNamedAndRemoveUntil(
+        context,
+        '/admin-dashboard',
+        (route) => false,
+      );
+    }
   }
 
   @override
@@ -175,6 +259,77 @@ class _LoginScreenState extends State<LoginScreen> {
                   text: 'Sign In',
                   onPressed: _handleLogin,
                   isLoading: authProvider.isLoading,
+                ),
+                const SizedBox(height: 20),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Divider(
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? const Color(0xFF3A3A3A)
+                            : const Color(0xFFDADADA),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      child: Text(
+                        'Or continue with',
+                        style: GoogleFonts.plusJakartaSans(
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? const Color(0xFFB0B0B0)
+                              : AppColors.textSecondary,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: Divider(
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? const Color(0xFF3A3A3A)
+                            : const Color(0xFFDADADA),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed:
+                            authProvider.isLoading ? null : _handleGoogleSignIn,
+                        icon: const Icon(Icons.g_mobiledata, size: 22),
+                        label: Text(
+                          'Google',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          minimumSize: const Size.fromHeight(48),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: authProvider.isLoading
+                            ? null
+                            : _handleFacebookSignIn,
+                        icon: const Icon(Icons.facebook, size: 18),
+                        label: Text(
+                          'Facebook',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          minimumSize: const Size.fromHeight(48),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 32),
                 // Sign Up Link

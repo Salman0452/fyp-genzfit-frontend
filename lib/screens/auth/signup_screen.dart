@@ -8,8 +8,6 @@ import '../../utils/helpers.dart';
 import '../../widgets/custom_button.dart';
 import '../../widgets/custom_text_field.dart';
 import '../onboarding/onboarding_screen.dart';
-import 'otp_verification_screen.dart';
-import '../../services/otp_service.dart';
 
 class SignupScreen extends StatefulWidget {
   final UserRole role;
@@ -89,12 +87,11 @@ class _SignupScreenState extends State<SignupScreen> {
     final password = _passwordController.text;
     final name = _nameController.text.trim();
 
-    // Step 1: Create temporary account and send OTP
+    // Step 1: Create account and send email verification link
     final authProvider = context.read<AuthProvider>();
-    final otpService = OTPService();
 
     try {
-      // Create account (but mark as unverified)
+      // Create account (mark email as unverified until link is clicked)
       final success = await authProvider.signUp(
         email: email,
         password: password,
@@ -111,48 +108,31 @@ class _SignupScreenState extends State<SignupScreen> {
       if (!mounted) return;
 
       if (success) {
-        // Generate and send OTP
-        final otp = otpService.generateOTP();
-        final otpSent = await otpService.sendOTP(email: email, otp: otp);
+        final linkSent = await authProvider.sendEmailVerificationLink();
 
         if (!mounted) return;
 
-        if (otpSent) {
-          // Navigate to OTP verification screen
-          Navigator.pushReplacement(
+        if (linkSent) {
+          await authProvider.signOut();
+
+          if (!mounted) return;
+
+          Helpers.showSnackBar(
             context,
-            MaterialPageRoute(
-              builder: (context) => OTPVerificationScreen(
-                email: email,
-                onVerified: (verified) {
-                  if (verified) {
-                    // Update user as verified
-                    authProvider.markEmailAsVerified();
-
-                    // Clean up OTP
-                    otpService.deleteOTP(email: email);
-
-                    // Navigate based on role
-                    if (widget.role == UserRole.client) {
-                      Navigator.pushAndRemoveUntil(
-                        context,
-                        MaterialPageRoute(
-                            builder: (_) => const OnboardingScreen()),
-                        (route) => false,
-                      );
-                    } else if (widget.role == UserRole.trainer) {
-                      Navigator.pushNamedAndRemoveUntil(
-                          context, '/trainer-home', (route) => false);
-                    }
-                  }
-                },
-              ),
-            ),
+            'Verification link sent to $email. Verify your email and sign in.',
+          );
+          Navigator.pushNamedAndRemoveUntil(
+            context,
+            '/login',
+            (route) => false,
           );
         } else {
-          Helpers.showSnackBar(context,
-              'Failed to send OTP. Please check your email and try again.',
-              isError: true);
+          Helpers.showSnackBar(
+            context,
+            authProvider.error ??
+                'Failed to send verification email. Please try again.',
+            isError: true,
+          );
         }
       } else {
         Helpers.showSnackBar(
@@ -163,6 +143,141 @@ class _SignupScreenState extends State<SignupScreen> {
       }
     } catch (e) {
       Helpers.showSnackBar(context, 'Error: $e', isError: true);
+    }
+  }
+
+  Future<void> _handleGoogleSignup() async {
+    if (!_validateRoleSpecificFields()) {
+      return;
+    }
+
+    final authProvider = context.read<AuthProvider>();
+    final success = await authProvider.signInWithGoogle(
+      role: widget.role,
+      goals: _selectedGoal,
+      expertise: _selectedExpertise.isEmpty ? null : _selectedExpertise,
+      hourlyRate: _hourlyRateController.text.isEmpty
+          ? null
+          : double.tryParse(_hourlyRateController.text),
+      nameOverride:
+          _nameController.text.trim().isEmpty ? null : _nameController.text.trim(),
+    );
+
+    if (!mounted) return;
+
+    if (success) {
+      if (authProvider.lastSocialAuthIsNewUser) {
+        _navigateAfterSignup();
+      } else {
+        _navigateByRole(authProvider.currentUser);
+      }
+    } else {
+      Helpers.showSnackBar(
+        context,
+        authProvider.error ?? 'Google sign up failed',
+        isError: true,
+      );
+    }
+  }
+
+  Future<void> _handleFacebookSignup() async {
+    if (!_validateRoleSpecificFields()) {
+      return;
+    }
+
+    final authProvider = context.read<AuthProvider>();
+    final success = await authProvider.signInWithFacebook(
+      role: widget.role,
+      goals: _selectedGoal,
+      expertise: _selectedExpertise.isEmpty ? null : _selectedExpertise,
+      hourlyRate: _hourlyRateController.text.isEmpty
+          ? null
+          : double.tryParse(_hourlyRateController.text),
+      nameOverride:
+          _nameController.text.trim().isEmpty ? null : _nameController.text.trim(),
+    );
+
+    if (!mounted) return;
+
+    if (success) {
+      if (authProvider.lastSocialAuthIsNewUser) {
+        _navigateAfterSignup();
+      } else {
+        _navigateByRole(authProvider.currentUser);
+      }
+    } else {
+      Helpers.showSnackBar(
+        context,
+        authProvider.error ?? 'Facebook sign up failed',
+        isError: true,
+      );
+    }
+  }
+
+  bool _validateRoleSpecificFields() {
+    if (widget.role == UserRole.client && _selectedGoal == null) {
+      Helpers.showSnackBar(
+        context,
+        'Please select your fitness goal',
+        isError: true,
+      );
+      return false;
+    }
+
+    if (widget.role == UserRole.trainer && _selectedExpertise.isEmpty) {
+      Helpers.showSnackBar(
+        context,
+        'Please select at least one expertise',
+        isError: true,
+      );
+      return false;
+    }
+
+    if (widget.role == UserRole.trainer && _hourlyRateController.text.isEmpty) {
+      Helpers.showSnackBar(
+        context,
+        'Please enter your hourly rate',
+        isError: true,
+      );
+      return false;
+    }
+
+    return true;
+  }
+
+  void _navigateAfterSignup() {
+    if (widget.role == UserRole.client) {
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (_) => const OnboardingScreen()),
+        (route) => false,
+      );
+    } else if (widget.role == UserRole.trainer) {
+      Navigator.pushNamedAndRemoveUntil(context, '/trainer-home', (route) => false);
+    }
+  }
+
+  void _navigateByRole(UserModel? user) {
+    if (user == null) return;
+
+    if (user.role == UserRole.client) {
+      Navigator.pushNamedAndRemoveUntil(
+        context,
+        '/client-home',
+        (route) => false,
+      );
+    } else if (user.role == UserRole.trainer) {
+      Navigator.pushNamedAndRemoveUntil(
+        context,
+        '/trainer-home',
+        (route) => false,
+      );
+    } else if (user.role == UserRole.admin) {
+      Navigator.pushNamedAndRemoveUntil(
+        context,
+        '/admin-dashboard',
+        (route) => false,
+      );
     }
   }
 
@@ -364,6 +479,72 @@ class _SignupScreenState extends State<SignupScreen> {
                   text: 'Create Account',
                   onPressed: _handleSignup,
                   isLoading: authProvider.isLoading,
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Divider(
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? const Color(0xFF3A3A3A)
+                            : const Color(0xFFDADADA),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      child: Text(
+                        'Or sign up with',
+                        style: TextStyle(
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? const Color(0xFFB0B0B0)
+                              : AppConstants.textGray,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: Divider(
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? const Color(0xFF3A3A3A)
+                            : const Color(0xFFDADADA),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed:
+                            authProvider.isLoading ? null : _handleGoogleSignup,
+                        icon: const Icon(Icons.g_mobiledata, size: 22),
+                        label: const Text(
+                          'Google',
+                          style: TextStyle(fontWeight: FontWeight.w600),
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          minimumSize: const Size.fromHeight(48),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed:
+                            authProvider.isLoading ? null : _handleFacebookSignup,
+                        icon: const Icon(Icons.facebook, size: 18),
+                        label: const Text(
+                          'Facebook',
+                          style: TextStyle(fontWeight: FontWeight.w600),
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          minimumSize: const Size.fromHeight(48),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: AppConstants.paddingMedium),
                 Row(

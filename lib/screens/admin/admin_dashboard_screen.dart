@@ -25,6 +25,7 @@ class AdminDashboardScreen extends StatefulWidget {
 
 class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  bool _isSidebarCollapsed = false;
 
   int _totalUsers = 0;
   int _totalClients = 0;
@@ -40,18 +41,25 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         : UserModel.roleToString(widget.admin.role);
 
     bool get _canAccessFinance =>
-      _adminRoleKey == 'admin' || _adminRoleKey == 'finance_admin';
+      _adminRoleKey == 'admin' ||
+      _adminRoleKey == 'super_admin' ||
+      _adminRoleKey == 'finance_admin';
 
     bool get _canAccessModeration =>
       _adminRoleKey == 'admin' ||
+      _adminRoleKey == 'super_admin' ||
       _adminRoleKey == 'moderator' ||
       _adminRoleKey == 'support';
 
     bool get _canAccessUsers =>
-      _adminRoleKey == 'admin' || _adminRoleKey == 'support';
+      _adminRoleKey == 'admin' ||
+      _adminRoleKey == 'super_admin' ||
+      _adminRoleKey == 'support';
 
     bool get _canAccessSettings =>
-      _adminRoleKey == 'admin' || _adminRoleKey == 'finance_admin';
+      _adminRoleKey == 'admin' ||
+      _adminRoleKey == 'super_admin' ||
+      _adminRoleKey == 'finance_admin';
 
   @override
   void initState() {
@@ -158,6 +166,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isWideScreen = MediaQuery.of(context).size.width >= 1080;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final brandGreen = isDark ? AppColors.brandGreen : AppColors.brandGreenDeep;
     final primaryText =
@@ -168,9 +177,24 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      drawer: isWideScreen ? null : _buildMobileDrawer(),
       appBar: AppBar(
         backgroundColor: cardBackground,
         elevation: 0,
+        leading: isWideScreen
+            ? IconButton(
+                icon: Icon(
+                  _isSidebarCollapsed ? Icons.menu_open : Icons.menu,
+                  color: primaryText,
+                ),
+                tooltip: _isSidebarCollapsed
+                    ? 'Expand sidebar'
+                    : 'Collapse sidebar',
+                onPressed: () {
+                  setState(() => _isSidebarCollapsed = !_isSidebarCollapsed);
+                },
+              )
+            : null,
         title: Row(
           children: [
             Icon(Icons.admin_panel_settings, color: brandGreen),
@@ -251,31 +275,302 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           const SizedBox(width: 16),
         ],
       ),
-      body: _isLoading
-          ? Center(
-              child: CircularProgressIndicator(color: brandGreen),
+      body: isWideScreen
+          ? Row(
+              children: [
+                _buildSidebar(),
+                Expanded(child: _buildMainContent()),
+              ],
             )
-          : RefreshIndicator(
-              onRefresh: _loadDashboardData,
-              color: brandGreen,
-              backgroundColor: cardBackground,
-              child: SingleChildScrollView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildWelcomeCard(),
-                    const SizedBox(height: 24),
-                    _buildStatsOverview(),
-                    const SizedBox(height: 32),
-                    _buildQuickActions(),
-                    const SizedBox(height: 32),
-                    _buildRecentActivity(),
-                  ],
+          : _buildMainContent(),
+    );
+  }
+
+  Widget _buildMainContent() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final brandGreen = isDark ? AppColors.brandGreen : AppColors.brandGreenDeep;
+    final cardBackground = isDark ? const Color(0xFF1A1A1A) : AppColors.surface;
+
+    if (_isLoading) {
+      return Center(
+        child: CircularProgressIndicator(color: brandGreen),
+      );
+    }
+
+    return RefreshIndicator(
+      onRefresh: _loadDashboardData,
+      color: brandGreen,
+      backgroundColor: cardBackground,
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildWelcomeCard(),
+            const SizedBox(height: 24),
+            _buildStatsOverview(),
+            const SizedBox(height: 32),
+            _buildQuickActions(),
+            const SizedBox(height: 32),
+            _buildRecentActivity(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSidebar() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryText =
+        isDark ? const Color(0xFFFFFFFF) : AppColors.textPrimary;
+    final secondaryText =
+        isDark ? const Color(0xFFB0B0B0) : AppColors.textSecondary;
+    final cardBackground = isDark ? const Color(0xFF1A1A1A) : AppColors.surface;
+    final brandGreen = isDark ? AppColors.brandGreen : AppColors.brandGreenDeep;
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 220),
+      width: _isSidebarCollapsed ? 86 : 260,
+      decoration: BoxDecoration(
+        color: cardBackground,
+        border: Border(
+          right: BorderSide(
+            color: secondaryText.withOpacity(0.2),
+          ),
+        ),
+      ),
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+            child: Row(
+              children: [
+                CircleAvatar(
+                  backgroundColor: brandGreen.withOpacity(0.15),
+                  child: Icon(Icons.shield, color: brandGreen),
+                ),
+                if (!_isSidebarCollapsed) ...[
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      'Admin Panel',
+                      style: GoogleFonts.poppins(
+                        fontWeight: FontWeight.w700,
+                        color: primaryText,
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          const SizedBox(height: 4),
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              children: [
+                _buildSidebarItem(
+                  icon: Icons.people_alt,
+                  label: 'Users',
+                  enabled: _canAccessUsers,
+                  onTap: _navigateToUserManagement,
+                ),
+                _buildSidebarItem(
+                  icon: Icons.home_filled,
+                  label: 'Overview',
+                  enabled: true,
+                  onTap: () {},
+                ),
+                _buildSidebarItem(
+                  icon: Icons.verified_user,
+                  label: 'Verify Trainers',
+                  enabled: true,
+                  onTap: _navigateToVerification,
+                ),
+                _buildSidebarItem(
+                  icon: Icons.event_note,
+                  label: 'Sessions',
+                  enabled: true,
+                  onTap: _navigateToSessionMonitoring,
+                ),
+                _buildSidebarItem(
+                  icon: Icons.analytics,
+                  label: 'Analytics',
+                  enabled: true,
+                  onTap: _navigateToAnalytics,
+                ),
+                _buildSidebarItem(
+                  icon: Icons.flag,
+                  label: 'Moderation',
+                  enabled: _canAccessModeration,
+                  onTap: _navigateToModeration,
+                ),
+                _buildSidebarItem(
+                  icon: Icons.attach_money,
+                  label: 'Finances',
+                  enabled: _canAccessFinance,
+                  onTap: _navigateToFinances,
+                ),
+                _buildSidebarItem(
+                  icon: Icons.account_balance,
+                  label: 'Bank Verification',
+                  enabled: _canAccessFinance,
+                  onTap: _navigateToBankVerification,
+                ),
+                _buildSidebarItem(
+                  icon: Icons.receipt_long,
+                  label: 'Audit Logs',
+                  enabled: true,
+                  onTap: _navigateToAuditLogs,
+                ),
+                _buildSidebarItem(
+                  icon: Icons.settings,
+                  label: 'Settings',
+                  enabled: _canAccessSettings,
+                  onTap: _navigateToSettings,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMobileDrawer() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardBackground = isDark ? const Color(0xFF1A1A1A) : AppColors.surface;
+
+    return Drawer(
+      backgroundColor: cardBackground,
+      child: SafeArea(
+        child: ListView(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+          children: [
+            _buildSidebarItem(
+              icon: Icons.people_alt,
+              label: 'Users',
+              enabled: _canAccessUsers,
+              onTap: () {
+                Navigator.of(context).pop();
+                _navigateToUserManagement();
+              },
+            ),
+            _buildSidebarItem(
+              icon: Icons.home_filled,
+              label: 'Overview',
+              enabled: true,
+              onTap: () => Navigator.of(context).pop(),
+            ),
+            _buildSidebarItem(
+              icon: Icons.verified_user,
+              label: 'Verify Trainers',
+              enabled: true,
+              onTap: () {
+                Navigator.of(context).pop();
+                _navigateToVerification();
+              },
+            ),
+            _buildSidebarItem(
+              icon: Icons.event_note,
+              label: 'Sessions',
+              enabled: true,
+              onTap: () {
+                Navigator.of(context).pop();
+                _navigateToSessionMonitoring();
+              },
+            ),
+            _buildSidebarItem(
+              icon: Icons.analytics,
+              label: 'Analytics',
+              enabled: true,
+              onTap: () {
+                Navigator.of(context).pop();
+                _navigateToAnalytics();
+              },
+            ),
+            _buildSidebarItem(
+              icon: Icons.flag,
+              label: 'Moderation',
+              enabled: _canAccessModeration,
+              onTap: () {
+                Navigator.of(context).pop();
+                _navigateToModeration();
+              },
+            ),
+            _buildSidebarItem(
+              icon: Icons.attach_money,
+              label: 'Finances',
+              enabled: _canAccessFinance,
+              onTap: () {
+                Navigator.of(context).pop();
+                _navigateToFinances();
+              },
+            ),
+            _buildSidebarItem(
+              icon: Icons.account_balance,
+              label: 'Bank Verification',
+              enabled: _canAccessFinance,
+              onTap: () {
+                Navigator.of(context).pop();
+                _navigateToBankVerification();
+              },
+            ),
+            _buildSidebarItem(
+              icon: Icons.receipt_long,
+              label: 'Audit Logs',
+              enabled: true,
+              onTap: () {
+                Navigator.of(context).pop();
+                _navigateToAuditLogs();
+              },
+            ),
+            _buildSidebarItem(
+              icon: Icons.settings,
+              label: 'Settings',
+              enabled: _canAccessSettings,
+              onTap: () {
+                Navigator.of(context).pop();
+                _navigateToSettings();
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSidebarItem({
+    required IconData icon,
+    required String label,
+    required bool enabled,
+    required VoidCallback onTap,
+  }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final brandGreen = isDark ? AppColors.brandGreen : AppColors.brandGreenDeep;
+    final textColor = enabled
+        ? (isDark ? const Color(0xFFFFFFFF) : AppColors.textPrimary)
+        : (isDark ? const Color(0xFF757575) : AppColors.textSecondary);
+
+    return Tooltip(
+      message: label,
+      child: ListTile(
+        dense: true,
+        enabled: enabled,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        leading: Icon(icon, color: enabled ? brandGreen : textColor),
+        title: _isSidebarCollapsed
+            ? null
+            : Text(
+                label,
+                style: GoogleFonts.inter(
+                  color: textColor,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
-            ),
+        onTap: enabled ? onTap : null,
+      ),
     );
   }
 
