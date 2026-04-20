@@ -277,6 +277,8 @@ class _SessionMonitoringScreenState extends State<SessionMonitoringScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const SizedBox(height: 8),
+            _buildUserPairSummary(session.clientId, session.trainerId),
+            const SizedBox(height: 6),
             Text(
               'Created: ${DateFormat('MMM d, yyyy • HH:mm').format(session.createdAt)}',
               style: GoogleFonts.inter(
@@ -306,6 +308,55 @@ class _SessionMonitoringScreenState extends State<SessionMonitoringScreen> {
           _buildSessionDetails(session),
         ],
       ),
+    );
+  }
+
+  Widget _buildUserPairSummary(String clientId, String trainerId) {
+    final textColor = (Theme.of(context).brightness == Brightness.dark
+            ? const Color(0xFFFFFFFF)
+            : AppColors.textPrimary)
+        .withOpacity(0.78);
+
+    return FutureBuilder<List<DocumentSnapshot>>(
+      future: Future.wait([
+        _firestore.collection('users').doc(clientId).get(),
+        _firestore.collection('users').doc(trainerId).get(),
+      ]),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData || snapshot.data!.length < 2) {
+          final shortClient =
+              clientId.length > 6 ? '${clientId.substring(0, 6)}...' : clientId;
+          final shortTrainer = trainerId.length > 6
+              ? '${trainerId.substring(0, 6)}...'
+              : trainerId;
+          return Text(
+            'Client $shortClient -> Trainer $shortTrainer',
+            style: GoogleFonts.inter(
+              fontSize: 12,
+              color: textColor,
+              fontWeight: FontWeight.w500,
+            ),
+          );
+        }
+
+        final clientDoc = snapshot.data![0];
+        final trainerDoc = snapshot.data![1];
+        final clientName =
+            (clientDoc.data() as Map<String, dynamic>?)?['name'] as String?;
+        final trainerName =
+            (trainerDoc.data() as Map<String, dynamic>?)?['name'] as String?;
+
+        return Text(
+          '${clientName ?? 'Unknown Client'} -> ${trainerName ?? 'Unknown Trainer'}',
+          style: GoogleFonts.inter(
+            fontSize: 12,
+            color: textColor,
+            fontWeight: FontWeight.w600,
+          ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        );
+      },
     );
   }
 

@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:genzfit/models/withdrawal_request_model.dart';
 import 'package:genzfit/models/bank_details_model.dart';
+import 'package:genzfit/services/admin_audit_service.dart';
 
 class WithdrawalService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -94,6 +95,7 @@ class WithdrawalService {
   Future<void> approveWithdrawal({
     required String withdrawalId,
     required String trainerId,
+    String? adminId,
   }) async {
     try {
       final now = DateTime.now();
@@ -118,6 +120,16 @@ class WithdrawalService {
           referenceId: withdrawalId,
         );
       }
+
+      if (adminId != null) {
+        await AdminAuditService.logAction(
+          adminId: adminId,
+          actionType: 'withdrawal_approved',
+          entityType: 'withdrawal_request',
+          entityId: withdrawalId,
+          metadata: {'trainerId': trainerId},
+        );
+      }
     } catch (e) {
       throw Exception('Failed to approve withdrawal: $e');
     }
@@ -128,6 +140,7 @@ class WithdrawalService {
     required String withdrawalId,
     required String trainerId,
     required String rejectionReason,
+    String? adminId,
   }) async {
     try {
       final now = DateTime.now();
@@ -152,8 +165,49 @@ class WithdrawalService {
           referenceId: withdrawalId,
         );
       }
+
+      if (adminId != null) {
+        await AdminAuditService.logAction(
+          adminId: adminId,
+          actionType: 'withdrawal_rejected',
+          entityType: 'withdrawal_request',
+          entityId: withdrawalId,
+          metadata: {
+            'trainerId': trainerId,
+            'rejectionReason': rejectionReason,
+          },
+        );
+      }
     } catch (e) {
       throw Exception('Failed to reject withdrawal: $e');
+    }
+  }
+
+  Future<void> markWithdrawalProcessing({
+    required String withdrawalId,
+    required String trainerId,
+    String? adminId,
+  }) async {
+    try {
+      await _firestore
+          .collection('withdrawal_requests')
+          .doc(withdrawalId)
+          .update({
+        'status': 'processing',
+        'processedAt': FieldValue.serverTimestamp(),
+      });
+
+      if (adminId != null) {
+        await AdminAuditService.logAction(
+          adminId: adminId,
+          actionType: 'withdrawal_processing',
+          entityType: 'withdrawal_request',
+          entityId: withdrawalId,
+          metadata: {'trainerId': trainerId},
+        );
+      }
+    } catch (e) {
+      throw Exception('Failed to mark withdrawal as processing: $e');
     }
   }
 
@@ -162,6 +216,7 @@ class WithdrawalService {
     required String withdrawalId,
     required String transactionId,
     required String trainerId,
+    String? adminId,
   }) async {
     try {
       final now = DateTime.now();
@@ -184,6 +239,19 @@ class WithdrawalService {
           amount: 0,
           description: 'Withdrawal completed - Transaction ID: $transactionId',
           referenceId: withdrawalId,
+        );
+      }
+
+      if (adminId != null) {
+        await AdminAuditService.logAction(
+          adminId: adminId,
+          actionType: 'withdrawal_completed',
+          entityType: 'withdrawal_request',
+          entityId: withdrawalId,
+          metadata: {
+            'trainerId': trainerId,
+            'transactionId': transactionId,
+          },
         );
       }
     } catch (e) {

@@ -899,7 +899,7 @@ class _TrainerDetailScreenState extends State<TrainerDetailScreen> {
         'status': 'requested', // Still needs trainer approval
         'amount': amount,
         'paymentStatus':
-            'pending_verification', // Payment awaiting admin verification
+          'pendingVerification', // Payment awaiting admin verification
         'transactionId': transactionId,
         'notes': _notesController.text.trim().isNotEmpty
             ? _notesController.text.trim()

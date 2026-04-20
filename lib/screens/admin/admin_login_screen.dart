@@ -52,8 +52,14 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
 
       final userData = userDoc.data()!;
       final role = userData['role'] as String?;
+      const allowedAdminRoles = {
+        'admin',
+        'finance_admin',
+        'moderator',
+        'support',
+      };
 
-      if (role != 'admin') {
+      if (role == null || !allowedAdminRoles.contains(role)) {
         await FirebaseAuth.instance.signOut();
         throw Exception('Access denied: Admin privileges required');
       }

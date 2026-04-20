@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:cloudinary_public/cloudinary_public.dart';
 import 'dart:io';
+import 'package:genzfit/services/admin_audit_service.dart';
 import '../models/transaction_model.dart';
 import '../models/bank_details_model.dart';
 import '../models/payout_model.dart';
@@ -129,6 +130,14 @@ class PaymentService {
         throw Exception('Transaction not found');
       }
 
+      if (approved &&
+          transaction.status == TransactionStatus.verified) {
+        return;
+      }
+      if (!approved && transaction.status == TransactionStatus.failed) {
+        return;
+      }
+
       final updateData = {
         'status': approved
             ? TransactionStatus.verified.value
@@ -142,6 +151,18 @@ class PaymentService {
           .collection(transactionsCollection)
           .doc(transactionId)
           .update(updateData);
+
+      await AdminAuditService.logAction(
+        adminId: adminId,
+        actionType: approved ? 'payment_approved' : 'payment_rejected',
+        entityType: 'transaction',
+        entityId: transactionId,
+        metadata: {
+          'clientId': transaction.clientId,
+          'trainerId': transaction.trainerId,
+          if (!approved) 'rejectionReason': rejectionReason ?? '',
+        },
+      );
 
       if (approved) {
         // Get session details
@@ -157,20 +178,42 @@ class PaymentService {
         final sessionData = sessionDoc.data() as Map<String, dynamic>;
         final clientId = transaction.clientId;
         final trainerId = transaction.trainerId;
+        final sessionStatus = sessionData['status'] as String?;
+        final shouldActivateSession = sessionStatus != 'active';
 
-        // Update session status to active
-        await _firestore
-            .collection('sessions')
-            .doc(transaction.sessionId)
-            .update({
-          'paymentStatus': 'paid',
-          'paymentVerifiedAt': Timestamp.now(),
-          'status': 'active',
-          'startDate': Timestamp.now(),
-          'endDate': Timestamp.fromDate(
-            DateTime.now().add(const Duration(days: 30)),
-          ),
-        });
+        final existingLedger = await _firestore
+            .collection('earnings_ledger')
+            .where('transactionId', isEqualTo: transactionId)
+            .where('type', isEqualTo: 'session_payment')
+            .limit(1)
+            .get();
+
+        if (shouldActivateSession) {
+          // Update session status to active
+          await _firestore
+              .collection('sessions')
+              .doc(transaction.sessionId)
+              .update({
+            'paymentStatus': 'paid',
+            'paymentVerifiedAt': Timestamp.now(),
+            'status': 'active',
+            'startDate': Timestamp.now(),
+            'endDate': Timestamp.fromDate(
+              DateTime.now().add(const Duration(days: 30)),
+            ),
+          });
+
+          // Update trainer's earnings and active sessions count
+          await _firestore.collection('users').doc(trainerId).update({
+            'activeSessionCount': FieldValue.increment(1),
+            'totalEarnings': FieldValue.increment(transaction.trainerAmount),
+          });
+
+          // Update client's active sessions count
+          await _firestore.collection('users').doc(clientId).update({
+            'activeSessionCount': FieldValue.increment(1),
+          });
+        }
 
         // Create notifications for both client and trainer
         await _createSessionApprovalNotification(
@@ -181,30 +224,21 @@ class PaymentService {
           clientName: sessionData['clientName'] ?? 'Your Client',
         );
 
-        // Update trainer's earnings and active sessions count
-        await _firestore.collection('users').doc(trainerId).update({
-          'activeSessionCount': FieldValue.increment(1),
-          'totalEarnings': FieldValue.increment(transaction.trainerAmount),
-        });
-
-        // Update client's active sessions count
-        await _firestore.collection('users').doc(clientId).update({
-          'activeSessionCount': FieldValue.increment(1),
-        });
-
-        // Store transaction in ledger for admin tracking
-        await _firestore.collection('earnings_ledger').add({
-          'trainerId': trainerId,
-          'clientId': clientId,
-          'sessionId': transaction.sessionId,
-          'transactionId': transactionId,
-          'amount': transaction.trainerAmount,
-          'platformFee': transaction.platformFee,
-          'totalAmount': transaction.amount,
-          'createdAt': Timestamp.now(),
-          'status': 'active',
-          'type': 'session_payment',
-        });
+        if (existingLedger.docs.isEmpty) {
+          // Store transaction in ledger for admin tracking
+          await _firestore.collection('earnings_ledger').add({
+            'trainerId': trainerId,
+            'clientId': clientId,
+            'sessionId': transaction.sessionId,
+            'transactionId': transactionId,
+            'amount': transaction.trainerAmount,
+            'platformFee': transaction.platformFee,
+            'totalAmount': transaction.amount,
+            'createdAt': Timestamp.now(),
+            'status': 'active',
+            'type': 'session_payment',
+          });
+        }
       } else {
         // Send rejection notification
         await _createPaymentRejectionNotification(

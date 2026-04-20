@@ -8,6 +8,7 @@ class UserModel {
   final String name;
   final String? avatarUrl;
   final UserRole role;
+  final String roleKey; // Raw role from Firestore (e.g. admin, finance_admin)
   final DateTime createdAt;
   final String status; // active or suspended
   final bool emailVerified; // Email OTP verification status
@@ -35,6 +36,7 @@ class UserModel {
     required this.name,
     this.avatarUrl,
     required this.role,
+    this.roleKey = '',
     required this.createdAt,
     this.status = 'active',
     this.emailVerified = false,
@@ -74,6 +76,10 @@ class UserModel {
         return UserRole.trainer;
       case 'admin':
         return UserRole.admin;
+      case 'finance_admin':
+      case 'moderator':
+      case 'support':
+        return UserRole.admin;
       default:
         return UserRole.client;
     }
@@ -86,7 +92,7 @@ class UserModel {
       'email': email,
       'name': name,
       'avatarUrl': avatarUrl,
-      'role': roleToString(role),
+      'role': roleKey.isNotEmpty ? roleKey : roleToString(role),
       'createdAt': Timestamp.fromDate(createdAt),
       'status': status,
       'emailVerified': emailVerified,
@@ -118,6 +124,7 @@ class UserModel {
       name: map['name'] ?? '',
       avatarUrl: map['avatarUrl'],
       role: stringToRole(map['role'] ?? 'client'),
+      roleKey: map['role'] ?? 'client',
       createdAt: (map['createdAt'] as Timestamp).toDate(),
       status: map['status'] ?? 'active',
       emailVerified: map['emailVerified'] ?? false,
@@ -157,6 +164,7 @@ class UserModel {
     String? name,
     String? avatarUrl,
     UserRole? role,
+    String? roleKey,
     DateTime? createdAt,
     String? status,
     bool? emailVerified,
@@ -180,6 +188,7 @@ class UserModel {
       name: name ?? this.name,
       avatarUrl: avatarUrl ?? this.avatarUrl,
       role: role ?? this.role,
+      roleKey: roleKey ?? this.roleKey,
       createdAt: createdAt ?? this.createdAt,
       status: status ?? this.status,
       emailVerified: emailVerified ?? this.emailVerified,
@@ -202,5 +211,13 @@ class UserModel {
   bool get isClient => role == UserRole.client;
   bool get isTrainer => role == UserRole.trainer;
   bool get isAdmin => role == UserRole.admin;
+  bool get isFinanceAdmin => roleKey == 'finance_admin';
+  bool get isModerator => roleKey == 'moderator';
+  bool get isSupport => roleKey == 'support';
+  bool get isAnyAdminRole =>
+      roleKey == 'admin' ||
+      roleKey == 'finance_admin' ||
+      roleKey == 'moderator' ||
+      roleKey == 'support';
   bool get isActive => status == 'active';
 }

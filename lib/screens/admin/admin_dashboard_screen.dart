@@ -9,6 +9,7 @@ import 'package:genzfit/screens/admin/analytics_dashboard_screen.dart';
 import 'package:genzfit/screens/admin/content_moderation_screen.dart';
 import 'package:genzfit/screens/admin/financial_management_screen.dart';
 import 'package:genzfit/screens/admin/system_settings_screen.dart';
+import 'package:genzfit/screens/admin/admin_action_logs_screen.dart';
 import 'package:genzfit/utils/constants.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -32,6 +33,25 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   double _platformRevenue = 0.0;
   bool _isLoading = true;
 
+    String get _adminRoleKey =>
+      widget.admin.roleKey.isNotEmpty
+        ? widget.admin.roleKey
+        : UserModel.roleToString(widget.admin.role);
+
+    bool get _canAccessFinance =>
+      _adminRoleKey == 'admin' || _adminRoleKey == 'finance_admin';
+
+    bool get _canAccessModeration =>
+      _adminRoleKey == 'admin' ||
+      _adminRoleKey == 'moderator' ||
+      _adminRoleKey == 'support';
+
+    bool get _canAccessUsers =>
+      _adminRoleKey == 'admin' || _adminRoleKey == 'support';
+
+    bool get _canAccessSettings =>
+      _adminRoleKey == 'admin' || _adminRoleKey == 'finance_admin';
+
   @override
   void initState() {
     super.initState();
@@ -41,16 +61,20 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   Future<void> _loadDashboardData() async {
     setState(() => _isLoading = true);
 
+    int totalUsers = 0;
+    int clients = 0;
+    int trainers = 0;
+    int pendingVerifications = 0;
+    int activeSessions = 0;
+    double revenue = 0.0;
+
     try {
-      // Get all users
       final usersSnapshot = await _firestore.collection('users').get();
-      int clients = 0;
-      int trainers = 0;
-      int pendingVerifications = 0;
+      totalUsers = usersSnapshot.docs.length;
 
       for (var doc in usersSnapshot.docs) {
         final data = doc.data();
-        final role = data['role'] as String?;
+        final role = data['role'] as String? ?? '';
 
         if (role == 'client') {
           clients++;
@@ -61,40 +85,68 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           }
         }
       }
+    } catch (e) {
+      print('Error loading users for dashboard: $e');
+    }
 
-      // Get active sessions
+    try {
       final sessionsSnapshot = await _firestore
           .collection('sessions')
           .where('status', isEqualTo: 'active')
           .get();
+      activeSessions = sessionsSnapshot.docs.length;
 
-      // Calculate platform revenue (sum of all completed sessions)
-      final completedSessionsSnapshot = await _firestore
-          .collection('sessions')
-          .where('status', isEqualTo: 'completed')
-          .get();
+      // Backward-compatibility fallback for older/misaligned session status values.
+      if (activeSessions == 0) {
+        final allSessionsSnapshot = await _firestore.collection('sessions').get();
+        activeSessions = allSessionsSnapshot.docs.where((doc) {
+          final data = doc.data();
+          final rawStatus = (data['status'] as String? ?? '').trim().toLowerCase();
+          final isActiveFlag = data['isActive'] == true;
 
-      double revenue = 0.0;
-      for (var doc in completedSessionsSnapshot.docs) {
-        final amount = doc.data()['amount'] as num?;
-        if (amount != null) {
-          revenue += amount.toDouble();
-        }
+          return isActiveFlag ||
+              rawStatus == 'active' ||
+              rawStatus == 'ongoing' ||
+              rawStatus == 'in_progress' ||
+              rawStatus == 'in progress' ||
+              rawStatus == 'inprogress' ||
+              rawStatus == 'started' ||
+              rawStatus == 'accepted';
+        }).length;
       }
-
-      setState(() {
-        _totalClients = clients;
-        _totalTrainers = trainers;
-        _totalUsers = clients + trainers;
-        _pendingVerifications = pendingVerifications;
-        _activeSessions = sessionsSnapshot.docs.length;
-        _platformRevenue = revenue;
-        _isLoading = false;
-      });
     } catch (e) {
-      print('Error loading dashboard data: $e');
-      setState(() => _isLoading = false);
+      print('Error loading active sessions for dashboard: $e');
     }
+
+    // Finance data can be restricted for moderator/support roles.
+    if (_canAccessFinance) {
+      try {
+        final ledgerSnapshot = await _firestore
+            .collection('earnings_ledger')
+            .where('type', isEqualTo: 'session_payment')
+            .get();
+
+        for (var doc in ledgerSnapshot.docs) {
+          final platformFee = doc.data()['platformFee'] as num?;
+          if (platformFee != null) {
+            revenue += platformFee.toDouble();
+          }
+        }
+      } catch (e) {
+        print('Error loading revenue for dashboard: $e');
+      }
+    }
+
+    if (!mounted) return;
+    setState(() {
+      _totalClients = clients;
+      _totalTrainers = trainers;
+      _totalUsers = totalUsers;
+      _pendingVerifications = pendingVerifications;
+      _activeSessions = activeSessions;
+      _platformRevenue = revenue;
+      _isLoading = false;
+    });
   }
 
   @override
@@ -441,49 +493,45 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     ? 2
                     : 1;
 
-            return GridView.count(
-              crossAxisCount: crossAxisCount,
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              mainAxisSpacing: 16,
-              crossAxisSpacing: 16,
-              childAspectRatio: 2.5,
-              children: [
-                _buildActionCard(
-                  icon: Icons.verified_user,
-                  title: 'Verify Trainers',
-                  description: '$_pendingVerifications pending',
-                  color: isDark
-                      ? const Color(0xFFFFD166)
-                      : const Color(0xFFFFA726),
-                  onTap: _navigateToVerification,
-                ),
+            final actions = <Widget>[
+              _buildActionCard(
+                icon: Icons.verified_user,
+                title: 'Verify Trainers',
+                description: '$_pendingVerifications pending',
+                color: isDark
+                    ? const Color(0xFFFFD166)
+                    : const Color(0xFFFFA726),
+                onTap: _navigateToVerification,
+              ),
+              _buildActionCard(
+                icon: Icons.event_note,
+                title: 'Monitor Sessions',
+                description: '$_activeSessions active',
+                color: isDark
+                    ? const Color(0xFF7FFA88)
+                    : const Color(0xFF66BB6A),
+                onTap: _navigateToSessionMonitoring,
+              ),
+              _buildActionCard(
+                icon: Icons.analytics,
+                title: 'Analytics',
+                description: 'View insights',
+                color: isDark
+                    ? const Color(0xFF9C27B0)
+                    : const Color(0xFF8E24AA),
+                onTap: _navigateToAnalytics,
+              ),
+              if (_canAccessUsers)
                 _buildActionCard(
                   icon: Icons.manage_accounts,
                   title: 'Manage Users',
                   description: '$_totalUsers total users',
-                  color:
-                      isDark ? AppColors.brandGreen : AppColors.brandGreenDeep,
+                  color: isDark
+                      ? AppColors.brandGreen
+                      : AppColors.brandGreenDeep,
                   onTap: _navigateToUserManagement,
                 ),
-                _buildActionCard(
-                  icon: Icons.event_note,
-                  title: 'Monitor Sessions',
-                  description: '$_activeSessions active',
-                  color: isDark
-                      ? const Color(0xFF7FFA88)
-                      : const Color(0xFF66BB6A),
-                  onTap: _navigateToSessionMonitoring,
-                ),
-                _buildActionCard(
-                  icon: Icons.analytics,
-                  title: 'Analytics',
-                  description: 'View insights',
-                  color: isDark
-                      ? const Color(0xFF9C27B0)
-                      : const Color(0xFF8E24AA),
-                  onTap: _navigateToAnalytics,
-                ),
+              if (_canAccessModeration)
                 _buildActionCard(
                   icon: Icons.flag,
                   title: 'Moderation',
@@ -493,6 +541,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       : const Color(0xFFD32F2F),
                   onTap: _navigateToModeration,
                 ),
+              if (_canAccessFinance)
                 _buildActionCard(
                   icon: Icons.attach_money,
                   title: 'Finances',
@@ -502,6 +551,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       : const Color(0xFF66BB6A),
                   onTap: _navigateToFinances,
                 ),
+              if (_canAccessSettings)
                 _buildActionCard(
                   icon: Icons.settings,
                   title: 'Settings',
@@ -511,7 +561,25 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       : const Color(0xFF546E7A),
                   onTap: _navigateToSettings,
                 ),
-              ],
+              _buildActionCard(
+                icon: Icons.receipt_long,
+                title: 'Audit Logs',
+                description: 'Track admin actions',
+                color: isDark
+                    ? const Color(0xFF81D4FA)
+                    : const Color(0xFF0277BD),
+                onTap: _navigateToAuditLogs,
+              ),
+            ];
+
+            return GridView.count(
+              crossAxisCount: crossAxisCount,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              mainAxisSpacing: 16,
+              crossAxisSpacing: 16,
+              childAspectRatio: 2.5,
+              children: actions,
             );
           },
         ),
@@ -791,6 +859,14 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (context) => const SystemSettingsScreen(),
+      ),
+    );
+  }
+
+  void _navigateToAuditLogs() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => const AdminActionLogsScreen(),
       ),
     );
   }

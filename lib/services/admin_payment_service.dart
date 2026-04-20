@@ -18,7 +18,7 @@ class AdminPaymentVerificationService {
   Stream<List<PendingPaymentModel>> getPendingPayments() {
     return _firestore
         .collection('transactions')
-        .where('status', isEqualTo: 'pending_verification')
+        .where('status', isEqualTo: 'pendingVerification')
         .orderBy('createdAt', descending: true)
         .snapshots()
         .map((snapshot) => snapshot.docs

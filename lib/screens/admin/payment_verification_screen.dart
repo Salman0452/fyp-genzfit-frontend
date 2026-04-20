@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:genzfit/models/transaction_model.dart';
+import 'package:genzfit/services/payment_service.dart';
 import 'package:genzfit/utils/constants.dart';
+import 'package:genzfit/utils/download_helper.dart';
 import 'package:intl/intl.dart';
 
 class PaymentVerificationScreen extends StatefulWidget {
@@ -15,12 +19,17 @@ class PaymentVerificationScreen extends StatefulWidget {
 class _PaymentVerificationScreenState extends State<PaymentVerificationScreen>
     with SingleTickerProviderStateMixin {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final PaymentService _paymentService = PaymentService();
   late TabController _tabController;
+  bool _isAccessLoading = true;
+  bool _canManagePayments = false;
+  int _pendingLimit = 100;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
+    _loadRoleAccess();
   }
 
   @override
@@ -29,26 +38,55 @@ class _PaymentVerificationScreenState extends State<PaymentVerificationScreen>
     super.dispose();
   }
 
+  Future<void> _loadRoleAccess() async {
+    try {
+      final uid = FirebaseAuth.instance.currentUser?.uid;
+      if (uid == null) {
+        setState(() {
+          _isAccessLoading = false;
+          _canManagePayments = false;
+        });
+        return;
+      }
+
+      final userDoc = await _firestore.collection('users').doc(uid).get();
+      final role = userDoc.data()?['role'] as String? ?? '';
+
+      setState(() {
+        _isAccessLoading = false;
+        _canManagePayments = role == 'admin' || role == 'finance_admin';
+      });
+    } catch (_) {
+      setState(() {
+        _isAccessLoading = false;
+        _canManagePayments = false;
+      });
+    }
+  }
+
   Future<void> _verifyPayment(
     String transactionId,
-    String trainerId,
+    String _,
   ) async {
-    try {
-      // Update transaction status to verified
-      await _firestore.collection('transactions').doc(transactionId).update({
-        'status': TransactionStatus.verified.value,
-        'verifiedAt': FieldValue.serverTimestamp(),
-      });
+    final adminId = FirebaseAuth.instance.currentUser?.uid;
+    if (adminId == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Admin authentication required'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+      return;
+    }
 
-      // Send notification to trainer
-      await _firestore.collection('notifications').add({
-        'userId': trainerId,
-        'type': 'payment_verified',
-        'title': 'Payment Verified',
-        'message': 'Your payment has been verified successfully.',
-        'createdAt': FieldValue.serverTimestamp(),
-        'read': false,
-      });
+    try {
+      await _paymentService.verifyPayment(
+        transactionId: transactionId,
+        approved: true,
+        adminId: adminId,
+      );
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -74,25 +112,29 @@ class _PaymentVerificationScreenState extends State<PaymentVerificationScreen>
 
   Future<void> _rejectPayment(
     String transactionId,
-    String trainerId,
+    String _,
     String reason,
   ) async {
-    try {
-      // Update transaction status to failed
-      await _firestore.collection('transactions').doc(transactionId).update({
-        'status': TransactionStatus.failed.value,
-        'rejectionReason': reason,
-      });
+    final adminId = FirebaseAuth.instance.currentUser?.uid;
+    if (adminId == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Admin authentication required'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+      return;
+    }
 
-      // Send notification to trainer
-      await _firestore.collection('notifications').add({
-        'userId': trainerId,
-        'type': 'payment_rejected',
-        'title': 'Payment Rejected',
-        'message': 'Your payment was rejected. Reason: $reason',
-        'createdAt': FieldValue.serverTimestamp(),
-        'read': false,
-      });
+    try {
+      await _paymentService.verifyPayment(
+        transactionId: transactionId,
+        approved: false,
+        adminId: adminId,
+        rejectionReason: reason,
+      );
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -101,7 +143,6 @@ class _PaymentVerificationScreenState extends State<PaymentVerificationScreen>
             backgroundColor: AppColors.error,
           ),
         );
-        Navigator.pop(context);
       }
     } catch (e) {
       if (mounted) {
@@ -117,6 +158,21 @@ class _PaymentVerificationScreenState extends State<PaymentVerificationScreen>
 
   @override
   Widget build(BuildContext context) {
+    if (_isAccessLoading) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (!_canManagePayments) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Payment Verification')),
+        body: const Center(
+          child: Text('You do not have permission to manage payments.'),
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
@@ -147,6 +203,14 @@ class _PaymentVerificationScreenState extends State<PaymentVerificationScreen>
             Tab(text: 'Rejected'),
           ],
         ),
+        actions: [
+          IconButton(
+            tooltip: 'Export Pending CSV',
+            onPressed: _exportPendingPaymentsCsv,
+            icon: const Icon(Icons.download),
+          ),
+          const SizedBox(width: 8),
+        ],
       ),
       body: TabBarView(
         controller: _tabController,
@@ -165,6 +229,7 @@ class _PaymentVerificationScreenState extends State<PaymentVerificationScreen>
           .collection('transactions')
           .where('status', isEqualTo: 'pendingVerification')
           .orderBy('createdAt', descending: true)
+          .limit(_pendingLimit)
           .snapshots(),
       builder: (context, snapshot) {
         if (snapshot.hasError) {
@@ -188,21 +253,264 @@ class _PaymentVerificationScreenState extends State<PaymentVerificationScreen>
           );
         }
 
-        return ListView.builder(
-          padding: const EdgeInsets.all(16),
-          itemCount: docs.length,
-          itemBuilder: (context, index) {
-            final transaction = TransactionModel.fromFirestore(docs[index]);
+        return Column(
+          children: [
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: DataTable(
+                    headingRowColor: WidgetStateProperty.resolveWith(
+                      (states) => Theme.of(context).brightness == Brightness.dark
+                          ? const Color(0xFF2A2A2A)
+                          : const Color(0xFFF3F3F3),
+                    ),
+                    columns: const [
+                      DataColumn(label: Text('Transaction')),
+                      DataColumn(label: Text('Client')),
+                      DataColumn(label: Text('Trainer')),
+                      DataColumn(label: Text('Amount')),
+                      DataColumn(label: Text('Submitted')),
+                      DataColumn(label: Text('Aging')),
+                      DataColumn(label: Text('Receipt')),
+                      DataColumn(label: Text('Actions')),
+                    ],
+                    rows: docs.map((doc) {
+                      final transaction = TransactionModel.fromFirestore(doc);
+                      final aging = DateTime.now().difference(transaction.createdAt);
+                      final agingLabel =
+                          '${aging.inDays}d ${aging.inHours.remainder(24)}h';
 
-            return _buildPaymentCard(
-              transaction: transaction,
-              docId: docs[index].id,
-              isPending: true,
-            );
-          },
+                      return DataRow(
+                        cells: [
+                          DataCell(Text(transaction.id.substring(0, 8).toUpperCase())),
+                          DataCell(_buildUserNameCell(transaction.clientId)),
+                          DataCell(_buildUserNameCell(transaction.trainerId)),
+                          DataCell(
+                            Text('PKR ${transaction.amount.toStringAsFixed(0)}'),
+                          ),
+                          DataCell(
+                            Text(DateFormat('MMM dd • HH:mm').format(transaction.createdAt)),
+                          ),
+                          DataCell(
+                            Text(
+                              agingLabel,
+                              style: TextStyle(
+                                color: aging.inDays >= 2
+                                    ? AppColors.error
+                                    : AppColors.warning,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                          DataCell(
+                            TextButton(
+                              onPressed: transaction.clientPaymentProofUrl == null
+                                  ? null
+                                  : () => _openReceiptPreview(
+                                        transaction.clientPaymentProofUrl!,
+                                      ),
+                              child: const Text('View'),
+                            ),
+                          ),
+                          DataCell(
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                IconButton(
+                                  tooltip: 'Approve',
+                                  onPressed: () => _verifyPayment(doc.id, ''),
+                                  icon: Icon(
+                                    Icons.check_circle,
+                                    color: Theme.of(context).brightness ==
+                                            Brightness.dark
+                                        ? AppColors.brandGreen
+                                        : AppColors.brandGreenDeep,
+                                  ),
+                                ),
+                                IconButton(
+                                  tooltip: 'Reject',
+                                  onPressed: () => _showQuickRejectDialog(doc.id),
+                                  icon:
+                                      const Icon(Icons.cancel, color: AppColors.error),
+                                ),
+                                IconButton(
+                                  tooltip: 'Details',
+                                  onPressed: () => _showPaymentDetails(
+                                    transaction: transaction,
+                                    docId: doc.id,
+                                    isPending: true,
+                                  ),
+                                  icon: const Icon(Icons.open_in_new),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      );
+                    }).toList(),
+                  ),
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+              child: Align(
+                alignment: Alignment.centerRight,
+                child: OutlinedButton.icon(
+                  onPressed: () {
+                    setState(() {
+                      _pendingLimit += 100;
+                    });
+                  },
+                  icon: const Icon(Icons.expand_more),
+                  label: Text('Load More (${docs.length})'),
+                ),
+              ),
+            ),
+          ],
         );
       },
     );
+  }
+
+  Widget _buildUserNameCell(String userId) {
+    return FutureBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+      future: _firestore.collection('users').doc(userId).get(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return const SizedBox(
+            width: 16,
+            height: 16,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          );
+        }
+
+        final name = snapshot.data?.data()?['name'] as String?;
+        return Text(name ?? userId.substring(0, 6));
+      },
+    );
+  }
+
+  void _openReceiptPreview(String imageUrl) {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: Image.network(imageUrl, fit: BoxFit.contain),
+        ),
+      ),
+    );
+  }
+
+  void _showQuickRejectDialog(String transactionId) {
+    final reasonController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Reject Payment'),
+        content: TextField(
+          controller: reasonController,
+          maxLines: 3,
+          decoration: const InputDecoration(
+            hintText: 'Enter rejection reason',
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              if (reasonController.text.trim().isEmpty) return;
+              await _rejectPayment(transactionId, '', reasonController.text.trim());
+              if (context.mounted) {
+                Navigator.pop(context);
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.error,
+            ),
+            child: const Text('Reject'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _exportPendingPaymentsCsv() async {
+    try {
+      final snapshot = await _firestore
+          .collection('transactions')
+          .where('status', isEqualTo: 'pendingVerification')
+          .orderBy('createdAt', descending: true)
+          .limit(_pendingLimit)
+          .get();
+
+      final rows = <String>[
+        'transactionId,clientId,clientName,trainerId,trainerName,amount,paymentMethod,createdAt,status'
+      ];
+
+      for (final doc in snapshot.docs) {
+        final tx = TransactionModel.fromFirestore(doc);
+
+        final clientDoc = await _firestore.collection('users').doc(tx.clientId).get();
+        final trainerDoc =
+            await _firestore.collection('users').doc(tx.trainerId).get();
+
+        final clientName = clientDoc.data()?['name'] as String? ?? '';
+        final trainerName = trainerDoc.data()?['name'] as String? ?? '';
+
+        rows.add(
+          [
+            tx.id,
+            tx.clientId,
+            clientName,
+            tx.trainerId,
+            trainerName,
+            tx.amount.toStringAsFixed(2),
+            tx.paymentMethod.value,
+            tx.createdAt.toIso8601String(),
+            tx.status.value,
+          ].map(_csvCell).join(','),
+        );
+      }
+
+      final content = rows.join('\n');
+
+      if (kIsWeb) {
+        downloadCsvFile(
+          content,
+          'pending_payments_${DateFormat('yyyyMMdd_HHmmss').format(DateTime.now())}.csv',
+        );
+      }
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              kIsWeb
+                  ? 'Pending payments exported'
+                  : 'CSV export is only supported on web',
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to export CSV: $e')),
+      );
+    }
+  }
+
+  String _csvCell(Object? value) {
+    final text = (value ?? '').toString().replaceAll('"', '""');
+    return '"$text"';
   }
 
   Widget _buildVerifiedPaymentsTab() {
@@ -472,8 +780,8 @@ class PaymentDetailsSheet extends StatefulWidget {
   final TransactionModel transaction;
   final String docId;
   final bool isPending;
-  final Function(String, String) onVerify;
-  final Function(String, String, String) onReject;
+  final Future<void> Function(String, String) onVerify;
+  final Future<void> Function(String, String, String) onReject;
 
   const PaymentDetailsSheet({
     Key? key,
@@ -654,15 +962,16 @@ class _PaymentDetailsSheetState extends State<PaymentDetailsSheet> {
                   child: ElevatedButton(
                     onPressed: _isLoading
                         ? null
-                        : () {
+                        : () async {
                             setState(() => _isLoading = true);
-                            widget.onVerify(
+                            await widget.onVerify(
                               widget.docId,
                               widget.transaction.trainerId,
                             );
-                            Future.delayed(const Duration(seconds: 1), () {
-                              if (mounted) Navigator.pop(context);
-                            });
+                            if (mounted) {
+                              setState(() => _isLoading = false);
+                              Navigator.pop(context);
+                            }
                           },
                     style: ElevatedButton.styleFrom(
                       backgroundColor:
@@ -814,7 +1123,7 @@ class _PaymentDetailsSheetState extends State<PaymentDetailsSheet> {
             child: const Text('Cancel'),
           ),
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
               if (_rejectionReasonController.text.isEmpty) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
@@ -825,11 +1134,14 @@ class _PaymentDetailsSheetState extends State<PaymentDetailsSheet> {
                 return;
               }
 
-              widget.onReject(
+              setState(() => _isLoading = true);
+              await widget.onReject(
                 widget.docId,
                 widget.transaction.trainerId,
                 _rejectionReasonController.text,
               );
+              if (!mounted) return;
+              setState(() => _isLoading = false);
               Navigator.pop(context);
               Navigator.pop(context);
             },

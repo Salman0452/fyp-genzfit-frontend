@@ -74,10 +74,31 @@ class HiringService {
   /// Cancel a session (client or trainer action)
   Future<bool> cancelSession(String sessionId) async {
     try {
+      final sessionDoc = await _firestore.collection('sessions').doc(sessionId).get();
+      final sessionData = sessionDoc.data();
+
       await _firestore.collection('sessions').doc(sessionId).update({
         'status': 'cancelled',
         'updatedAt': FieldValue.serverTimestamp(),
       });
+
+      if (sessionData != null && sessionData['status'] == 'active') {
+        final trainerId = sessionData['trainerId'] as String?;
+        final clientId = sessionData['clientId'] as String?;
+
+        if (trainerId != null) {
+          await _firestore.collection('users').doc(trainerId).update({
+            'activeSessionCount': FieldValue.increment(-1),
+          });
+        }
+
+        if (clientId != null) {
+          await _firestore.collection('users').doc(clientId).update({
+            'activeSessionCount': FieldValue.increment(-1),
+          });
+        }
+      }
+
       return true;
     } catch (e) {
       print('Error cancelling session: $e');
@@ -88,23 +109,30 @@ class HiringService {
   /// Complete a session (trainer action)
   Future<bool> completeSession(String sessionId) async {
     try {
+      final sessionDoc = await _firestore.collection('sessions').doc(sessionId).get();
+      final sessionData = sessionDoc.data();
+
       await _firestore.collection('sessions').doc(sessionId).update({
         'status': 'completed',
         'endDate': FieldValue.serverTimestamp(),
         'updatedAt': FieldValue.serverTimestamp(),
       });
 
-      // Get session details to update trainer earnings
-      final sessionDoc = await _firestore.collection('sessions').doc(sessionId).get();
-      final sessionData = sessionDoc.data() as Map<String, dynamic>;
-      final trainerId = sessionData['trainerId'];
-      final amount = sessionData['amount'];
+      if (sessionData != null && sessionData['status'] == 'active') {
+        final trainerId = sessionData['trainerId'] as String?;
+        final clientId = sessionData['clientId'] as String?;
 
-      if (amount != null) {
-        // Update trainer's total earnings
-        await _firestore.collection('users').doc(trainerId).update({
-          'totalEarnings': FieldValue.increment(amount),
-        });
+        if (trainerId != null) {
+          await _firestore.collection('users').doc(trainerId).update({
+            'activeSessionCount': FieldValue.increment(-1),
+          });
+        }
+
+        if (clientId != null) {
+          await _firestore.collection('users').doc(clientId).update({
+            'activeSessionCount': FieldValue.increment(-1),
+          });
+        }
       }
 
       return true;

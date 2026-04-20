@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:genzfit/models/withdrawal_request_model.dart';
+import 'package:genzfit/services/withdrawal_service.dart';
 import 'package:genzfit/utils/constants.dart';
+import 'package:genzfit/utils/download_helper.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
@@ -15,13 +20,17 @@ class FinancialManagementScreen extends StatefulWidget {
 class _FinancialManagementScreenState extends State<FinancialManagementScreen>
     with SingleTickerProviderStateMixin {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final WithdrawalService _withdrawalService = WithdrawalService();
   late TabController _tabController;
+  bool _isAccessLoading = true;
+  bool _canManageFinance = false;
 
   double _totalRevenue = 0.0;
   double _platformRevenue = 0.0;
-  double _trainerRevenue = 0.0;
   double _pendingPayouts = 0.0;
   double _commissionRate = 0.20; // 20% default
+  String _payoutStatusFilter = 'all';
+  int _payoutLimit = 100;
 
   @override
   void initState() {
@@ -29,6 +38,7 @@ class _FinancialManagementScreenState extends State<FinancialManagementScreen>
     _tabController = TabController(length: 3, vsync: this);
     _loadFinancialSummary();
     _loadCommissionRate();
+    _loadRoleAccess();
   }
 
   @override
@@ -54,31 +64,65 @@ class _FinancialManagementScreenState extends State<FinancialManagementScreen>
     }
   }
 
+  Future<void> _loadRoleAccess() async {
+    try {
+      final uid = FirebaseAuth.instance.currentUser?.uid;
+      if (uid == null) {
+        setState(() {
+          _isAccessLoading = false;
+          _canManageFinance = false;
+        });
+        return;
+      }
+
+      final userDoc = await _firestore.collection('users').doc(uid).get();
+      final role = userDoc.data()?['role'] as String? ?? '';
+
+      setState(() {
+        _isAccessLoading = false;
+        _canManageFinance = role == 'admin' || role == 'finance_admin';
+      });
+    } catch (_) {
+      setState(() {
+        _isAccessLoading = false;
+        _canManageFinance = false;
+      });
+    }
+  }
+
   Future<void> _loadFinancialSummary() async {
     try {
-      final sessionsSnapshot = await _firestore
-          .collection('sessions')
-          .where('status', isEqualTo: 'completed')
+      final ledgerSnapshot = await _firestore
+          .collection('earnings_ledger')
+          .where('type', isEqualTo: 'session_payment')
+          .get();
+
+      final pendingWithdrawalsSnapshot = await _firestore
+          .collection('withdrawal_requests')
+          .where('status', whereIn: ['requested', 'approved', 'processing'])
           .get();
 
       double totalRev = 0.0;
+      double platformRev = 0.0;
       double pending = 0.0;
 
-      for (var doc in sessionsSnapshot.docs) {
+      for (var doc in ledgerSnapshot.docs) {
         final data = doc.data();
-        final amount = (data['amount'] as num?)?.toDouble() ?? 0.0;
-        final isPaid = data['trainerPaid'] as bool? ?? false;
+        final totalAmount = (data['totalAmount'] as num?)?.toDouble() ?? 0.0;
+        final platformFee = (data['platformFee'] as num?)?.toDouble() ?? 0.0;
 
-        totalRev += amount;
-        if (!isPaid) {
-          pending += amount * (1 - _commissionRate);
-        }
+        totalRev += totalAmount;
+        platformRev += platformFee;
+      }
+
+      for (var doc in pendingWithdrawalsSnapshot.docs) {
+        final amount = (doc.data()['amount'] as num?)?.toDouble() ?? 0.0;
+        pending += amount;
       }
 
       setState(() {
         _totalRevenue = totalRev;
-        _platformRevenue = totalRev * _commissionRate;
-        _trainerRevenue = totalRev * (1 - _commissionRate);
+        _platformRevenue = platformRev;
         _pendingPayouts = pending;
       });
     } catch (e) {
@@ -88,6 +132,21 @@ class _FinancialManagementScreenState extends State<FinancialManagementScreen>
 
   @override
   Widget build(BuildContext context) {
+    if (_isAccessLoading) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (!_canManageFinance) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Financial Management')),
+        body: const Center(
+          child: Text('You do not have permission to manage finances.'),
+        ),
+      );
+    }
+
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final brandGreen = isDark ? AppColors.brandGreen : AppColors.brandGreenDeep;
     final primaryText =
@@ -125,6 +184,14 @@ class _FinancialManagementScreenState extends State<FinancialManagementScreen>
             Tab(text: 'Revenue'),
           ],
         ),
+        actions: [
+          IconButton(
+            tooltip: 'Export Payouts CSV',
+            onPressed: _exportPayoutsCsv,
+            icon: const Icon(Icons.download),
+          ),
+          const SizedBox(width: 8),
+        ],
       ),
       body: Column(
         children: [
@@ -235,78 +302,148 @@ class _FinancialManagementScreenState extends State<FinancialManagementScreen>
   }
 
   Widget _buildPayoutsTab() {
-    return StreamBuilder<QuerySnapshot>(
-      stream: _firestore
-          .collection('sessions')
-          .where('status', isEqualTo: 'completed')
-          .where('trainerPaid', isEqualTo: false)
-          .orderBy('completedAt', descending: true)
-          .snapshots(),
-      builder: (context, snapshot) {
-        if (snapshot.hasError) {
-          return Center(
-            child: Text(
-              'Error: ${snapshot.error}',
-              style: GoogleFonts.inter(color: Colors.red),
-            ),
-          );
-        }
+    Query<Map<String, dynamic>> query = _firestore
+        .collection('withdrawal_requests')
+        .orderBy('createdAt', descending: true);
 
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(
-            child: CircularProgressIndicator(color: Color(0xFF83BCB5)),
-          );
-        }
+    if (_payoutStatusFilter != 'all') {
+      query = query.where('status', isEqualTo: _payoutStatusFilter);
+    }
 
-        final sessions = snapshot.data?.docs ?? [];
+    query = query.limit(_payoutLimit);
 
-        if (sessions.isEmpty) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.check_circle_outline,
-                    size: 64, color: Colors.white24),
-                const SizedBox(height: 16),
-                Text(
-                  'No pending payouts',
-                  style: GoogleFonts.poppins(
-                    fontSize: 18,
-                    color: Colors.white38,
+    return Column(
+      children: [
+        _buildPayoutStatusFilters(),
+        Expanded(
+          child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+            stream: query.snapshots(),
+            builder: (context, snapshot) {
+              if (snapshot.hasError) {
+                return Center(
+                  child: Text(
+                    'Error: ${snapshot.error}',
+                    style: GoogleFonts.inter(color: Colors.red),
                   ),
-                ),
-              ],
-            ),
-          );
-        }
+                );
+              }
 
-        return ListView.builder(
-          padding: const EdgeInsets.all(16),
-          itemCount: sessions.length,
-          itemBuilder: (context, index) {
-            final session = sessions[index].data() as Map<String, dynamic>;
-            final sessionId = sessions[index].id;
-            return _buildPayoutCard(session, sessionId);
-          },
-        );
-      },
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(
+                  child: CircularProgressIndicator(color: Color(0xFF83BCB5)),
+                );
+              }
+
+              final requests = snapshot.data?.docs ?? [];
+
+              if (requests.isEmpty) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.check_circle_outline,
+                        size: 64,
+                        color: Colors.white24,
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'No withdrawal requests',
+                        style: GoogleFonts.poppins(
+                          fontSize: 18,
+                          color: Colors.white38,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }
+
+              return Column(
+                children: [
+                  Expanded(
+                    child: ListView.builder(
+                      padding: const EdgeInsets.all(16),
+                      itemCount: requests.length,
+                      itemBuilder: (context, index) {
+                        final request =
+                            WithdrawalRequestModel.fromFirestore(requests[index]);
+                        return _buildPayoutCard(request);
+                      },
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                    child: Align(
+                      alignment: Alignment.centerRight,
+                      child: OutlinedButton.icon(
+                        onPressed: () {
+                          setState(() {
+                            _payoutLimit += 100;
+                          });
+                        },
+                        icon: const Icon(Icons.expand_more),
+                        label: Text('Load More (${requests.length})'),
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 
-  Widget _buildPayoutCard(Map<String, dynamic> session, String sessionId) {
-    final amount = (session['amount'] as num?)?.toDouble() ?? 0.0;
-    final trainerAmount = amount * (1 - _commissionRate);
-    final platformAmount = amount * _commissionRate;
-    final trainerId = session['trainerId'] as String? ?? '';
-    final clientId = session['clientId'] as String? ?? '';
-    final completedAt = (session['completedAt'] as Timestamp?)?.toDate();
+  Widget _buildPayoutStatusFilters() {
+    final statuses = [
+      'all',
+      'requested',
+      'approved',
+      'processing',
+      'completed',
+      'rejected',
+    ];
+
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: statuses.map((status) {
+            final selected = _payoutStatusFilter == status;
+            return Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: FilterChip(
+                label: Text(status[0].toUpperCase() + status.substring(1)),
+                selected: selected,
+                onSelected: (_) {
+                  setState(() {
+                    _payoutStatusFilter = status;
+                    _payoutLimit = 100;
+                  });
+                },
+              ),
+            );
+          }).toList(),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPayoutCard(WithdrawalRequestModel request) {
+    final amount = request.amount;
+    final trainerId = request.trainerId;
+    final createdAt = request.createdAt;
+    final status = request.status;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
         color: const Color(0xFF171917),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.orange.withOpacity(0.3)),
+        border: Border.all(color: _withdrawalStatusColor(status).withOpacity(0.35)),
       ),
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -318,11 +455,14 @@ class _FinancialManagementScreenState extends State<FinancialManagementScreen>
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: Colors.orange.withOpacity(0.1),
+                    color: _withdrawalStatusColor(status).withOpacity(0.12),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Icon(Icons.pending_actions,
-                      color: Colors.orange, size: 20),
+                  child: Icon(
+                    Icons.payments,
+                    color: _withdrawalStatusColor(status),
+                    size: 20,
+                  ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -330,21 +470,20 @@ class _FinancialManagementScreenState extends State<FinancialManagementScreen>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Session #${sessionId.substring(0, 8)}',
+                        'Withdrawal #${request.id.substring(0, 8)}',
                         style: GoogleFonts.poppins(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
                           color: Colors.white,
                         ),
                       ),
-                      if (completedAt != null)
-                        Text(
-                          'Completed ${DateFormat('MMM dd, yyyy').format(completedAt)}',
-                          style: GoogleFonts.inter(
-                            fontSize: 12,
-                            color: Colors.white38,
-                          ),
+                      Text(
+                        'Requested ${DateFormat('MMM dd, yyyy • HH:mm').format(createdAt)}',
+                        style: GoogleFonts.inter(
+                          fontSize: 12,
+                          color: Colors.white38,
                         ),
+                      ),
                     ],
                   ),
                 ),
@@ -352,18 +491,26 @@ class _FinancialManagementScreenState extends State<FinancialManagementScreen>
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Text(
-                      '\$${trainerAmount.toStringAsFixed(2)}',
+                      'Rs. ${amount.toStringAsFixed(2)}',
                       style: GoogleFonts.poppins(
-                        fontSize: 20,
+                        fontSize: 18,
                         fontWeight: FontWeight.bold,
                         color: const Color(0xFF7FFA88),
                       ),
                     ),
-                    Text(
-                      'to trainer',
-                      style: GoogleFonts.inter(
-                        fontSize: 11,
-                        color: Colors.white38,
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: _withdrawalStatusColor(status).withOpacity(0.14),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        status.displayName,
+                        style: GoogleFonts.inter(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: _withdrawalStatusColor(status),
+                        ),
                       ),
                     ),
                   ],
@@ -371,93 +518,279 @@ class _FinancialManagementScreenState extends State<FinancialManagementScreen>
               ],
             ),
             const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Amount Details',
-                        style: GoogleFonts.inter(
-                          fontSize: 12,
-                          color: Colors.white38,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Total: \$${amount.toStringAsFixed(2)}',
-                        style: GoogleFonts.inter(
-                          fontSize: 13,
-                          color: Colors.white70,
-                        ),
-                      ),
-                      Text(
-                        'Platform (${(_commissionRate * 100).toInt()}%): \$${platformAmount.toStringAsFixed(2)}',
-                        style: GoogleFonts.inter(
-                          fontSize: 13,
-                          color: const Color(0xFF83BCB5),
-                        ),
-                      ),
-                      Text(
-                        'Trainer (${((1 - _commissionRate) * 100).toInt()}%): \$${trainerAmount.toStringAsFixed(2)}',
-                        style: GoogleFonts.inter(
-                          fontSize: 13,
-                          color: const Color(0xFF7FFA88),
-                        ),
-                      ),
-                    ],
+            FutureBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+              future: _firestore.collection('users').doc(trainerId).get(),
+              builder: (context, snapshot) {
+                final trainerName = snapshot.data?.data()?['name'] as String?;
+                return Text(
+                  'Trainer: ${trainerName ?? trainerId}',
+                  style: GoogleFonts.inter(
+                    fontSize: 13,
+                    color: Colors.white70,
                   ),
-                ),
-              ],
+                );
+              },
             ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: FutureBuilder<DocumentSnapshot>(
-                    future: _firestore.collection('users').doc(trainerId).get(),
-                    builder: (context, snapshot) {
-                      final trainerName = snapshot.data?.data() != null
-                          ? (snapshot.data!.data()
-                                  as Map<String, dynamic>)['name'] as String? ??
-                              'Unknown'
-                          : 'Loading...';
-                      return Text(
-                        'Trainer: $trainerName',
-                        style: GoogleFonts.inter(
-                          fontSize: 13,
-                          color: Colors.white70,
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton.icon(
-              onPressed: () =>
-                  _processPayou(sessionId, trainerId, trainerAmount),
-              icon: const Icon(Icons.payment),
-              label: Text(
-                'Process Payout',
-                style: GoogleFonts.inter(fontWeight: FontWeight.bold),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF7FFA88),
-                foregroundColor: Colors.white,
-                minimumSize: const Size(double.infinity, 44),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-            ),
+            const SizedBox(height: 14),
+            _buildPayoutActions(request),
           ],
         ),
       ),
     );
+  }
+
+  Widget _buildPayoutActions(WithdrawalRequestModel request) {
+    final adminId = FirebaseAuth.instance.currentUser?.uid;
+
+    if (request.status == WithdrawalStatus.requested) {
+      return Row(
+        children: [
+          Expanded(
+            child: OutlinedButton.icon(
+              onPressed: () => _showWithdrawalRejectDialog(request, adminId),
+              icon: const Icon(Icons.close),
+              label: const Text('Reject'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: Colors.red,
+                side: const BorderSide(color: Colors.red),
+              ),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: ElevatedButton.icon(
+              onPressed: () async {
+                await _withdrawalService.approveWithdrawal(
+                  withdrawalId: request.id,
+                  trainerId: request.trainerId,
+                  adminId: adminId,
+                );
+              },
+              icon: const Icon(Icons.check),
+              label: const Text('Approve'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blue,
+                foregroundColor: Colors.white,
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+
+    if (request.status == WithdrawalStatus.approved) {
+      return ElevatedButton.icon(
+        onPressed: () async {
+          await _withdrawalService.markWithdrawalProcessing(
+            withdrawalId: request.id,
+            trainerId: request.trainerId,
+            adminId: adminId,
+          );
+        },
+        icon: const Icon(Icons.sync),
+        label: const Text('Mark Processing'),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.orange,
+          foregroundColor: Colors.white,
+          minimumSize: const Size(double.infinity, 44),
+        ),
+      );
+    }
+
+    if (request.status == WithdrawalStatus.processing ||
+        request.status == WithdrawalStatus.approved) {
+      return ElevatedButton.icon(
+        onPressed: () => _showCompleteWithdrawalDialog(request, adminId),
+        icon: const Icon(Icons.done_all),
+        label: const Text('Complete Payout'),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFF7FFA88),
+          foregroundColor: Colors.black,
+          minimumSize: const Size(double.infinity, 44),
+        ),
+      );
+    }
+
+    if (request.status == WithdrawalStatus.completed) {
+      return Text(
+        'Bank Ref: ${request.transactionId ?? 'N/A'}',
+        style: GoogleFonts.inter(
+          color: Colors.white70,
+          fontSize: 12,
+        ),
+      );
+    }
+
+    return const SizedBox.shrink();
+  }
+
+  Future<void> _showWithdrawalRejectDialog(
+    WithdrawalRequestModel request,
+    String? adminId,
+  ) async {
+    final controller = TextEditingController();
+
+    await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Reject Withdrawal'),
+        content: TextField(
+          controller: controller,
+          maxLines: 3,
+          decoration: const InputDecoration(hintText: 'Reason'),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              if (controller.text.trim().isEmpty) return;
+              await _withdrawalService.rejectWithdrawal(
+                withdrawalId: request.id,
+                trainerId: request.trainerId,
+                rejectionReason: controller.text.trim(),
+                adminId: adminId,
+              );
+              if (context.mounted) Navigator.pop(context);
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
+            child: const Text('Reject'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _showCompleteWithdrawalDialog(
+    WithdrawalRequestModel request,
+    String? adminId,
+  ) async {
+    final controller = TextEditingController();
+
+    await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Complete Payout'),
+        content: TextField(
+          controller: controller,
+          decoration: const InputDecoration(
+            labelText: 'Bank Transaction ID',
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              if (controller.text.trim().isEmpty) return;
+              await _withdrawalService.completeWithdrawal(
+                withdrawalId: request.id,
+                transactionId: controller.text.trim(),
+                trainerId: request.trainerId,
+                adminId: adminId,
+              );
+              if (context.mounted) Navigator.pop(context);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF7FFA88),
+              foregroundColor: Colors.black,
+            ),
+            child: const Text('Complete'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _exportPayoutsCsv() async {
+    try {
+      Query<Map<String, dynamic>> query = _firestore
+          .collection('withdrawal_requests')
+          .orderBy('createdAt', descending: true);
+
+      if (_payoutStatusFilter != 'all') {
+        query = query.where('status', isEqualTo: _payoutStatusFilter);
+      }
+
+      query = query.limit(_payoutLimit);
+      final snapshot = await query.get();
+
+      final rows = <String>[
+        'withdrawalId,trainerId,trainerName,amount,status,createdAt,processedAt,completedAt,transactionId,rejectionReason'
+      ];
+
+      for (final doc in snapshot.docs) {
+        final request = WithdrawalRequestModel.fromFirestore(doc);
+        final trainerDoc =
+            await _firestore.collection('users').doc(request.trainerId).get();
+        final trainerName = trainerDoc.data()?['name'] as String? ?? '';
+
+        rows.add(
+          [
+            request.id,
+            request.trainerId,
+            trainerName,
+            request.amount.toStringAsFixed(2),
+            request.status.name,
+            request.createdAt.toIso8601String(),
+            request.processedAt?.toIso8601String() ?? '',
+            request.completedAt?.toIso8601String() ?? '',
+            request.transactionId ?? '',
+            request.rejectionReason ?? '',
+          ].map(_csvCell).join(','),
+        );
+      }
+
+      final content = rows.join('\n');
+      if (kIsWeb) {
+        downloadCsvFile(
+          content,
+          'payouts_${_payoutStatusFilter}_${DateFormat('yyyyMMdd_HHmmss').format(DateTime.now())}.csv',
+        );
+      }
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              kIsWeb
+                  ? 'Payout queue exported'
+                  : 'CSV export is only supported on web',
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to export CSV: $e')),
+      );
+    }
+  }
+
+  String _csvCell(Object? value) {
+    final text = (value ?? '').toString().replaceAll('"', '""');
+    return '"$text"';
+  }
+
+  Color _withdrawalStatusColor(WithdrawalStatus status) {
+    switch (status) {
+      case WithdrawalStatus.requested:
+        return Colors.orange;
+      case WithdrawalStatus.approved:
+        return Colors.blue;
+      case WithdrawalStatus.processing:
+        return Colors.cyan;
+      case WithdrawalStatus.completed:
+        return AppColors.success;
+      case WithdrawalStatus.rejected:
+      case WithdrawalStatus.failed:
+        return AppColors.error;
+    }
   }
 
   Widget _buildRefundsTab() {
@@ -530,7 +863,6 @@ class _FinancialManagementScreenState extends State<FinancialManagementScreen>
     final amount = (refund['amount'] as num?)?.toDouble() ?? 0.0;
     final reason = refund['reason'] as String? ?? 'No reason provided';
     final userId = refund['userId'] as String? ?? '';
-    final sessionId = refund['sessionId'] as String? ?? '';
     final createdAt = (refund['createdAt'] as Timestamp?)?.toDate();
 
     return Container(
@@ -715,7 +1047,6 @@ class _FinancialManagementScreenState extends State<FinancialManagementScreen>
 
   Widget _buildRevenueCard(Map<String, dynamic> session, String sessionId) {
     final amount = (session['amount'] as num?)?.toDouble() ?? 0.0;
-    final trainerAmount = amount * (1 - _commissionRate);
     final platformAmount = amount * _commissionRate;
     final isPaid = session['trainerPaid'] as bool? ?? false;
     final completedAt = (session['completedAt'] as Timestamp?)?.toDate();
@@ -788,70 +1119,6 @@ class _FinancialManagementScreenState extends State<FinancialManagementScreen>
         ),
       ),
     );
-  }
-
-  Future<void> _processPayou(
-      String sessionId, String trainerId, double amount) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF171917),
-        title: Text(
-          'Process Payout',
-          style: GoogleFonts.poppins(color: Colors.white),
-        ),
-        content: Text(
-          'Confirm payout of \$${amount.toStringAsFixed(2)} to trainer?',
-          style: GoogleFonts.inter(color: Colors.white70),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child:
-                Text('Cancel', style: GoogleFonts.inter(color: Colors.white38)),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF7FFA88)),
-            child: Text('Confirm',
-                style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmed == true) {
-      try {
-        // Mark session as paid
-        await _firestore.collection('sessions').doc(sessionId).update({
-          'trainerPaid': true,
-          'paidAt': FieldValue.serverTimestamp(),
-        });
-
-        // TODO: Integrate with payment gateway to actually send money
-
-        await _loadFinancialSummary();
-
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Payout processed successfully'),
-              backgroundColor: Color(0xFF7FFA88),
-            ),
-          );
-        }
-      } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Error: $e'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-      }
-    }
   }
 
   Future<void> _processRefund(

@@ -4,6 +4,7 @@ import 'package:genzfit/models/withdrawal_request_model.dart';
 import 'package:genzfit/utils/constants.dart';
 import 'package:intl/intl.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class AdminWithdrawalManagementScreen extends StatefulWidget {
   const AdminWithdrawalManagementScreen({super.key});
@@ -378,9 +379,11 @@ class _AdminWithdrawalManagementScreenState
           ElevatedButton(
             onPressed: () async {
               try {
+                final adminId = FirebaseAuth.instance.currentUser?.uid;
                 await _withdrawalService.approveWithdrawal(
                   withdrawalId: request.id,
                   trainerId: request.trainerId,
+                  adminId: adminId,
                 );
                 if (context.mounted) {
                   Navigator.pop(context);
@@ -444,10 +447,12 @@ class _AdminWithdrawalManagementScreenState
               }
 
               try {
+                final adminId = FirebaseAuth.instance.currentUser?.uid;
                 await _withdrawalService.rejectWithdrawal(
                   withdrawalId: request.id,
                   trainerId: request.trainerId,
                   rejectionReason: reasonController.text,
+                  adminId: adminId,
                 );
                 if (context.mounted) {
                   Navigator.pop(context);
@@ -525,10 +530,12 @@ class _AdminWithdrawalManagementScreenState
               }
 
               try {
+                final adminId = FirebaseAuth.instance.currentUser?.uid;
                 await _withdrawalService.completeWithdrawal(
                   withdrawalId: request.id,
                   transactionId: transactionIdController.text,
                   trainerId: request.trainerId,
+                  adminId: adminId,
                 );
                 if (context.mounted) {
                   Navigator.pop(context);
