@@ -14,11 +14,11 @@
       },
       "oauth_client": [
         {
-          "client_id": "1088491642353-0fo1ur7rq2stlh48t38t6mrea9ianvjo.apps.googleusercontent.com",
+          "client_id": "1088491642353-aja6a50v5gt1pupaq6kjjid3aqrvuo21.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "com.example.genzfit",
-            "certificate_hash": "8c1f77134048326a9fcba4ef5e948fa2ec7faedd"
+            "certificate_hash": "f8863044eb24a6ac537356b37b1629cac4ee897d"
           }
         },
         {
