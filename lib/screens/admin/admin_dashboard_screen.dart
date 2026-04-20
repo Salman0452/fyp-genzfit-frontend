@@ -8,6 +8,7 @@ import 'package:genzfit/screens/admin/session_monitoring_screen.dart';
 import 'package:genzfit/screens/admin/analytics_dashboard_screen.dart';
 import 'package:genzfit/screens/admin/content_moderation_screen.dart';
 import 'package:genzfit/screens/admin/financial_management_screen.dart';
+import 'package:genzfit/screens/admin/admin_bank_verification_screen.dart';
 import 'package:genzfit/screens/admin/system_settings_screen.dart';
 import 'package:genzfit/screens/admin/admin_action_logs_screen.dart';
 import 'package:genzfit/utils/constants.dart';
@@ -86,7 +87,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         }
       }
     } catch (e) {
-      print('Error loading users for dashboard: $e');
+      if (!e.toString().contains('permission-denied')) {
+        print('Error loading users for dashboard: $e');
+      }
     }
 
     try {
@@ -115,7 +118,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         }).length;
       }
     } catch (e) {
-      print('Error loading active sessions for dashboard: $e');
+      if (!e.toString().contains('permission-denied')) {
+        print('Error loading active sessions for dashboard: $e');
+      }
     }
 
     // Finance data can be restricted for moderator/support roles.
@@ -133,7 +138,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           }
         }
       } catch (e) {
-        print('Error loading revenue for dashboard: $e');
+        if (!e.toString().contains('permission-denied')) {
+          print('Error loading revenue for dashboard: $e');
+        }
       }
     }
 
@@ -551,6 +558,16 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       : const Color(0xFF66BB6A),
                   onTap: _navigateToFinances,
                 ),
+              if (_canAccessFinance)
+                _buildActionCard(
+                  icon: Icons.account_balance,
+                  title: 'Verify Bank Details',
+                  description: 'Approve trainer payout accounts',
+                  color: isDark
+                      ? const Color(0xFF81D4FA)
+                      : const Color(0xFF0288D1),
+                  onTap: _navigateToBankVerification,
+                ),
               if (_canAccessSettings)
                 _buildActionCard(
                   icon: Icons.settings,
@@ -851,6 +868,14 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (context) => const FinancialManagementScreen(),
+      ),
+    );
+  }
+
+  void _navigateToBankVerification() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => const AdminBankVerificationScreen(),
       ),
     );
   }

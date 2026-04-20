@@ -19,11 +19,17 @@ service cloud.firestore {
     }
     
     function isAdmin() {
-      return isSignedIn() && getUserRole() == 'admin';
+      return isSignedIn() && (
+        getUserRole() == 'admin' ||
+        getUserRole() == 'super_admin'
+      );
     }
 
     function isFinanceAdmin() {
-      return isSignedIn() && getUserRole() == 'finance_admin';
+      return isSignedIn() && (
+        getUserRole() == 'finance_admin' ||
+        getUserRole() == 'financeAdmin'
+      );
     }
 
     function isModerator() {
@@ -322,6 +328,12 @@ service cloud.firestore {
       allow delete: if isOwner(trainerId) && 
         resource.data.verificationStatus != 'verified';
     }
+
+    // Collection-group compatibility for bank details verification screens.
+    match /{path=**}/bank_details/{bankDetailsId} {
+      allow read: if isFinanceAdmin() || isAdmin();
+      allow update: if isFinanceAdmin() || isAdmin();
+    }
     
     // Payouts collection
     match /payouts/{payoutId} {
@@ -382,7 +394,8 @@ service cloud.firestore {
       // Use direct role check to avoid getUserRole() issues
       allow write: if isSignedIn() && 
         (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
-         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'finance_admin');
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'finance_admin' ||
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'financeAdmin');
     }
   }
 }

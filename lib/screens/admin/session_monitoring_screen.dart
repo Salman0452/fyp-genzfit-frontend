@@ -48,6 +48,7 @@ class _SessionMonitoringScreenState extends State<SessionMonitoringScreen> {
       body: Column(
         children: [
           _buildFilterChips(),
+          _buildSessionStats(),
           Expanded(
             child: _buildSessionsList(),
           ),
@@ -133,15 +134,11 @@ class _SessionMonitoringScreenState extends State<SessionMonitoringScreen> {
   }
 
   Widget _buildSessionsList() {
-    Query query = _firestore.collection('sessions');
+    Query<Map<String, dynamic>> query = _firestore
+        .collection('sessions')
+        .orderBy('createdAt', descending: true);
 
-    if (_statusFilter != 'all') {
-      query = query.where('status', isEqualTo: _statusFilter);
-    }
-
-    query = query.orderBy('createdAt', descending: true);
-
-    return StreamBuilder<QuerySnapshot>(
+    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
       stream: query.snapshots(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
@@ -182,17 +179,152 @@ class _SessionMonitoringScreenState extends State<SessionMonitoringScreen> {
           );
         }
 
+        final allDocs = snapshot.data!.docs;
+        final prepared = allDocs.map((doc) {
+          final data = doc.data();
+          final session = SessionModel.fromFirestore(doc);
+          final effectiveStatus = _effectiveSessionStatus(
+            session,
+            rawStatus: data['status'] as String?,
+            isActiveFlag: data['isActive'] == true,
+          );
+
+          return (session: session, status: effectiveStatus);
+        }).toList();
+
+        final filteredSessions = prepared.where((item) {
+          if (_statusFilter == 'all') return true;
+          return SessionModel.statusToString(item.status) == _statusFilter;
+        }).toList();
+
+        if (filteredSessions.isEmpty) {
+          return Center(
+            child: Text(
+              'No $_statusFilter sessions found',
+              style: GoogleFonts.poppins(
+                fontSize: 16,
+                color: (Theme.of(context).brightness == Brightness.dark
+                        ? const Color(0xFFFFFFFF)
+                        : AppColors.textPrimary)
+                    .withOpacity(0.6),
+              ),
+            ),
+          );
+        }
+
         return ListView.builder(
           padding: const EdgeInsets.all(16),
-          itemCount: snapshot.data!.docs.length,
+          itemCount: filteredSessions.length,
           itemBuilder: (context, index) {
-            final sessionDoc = snapshot.data!.docs[index];
-            final session = SessionModel.fromFirestore(sessionDoc);
+            final item = filteredSessions[index];
+            final session = item.session.copyWith(status: item.status);
+
             return _buildSessionCard(session);
           },
         );
       },
     );
+  }
+
+  Widget _buildSessionStats() {
+    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+      stream: _firestore.collection('sessions').snapshots(),
+      builder: (context, snapshot) {
+        final docs = snapshot.data?.docs ?? const [];
+        final activeCount = docs.where((doc) {
+          final data = doc.data();
+          final session = SessionModel.fromFirestore(doc);
+          final rawStatus = data['status'] as String?;
+          final effectiveStatus = _effectiveSessionStatus(
+            session,
+            rawStatus: rawStatus,
+            isActiveFlag: data['isActive'] == true,
+          );
+
+          return effectiveStatus == SessionStatus.active;
+        }).length;
+
+        return Container(
+          width: double.infinity,
+          margin: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          decoration: BoxDecoration(
+            color: Theme.of(context).brightness == Brightness.dark
+                ? const Color(0xFF171917)
+                : AppColors.surface,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: (Theme.of(context).brightness == Brightness.dark
+                      ? AppColors.brandGreen
+                      : AppColors.brandGreenDeep)
+                  .withOpacity(0.35),
+            ),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                Icons.bolt,
+                size: 18,
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? AppColors.brandGreen
+                    : AppColors.brandGreenDeep,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'Active Sessions: $activeCount',
+                style: GoogleFonts.poppins(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? const Color(0xFFFFFFFF)
+                      : AppColors.textPrimary,
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  bool _isActiveLikeStatus(String? status) {
+    final normalized = (status ?? '').trim().toLowerCase();
+    return normalized == 'active' ||
+        normalized == 'ongoing' ||
+        normalized == 'in_progress' ||
+        normalized == 'in progress' ||
+        normalized == 'inprogress' ||
+        normalized == 'started' ||
+        normalized == 'accepted' ||
+        normalized == 'verified';
+  }
+
+  SessionStatus _effectiveSessionStatus(
+    SessionModel session, {
+    String? rawStatus,
+    bool isActiveFlag = false,
+  }) {
+    if (isActiveFlag || _isActiveLikeStatus(rawStatus)) {
+      return SessionStatus.active;
+    }
+
+    if (session.status == SessionStatus.completed && _isWithinActiveWindow(session)) {
+      return SessionStatus.active;
+    }
+
+    return session.status;
+  }
+
+  bool _isWithinActiveWindow(SessionModel session) {
+    final end = _resolveBillingEndDate(session);
+    if (end == null) return false;
+
+    final now = DateTime.now();
+    return now.isBefore(end) || _isSameDate(now, end);
+  }
+
+  bool _isSameDate(DateTime a, DateTime b) {
+    return a.year == b.year && a.month == b.month && a.day == b.day;
   }
 
   Widget _buildSessionCard(SessionModel session) {
@@ -361,6 +493,8 @@ class _SessionMonitoringScreenState extends State<SessionMonitoringScreen> {
   }
 
   Widget _buildSessionDetails(SessionModel session) {
+    final resolvedEndDate = _resolveBillingEndDate(session);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -393,10 +527,10 @@ class _SessionMonitoringScreenState extends State<SessionMonitoringScreen> {
           ),
           const SizedBox(height: 12),
         ],
-        if (session.endDate != null) ...[
+        if (resolvedEndDate != null) ...[
           _buildDetailRow(
             'End Date',
-            DateFormat('MMM d, yyyy').format(session.endDate!),
+            DateFormat('MMM d, yyyy').format(resolvedEndDate),
           ),
           const SizedBox(height: 12),
         ],
@@ -603,6 +737,22 @@ class _SessionMonitoringScreenState extends State<SessionMonitoringScreen> {
     );
   }
 
+  DateTime? _resolveBillingEndDate(SessionModel session) {
+    final start = session.startDate;
+    final end = session.endDate;
+
+    if (start == null) return end;
+    if (end == null) return start.add(const Duration(days: 30));
+
+    // Legacy correction: some complete actions wrote completion timestamp to endDate.
+    final minimalExpected = start.add(const Duration(days: 27));
+    if (end.isBefore(minimalExpected)) {
+      return start.add(const Duration(days: 30));
+    }
+
+    return end;
+  }
+
   Widget _buildAdminActions(SessionModel session) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -801,7 +951,7 @@ class _SessionMonitoringScreenState extends State<SessionMonitoringScreen> {
       try {
         await _firestore.collection('sessions').doc(session.id).update({
           'status': 'completed',
-          'endDate': FieldValue.serverTimestamp(),
+          'completedAt': FieldValue.serverTimestamp(),
           'updatedAt': FieldValue.serverTimestamp(),
         });
 

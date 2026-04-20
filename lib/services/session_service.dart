@@ -64,7 +64,7 @@ class SessionService {
 
     await _firestore.collection('sessions').doc(sessionId).update({
       'status': SessionModel.statusToString(SessionStatus.completed),
-      'endDate': Timestamp.fromDate(DateTime.now()),
+      'completedAt': Timestamp.fromDate(DateTime.now()),
       'updatedAt': Timestamp.fromDate(DateTime.now()),
       if (finalAmount != null) 'amount': finalAmount,
     });

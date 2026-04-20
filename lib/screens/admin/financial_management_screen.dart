@@ -36,7 +36,6 @@ class _FinancialManagementScreenState extends State<FinancialManagementScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
-    _loadFinancialSummary();
     _loadCommissionRate();
     _loadRoleAccess();
   }
@@ -56,6 +55,7 @@ class _FinancialManagementScreenState extends State<FinancialManagementScreen>
       if (settingsDoc.exists) {
         final rate = settingsDoc.data()?['rate'] as num?;
         if (rate != null) {
+          if (!mounted) return;
           setState(() => _commissionRate = rate.toDouble());
         }
       }
@@ -68,6 +68,7 @@ class _FinancialManagementScreenState extends State<FinancialManagementScreen>
     try {
       final uid = FirebaseAuth.instance.currentUser?.uid;
       if (uid == null) {
+        if (!mounted) return;
         setState(() {
           _isAccessLoading = false;
           _canManageFinance = false;
@@ -77,12 +78,19 @@ class _FinancialManagementScreenState extends State<FinancialManagementScreen>
 
       final userDoc = await _firestore.collection('users').doc(uid).get();
       final role = userDoc.data()?['role'] as String? ?? '';
+      final canManage = role == 'admin' || role == 'finance_admin';
 
+      if (!mounted) return;
       setState(() {
         _isAccessLoading = false;
-        _canManageFinance = role == 'admin' || role == 'finance_admin';
+        _canManageFinance = canManage;
       });
+
+      if (canManage) {
+        await _loadFinancialSummary();
+      }
     } catch (_) {
+      if (!mounted) return;
       setState(() {
         _isAccessLoading = false;
         _canManageFinance = false;
@@ -91,6 +99,8 @@ class _FinancialManagementScreenState extends State<FinancialManagementScreen>
   }
 
   Future<void> _loadFinancialSummary() async {
+    if (!_canManageFinance) return;
+
     try {
       final ledgerSnapshot = await _firestore
           .collection('earnings_ledger')
@@ -115,18 +125,39 @@ class _FinancialManagementScreenState extends State<FinancialManagementScreen>
         platformRev += platformFee;
       }
 
+      // Fallback for legacy/missing ledger entries: derive revenue from verified/completed transactions.
+      if (ledgerSnapshot.docs.isEmpty || totalRev == 0.0) {
+        final txSnapshot = await _firestore
+            .collection('transactions')
+            .where('status', whereIn: ['verified', 'completed'])
+            .get();
+
+        for (var doc in txSnapshot.docs) {
+          final data = doc.data();
+          final amount = (data['amount'] as num?)?.toDouble() ?? 0.0;
+          final platformFee = (data['platformFee'] as num?)?.toDouble() ?? 0.0;
+
+          if (amount <= 0) continue;
+          totalRev += amount;
+          platformRev += platformFee > 0 ? platformFee : amount * _commissionRate;
+        }
+      }
+
       for (var doc in pendingWithdrawalsSnapshot.docs) {
         final amount = (doc.data()['amount'] as num?)?.toDouble() ?? 0.0;
         pending += amount;
       }
 
+      if (!mounted) return;
       setState(() {
         _totalRevenue = totalRev;
         _platformRevenue = platformRev;
         _pendingPayouts = pending;
       });
     } catch (e) {
-      print('Error loading financial summary: $e');
+      if (!e.toString().contains('permission-denied')) {
+        print('Error loading financial summary: $e');
+      }
     }
   }
 

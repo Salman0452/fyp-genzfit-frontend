@@ -114,7 +114,7 @@ class HiringService {
 
       await _firestore.collection('sessions').doc(sessionId).update({
         'status': 'completed',
-        'endDate': FieldValue.serverTimestamp(),
+        'completedAt': FieldValue.serverTimestamp(),
         'updatedAt': FieldValue.serverTimestamp(),
       });
 

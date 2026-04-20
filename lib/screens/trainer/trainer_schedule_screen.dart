@@ -374,7 +374,7 @@ class _TrainerScheduleScreenState extends State<TrainerScheduleScreen> {
           .doc(session.id)
           .update({
         'status': 'completed',
-        'endDate': FieldValue.serverTimestamp(),
+        'completedAt': FieldValue.serverTimestamp(),
         'updatedAt': FieldValue.serverTimestamp(),
       });
 
