@@ -397,12 +397,9 @@ service cloud.firestore {
       // Anyone can read payment settings
       allow read: if true;
       
-      // Only admins can write payment settings
-      // Use direct role check to avoid getUserRole() issues
-      allow write: if isSignedIn() && 
-        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
-         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'finance_admin' ||
-         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'financeAdmin');
+      // Settings UI is available to admin/super_admin/finance_admin roles.
+      // Keep rules aligned with that role model.
+      allow write: if isFinanceAdmin() || isAdmin();
     }
   }
 }
