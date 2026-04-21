@@ -11,6 +11,7 @@ import 'package:genzfit/screens/admin/financial_management_screen.dart';
 import 'package:genzfit/screens/admin/admin_bank_verification_screen.dart';
 import 'package:genzfit/screens/admin/system_settings_screen.dart';
 import 'package:genzfit/screens/admin/admin_action_logs_screen.dart';
+import 'package:genzfit/screens/admin/admin_chat_monitor_screen.dart';
 import 'package:genzfit/utils/constants.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -89,7 +90,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           clients++;
         } else if (role == 'trainer') {
           trainers++;
-          if (data['verified'] != true) {
+          // Keep overview count consistent with Trainer Verification screen filters.
+          if (data['verified'] == false) {
             pendingVerifications++;
           }
         }
@@ -395,6 +397,12 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   onTap: _navigateToSessionMonitoring,
                 ),
                 _buildSidebarItem(
+                  icon: Icons.chat,
+                  label: 'Chat Monitor',
+                  enabled: _canAccessModeration,
+                  onTap: _navigateToChatMonitor,
+                ),
+                _buildSidebarItem(
                   icon: Icons.analytics,
                   label: 'Analytics',
                   enabled: true,
@@ -479,6 +487,15 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               onTap: () {
                 Navigator.of(context).pop();
                 _navigateToSessionMonitoring();
+              },
+            ),
+            _buildSidebarItem(
+              icon: Icons.chat,
+              label: 'Chat Monitor',
+              enabled: _canAccessModeration,
+              onTap: () {
+                Navigator.of(context).pop();
+                _navigateToChatMonitor();
               },
             ),
             _buildSidebarItem(
@@ -814,6 +831,16 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     : const Color(0xFF66BB6A),
                 onTap: _navigateToSessionMonitoring,
               ),
+              if (_canAccessModeration)
+                _buildActionCard(
+                  icon: Icons.chat_bubble_outline,
+                  title: 'Chat Monitor',
+                  description: 'Review client-trainer chats',
+                  color: isDark
+                      ? const Color(0xFF4FC3F7)
+                      : const Color(0xFF0288D1),
+                  onTap: _navigateToChatMonitor,
+                ),
               _buildActionCard(
                 icon: Icons.analytics,
                 title: 'Analytics',
@@ -1139,6 +1166,14 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (context) => const SessionMonitoringScreen(),
+      ),
+    );
+  }
+
+  void _navigateToChatMonitor() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => const AdminChatMonitorScreen(),
       ),
     );
   }

@@ -131,6 +131,20 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _navigateByRole(UserModel? user) async {
     if (user == null) return;
 
+    final status = user.status.toLowerCase();
+    final isDisabled =
+        status == 'suspended' || status == 'inactive' || status == 'disabled';
+    if (isDisabled) {
+      await context.read<AuthProvider>().signOut();
+      if (!mounted) return;
+      Helpers.showSnackBar(
+        context,
+        'This account has been disabled by admin. Please contact support.',
+        isError: true,
+      );
+      return;
+    }
+
     if (user.role == UserRole.client) {
       final hasPreferences = await _preferencesService.hasPreferences(user.id);
 

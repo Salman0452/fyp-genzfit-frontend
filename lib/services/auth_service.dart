@@ -133,6 +133,8 @@ class AuthService {
         throw Exception('User data not found');
       }
 
+      await _ensureAccountActiveOrThrow(doc.data()!);
+
       if ((doc.data()?['emailVerified'] as bool?) != true) {
         await _firestore.collection('users').doc(refreshedUser.uid).update({
           'emailVerified': true,
@@ -143,7 +145,8 @@ class AuthService {
     } on FirebaseAuthException catch (e) {
       throw _handleAuthException(e);
     } catch (e) {
-      if (e.toString().contains('Please verify your email first')) {
+      if (e.toString().contains('Please verify your email first') ||
+          e.toString().contains('disabled by admin')) {
         rethrow;
       }
       throw Exception('Login failed. Please try again.');
@@ -274,6 +277,9 @@ class AuthService {
     } on FirebaseAuthException catch (e) {
       throw _handleAuthException(e);
     } catch (e) {
+      if (e.toString().contains('disabled by admin')) {
+        rethrow;
+      }
       if (e.toString().contains('cancelled')) {
         rethrow;
       }
@@ -341,6 +347,9 @@ class AuthService {
     } on FirebaseAuthException catch (e) {
       throw _handleAuthException(e);
     } catch (e) {
+      if (e.toString().contains('disabled by admin')) {
+        rethrow;
+      }
       if (e.toString().contains('Facebook sign in was cancelled')) {
         rethrow;
       }
@@ -476,6 +485,7 @@ class AuthService {
     final existingDoc = await docRef.get();
 
     if (existingDoc.exists) {
+      await _ensureAccountActiveOrThrow(existingDoc.data()!);
       return SocialAuthResult(
         user: UserModel.fromMap(existingDoc.data()!),
         isNewUser: false,
@@ -528,5 +538,17 @@ class AuthService {
       user: userModel,
       isNewUser: true,
     );
+  }
+
+  Future<void> _ensureAccountActiveOrThrow(Map<String, dynamic> userData) async {
+    final status = (userData['status'] as String? ?? 'active').toLowerCase();
+    final isActiveFlag = userData['isActive'] as bool?;
+    final isDisabled =
+        status == 'suspended' || status == 'inactive' || status == 'disabled' || isActiveFlag == false;
+
+    if (isDisabled) {
+      await _auth.signOut();
+      throw Exception('This account has been disabled by admin. Please contact support.');
+    }
   }
 }

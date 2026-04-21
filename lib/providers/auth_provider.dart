@@ -34,6 +34,13 @@ class AuthProvider extends ChangeNotifier {
       _firebaseUser = user;
       try {
         _currentUser = await _authService.getUserData(user.uid);
+
+        if (_currentUser != null && !_currentUser!.isActive) {
+          await _authService.signOut();
+          _currentUser = null;
+          _error = 'This account has been disabled by admin. Please contact support.';
+        }
+
         notifyListeners();
       } catch (e) {
         _error = e.toString();
@@ -49,6 +56,15 @@ class AuthProvider extends ChangeNotifier {
       if (user != null) {
         try {
           _currentUser = await _authService.getUserData(user.uid);
+
+          if (_currentUser != null && !_currentUser!.isActive) {
+            await _authService.signOut();
+            _currentUser = null;
+            _error = 'This account has been disabled by admin. Please contact support.';
+            notifyListeners();
+            return;
+          }
+
           notifyListeners();
           // Sync saved preferences to backend on every login / app restart
           _prefsService.loadPreferences(user.uid).catchError((e) {

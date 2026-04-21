@@ -339,6 +339,10 @@ class AdminClientInsightsScreen extends StatelessWidget {
 
   Widget _buildGroupedPreferences(
       BuildContext context, Map<String, dynamic> prefs) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final secondaryText =
+        isDark ? const Color(0xFFB0B0B0) : AppColors.textSecondary;
+
     final groups = <String, List<String>>{
       'Workout': [
         'goal',
@@ -387,30 +391,34 @@ class AdminClientInsightsScreen extends StatelessWidget {
         continue;
       }
 
-      sections.add(_buildPreferenceGroupHeader(context, group.key));
-      sections.add(const SizedBox(height: 8));
-
-      for (final key in presentKeys) {
-        sections.add(_buildKeyValue(context, key, prefs[key]));
-      }
+      sections.add(
+        _buildPreferenceGroupTile(
+          context,
+          title: group.key,
+          entries: presentKeys
+              .map((key) => MapEntry<String, dynamic>(key, prefs[key]))
+              .toList(),
+        ),
+      );
 
       sections.add(const SizedBox(height: 8));
     }
 
     if (otherEntries.isNotEmpty) {
-      sections.add(_buildPreferenceGroupHeader(context, 'Other'));
-      sections.add(const SizedBox(height: 8));
-      for (final entry in otherEntries) {
-        sections.add(_buildKeyValue(context, entry.key, entry.value));
-      }
+      sections.add(
+        _buildPreferenceGroupTile(
+          context,
+          title: 'Other',
+          entries: otherEntries,
+        ),
+      );
     }
 
     if (sections.isEmpty) {
-      final isDark = Theme.of(context).brightness == Brightness.dark;
       return Text(
         'No preferences found for this client.',
         style: GoogleFonts.inter(
-          color: isDark ? const Color(0xFFB0B0B0) : AppColors.textSecondary,
+          color: secondaryText,
         ),
       );
     }
@@ -421,25 +429,43 @@ class AdminClientInsightsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildPreferenceGroupHeader(BuildContext context, String label) {
+  Widget _buildPreferenceGroupTile(
+    BuildContext context, {
+    required String title,
+    required List<MapEntry<String, dynamic>> entries,
+  }) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final primaryText =
         isDark ? const Color(0xFFFFFFFF) : AppColors.textPrimary;
+    final secondaryText =
+        isDark ? const Color(0xFFB0B0B0) : AppColors.textSecondary;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: (isDark ? AppColors.brandBlue : AppColors.brandBlueDark)
-            .withOpacity(0.12),
-        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: secondaryText.withOpacity(0.22)),
+        borderRadius: BorderRadius.circular(10),
       ),
-      child: Text(
-        label,
-        style: GoogleFonts.poppins(
-          color: primaryText,
-          fontWeight: FontWeight.w700,
-          fontSize: 13,
+      child: ExpansionTile(
+        tilePadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+        childrenPadding: const EdgeInsets.fromLTRB(12, 0, 12, 10),
+        title: Text(
+          title,
+          style: GoogleFonts.poppins(
+            color: primaryText,
+            fontWeight: FontWeight.w700,
+            fontSize: 14,
+          ),
         ),
+        subtitle: Text(
+          '${entries.length} item${entries.length == 1 ? '' : 's'}',
+          style: GoogleFonts.inter(
+            color: secondaryText,
+            fontSize: 12,
+          ),
+        ),
+        children: entries
+            .map((entry) => _buildKeyValue(context, entry.key, entry.value))
+            .toList(),
       ),
     );
   }

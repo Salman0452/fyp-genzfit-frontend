@@ -138,9 +138,12 @@ service cloud.firestore {
     }
     // Chats collection
     match /chats/{chatId} {
-      // Users can read chats they are part of
+      // Users can read chats they are part of; admin roles can monitor chats.
       allow read: if isSignedIn() && 
-        resource.data.participants.hasAny([request.auth.uid]);
+        (
+          resource.data.participants.hasAny([request.auth.uid]) ||
+          isAnyAdminRole()
+        );
       
       // Users can create chats
       allow create: if isSignedIn() && 
@@ -152,8 +155,11 @@ service cloud.firestore {
       
       // Messages subcollection
       match /messages/{messageId} {
-        // Allow message reads if user is signed in (parent chat rule protects access)
-        allow read: if isSignedIn();
+        // Allow message reads for chat participants and admin roles.
+        allow read: if isSignedIn() && (
+          get(/databases/$(database)/documents/chats/$(chatId)).data.participants.hasAny([request.auth.uid]) ||
+          isAnyAdminRole()
+        );
         
         // Allow message creation if user is authenticated and is the sender
         allow create: if isSignedIn() && 

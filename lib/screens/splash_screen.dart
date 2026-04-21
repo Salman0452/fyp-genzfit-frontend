@@ -74,6 +74,13 @@ class _SplashScreenState extends State<SplashScreen>
 
         final refreshedModel = authProvider.userModel;
         if (refreshedModel != null) {
+          if (!_isModelActive(refreshedModel)) {
+            await authProvider.signOut();
+            if (mounted) {
+              Navigator.pushReplacementNamed(context, '/role-selection');
+            }
+            return;
+          }
           _navigateToHome(refreshedModel.role);
         } else {
           // Still null, sign out and restart
@@ -91,8 +98,20 @@ class _SplashScreenState extends State<SplashScreen>
       }
     } else {
       // User is fully loaded, navigate to home
+      if (!_isModelActive(userModel)) {
+        await authProvider.signOut();
+        if (mounted) {
+          Navigator.pushReplacementNamed(context, '/role-selection');
+        }
+        return;
+      }
       _navigateToHome(userModel.role);
     }
+  }
+
+  bool _isModelActive(UserModel model) {
+    final status = model.status.toLowerCase();
+    return status != 'suspended' && status != 'inactive' && status != 'disabled';
   }
 
   void _navigateToHome(UserRole role) {

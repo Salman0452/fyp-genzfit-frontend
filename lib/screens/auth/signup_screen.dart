@@ -78,7 +78,7 @@ class _SignupScreenState extends State<SignupScreen> {
     }
 
     if (widget.role == UserRole.trainer && _hourlyRateController.text.isEmpty) {
-      Helpers.showSnackBar(context, 'Please enter your hourly rate',
+      Helpers.showSnackBar(context, 'Please enter your monthly rate (PKR)',
           isError: true);
       return;
     }
@@ -236,7 +236,7 @@ class _SignupScreenState extends State<SignupScreen> {
     if (widget.role == UserRole.trainer && _hourlyRateController.text.isEmpty) {
       Helpers.showSnackBar(
         context,
-        'Please enter your hourly rate',
+        'Please enter your monthly rate (PKR)',
         isError: true,
       );
       return false;
@@ -465,10 +465,10 @@ class _SignupScreenState extends State<SignupScreen> {
                   ),
                   const SizedBox(height: AppConstants.paddingMedium),
                   CustomTextField(
-                    label: 'Hourly Rate (\$)',
-                    hint: 'Enter your hourly rate',
+                    label: 'Monthly Rate (PKR)',
+                    hint: 'Enter your monthly rate in PKR',
                     controller: _hourlyRateController,
-                    prefixIcon: Icons.attach_money,
+                    prefixIcon: Icons.payments_outlined,
                     keyboardType: TextInputType.number,
                     validator: Validators.validateHourlyRate,
                   ),
@@ -562,10 +562,12 @@ class _SignupScreenState extends State<SignupScreen> {
                     GestureDetector(
                       onTap: () =>
                           Navigator.pushReplacementNamed(context, '/login'),
-                      child: const Text(
+                      child: Text(
                         'Sign In',
                         style: TextStyle(
-                          color: Color(0xFF000000),
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? AppColors.brandGreen
+                              : AppColors.brandGreenDeep,
                           fontSize: AppConstants.fontMedium,
                           fontWeight: FontWeight.w600,
                         ),

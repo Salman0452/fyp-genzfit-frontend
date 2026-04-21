@@ -6,6 +6,7 @@ import 'package:genzfit/widgets/custom_button.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
+import 'dart:ui';
 import 'package:genzfit/services/storage_service.dart';
 import 'package:genzfit/services/firestore_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -146,6 +147,87 @@ class _TrainerProfileScreenState extends State<TrainerProfileScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to upload certificate: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _deleteCertificate(String certificateUrl) async {
+    final shouldDelete = await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Delete certificate?'),
+            content: const Text(
+              'This will remove the certificate from your profile.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                child: const Text('Delete'),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+
+    if (!shouldDelete) return;
+
+    try {
+      setState(() => _isLoading = true);
+
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final userId = authProvider.user?.uid;
+
+      if (userId == null) {
+        throw Exception('User not authenticated');
+      }
+
+      final trainerSnapshot = await FirebaseFirestore.instance
+          .collection('trainers')
+          .where('userId', isEqualTo: userId)
+          .limit(1)
+          .get();
+
+      if (trainerSnapshot.docs.isNotEmpty) {
+        final trainerId = trainerSnapshot.docs.first.id;
+        final currentData = trainerSnapshot.docs.first.data();
+        final certifications = List<String>.from(
+          currentData['certifications'] ?? [],
+        );
+
+        certifications.remove(certificateUrl);
+
+        await FirebaseFirestore.instance
+            .collection('trainers')
+            .doc(trainerId)
+            .update({'certifications': certifications});
+
+        await _storageService.deleteFile(certificateUrl);
+      }
+
+      await authProvider.refreshUser();
+
+      if (mounted) {
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Certificate deleted successfully.'),
+            backgroundColor: AppColors.success,
+          ),
+        );
+      }
+    } catch (e) {
+      setState(() => _isLoading = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to delete certificate: $e'),
             backgroundColor: AppColors.error,
           ),
         );
@@ -801,24 +883,70 @@ class _TrainerProfileScreenState extends State<TrainerProfileScreen> {
                 itemBuilder: (context, index) {
                   return ClipRRect(
                     borderRadius: BorderRadius.circular(AppSizes.borderRadius),
-                    child: CachedNetworkImage(
-                      imageUrl: certifications[index],
-                      fit: BoxFit.cover,
-                      placeholder: (context, url) => Container(
-                        color: AppColors.charcoal,
-                        child: CircularProgressIndicator(
-                          color: Theme.of(context).brightness == Brightness.dark
-                              ? AppColors.brandGreen
-                              : AppColors.brandGreenDeep,
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        CachedNetworkImage(
+                          imageUrl: certifications[index],
+                          fit: BoxFit.cover,
+                          placeholder: (context, url) => Container(
+                            color: AppColors.charcoal,
+                            child: CircularProgressIndicator(
+                              color: Theme.of(context).brightness ==
+                                      Brightness.dark
+                                  ? AppColors.brandGreen
+                                  : AppColors.brandGreenDeep,
+                            ),
+                          ),
+                          errorWidget: (context, url, error) => Container(
+                            color: AppColors.charcoal,
+                            child: const Icon(
+                              Icons.error,
+                              color: AppColors.error,
+                            ),
+                          ),
                         ),
-                      ),
-                      errorWidget: (context, url, error) => Container(
-                        color: AppColors.charcoal,
-                        child: const Icon(
-                          Icons.error,
-                          color: AppColors.error,
+                        Positioned(
+                          top: 8,
+                          right: 8,
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(20),
+                            child: BackdropFilter(
+                              filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: Theme.of(context).brightness ==
+                                          Brightness.dark
+                                      ? const Color(0x4D1A1A1A)
+                                      : const Color(0x66FFFFFF),
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(
+                                    color: accentColor.withOpacity(0.35),
+                                  ),
+                                ),
+                                child: IconButton(
+                                  icon: Icon(
+                                    Icons.delete_outline,
+                                    color: accentColor,
+                                    size: 18,
+                                  ),
+                                  tooltip: 'Delete certificate',
+                                  constraints: const BoxConstraints(
+                                    minWidth: 32,
+                                    minHeight: 32,
+                                  ),
+                                  padding: const EdgeInsets.all(6),
+                                  onPressed: _isLoading
+                                      ? null
+                                      : () => _deleteCertificate(
+                                            certifications[index],
+                                          ),
+                                ),
+                              ),
+                            ),
+                          ),
                         ),
-                      ),
+                      ],
                     ),
                   );
                 },

@@ -209,29 +209,6 @@ class _TrainerDetailScreenState extends State<TrainerDetailScreen> {
                                       overflow: TextOverflow.ellipsis,
                                     ),
                                   ),
-                                  if (trainerData['verified'] == true) ...[
-                                    const SizedBox(width: 8),
-                                    Container(
-                                      width: 24,
-                                      height: 24,
-                                      decoration: BoxDecoration(
-                                        shape: BoxShape.circle,
-                                        color: accentColor,
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: accentColor.withOpacity(0.5),
-                                            blurRadius: 8,
-                                            offset: const Offset(0, 2),
-                                          ),
-                                        ],
-                                      ),
-                                      child: const Icon(
-                                        Icons.check_rounded,
-                                        color: Colors.white,
-                                        size: 13,
-                                      ),
-                                    ),
-                                  ],
                                 ],
                               ),
                             ),
@@ -326,12 +303,6 @@ class _TrainerDetailScreenState extends State<TrainerDetailScreen> {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(
-                            Icons.verified_rounded,
-                            size: 14,
-                            color: accentColor,
-                          ),
-                          const SizedBox(width: 6),
                           Text(
                             'Verified Trainer',
                             style: TextStyle(

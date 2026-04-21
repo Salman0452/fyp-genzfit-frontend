@@ -901,6 +901,8 @@ class _TrainerVerificationScreenState extends State<TrainerVerificationScreen> {
         'updatedAt': FieldValue.serverTimestamp(),
       });
 
+      await _createVerificationApprovedNotification(trainer);
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -921,6 +923,20 @@ class _TrainerVerificationScreenState extends State<TrainerVerificationScreen> {
         );
       }
     }
+  }
+
+  Future<void> _createVerificationApprovedNotification(
+      UserModel trainer) async {
+    await _firestore.collection('notifications').add({
+      'userId': trainer.id,
+      'type': 'trainer_verified',
+      'title': 'Profile Verified',
+      'message':
+          'Congratulations! Your trainer profile has been verified by admin.',
+      'trainerId': trainer.id,
+      'createdAt': FieldValue.serverTimestamp(),
+      'read': false,
+    });
   }
 
   Future<void> _rejectTrainer(UserModel trainer) async {

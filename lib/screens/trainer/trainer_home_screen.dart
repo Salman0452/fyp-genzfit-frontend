@@ -8,6 +8,7 @@ import 'package:genzfit/screens/chat/chat_list_screen.dart';
 import 'package:genzfit/screens/trainer/trainer_clients_screen.dart';
 import 'package:genzfit/screens/trainer/trainer_schedule_screen.dart';
 import 'package:genzfit/services/notification_service.dart';
+import 'package:genzfit/widgets/notification_widgets.dart';
 
 class TrainerHomeScreen extends StatefulWidget {
   const TrainerHomeScreen({super.key});
@@ -33,6 +34,15 @@ class _TrainerHomeScreenState extends State<TrainerHomeScreen> {
     if (userId != null) {
       await _notificationService.saveTokenToDatabase(userId);
     }
+  }
+
+  void _openNotifications() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const NotificationsList(),
+      ),
+    );
   }
 
   @override
@@ -162,9 +172,7 @@ class _TrainerHomeScreenState extends State<TrainerHomeScreen> {
                     color: Theme.of(context).brightness == Brightness.dark
                         ? const Color(0xFF000000)
                         : const Color(0xFFFFFFFF),
-                    onPressed: () {
-                      // TODO: Navigate to notifications
-                    },
+                    onPressed: _openNotifications,
                   ),
                 ),
               ],

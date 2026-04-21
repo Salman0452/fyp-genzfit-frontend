@@ -71,9 +71,17 @@ service cloud.firestore {
     }
 
     match /chats/{chatId} {
-      allow read, write: if isSignedIn();
+      allow read: if isSignedIn() && (
+        resource.data.participants.hasAny([request.auth.uid]) ||
+        isAnyAdminRole()
+      );
+      allow write: if isSignedIn();
       match /messages/{messageId} {
-        allow read, write: if isSignedIn();
+        allow read: if isSignedIn() && (
+          get(/databases/$(database)/documents/chats/$(chatId)).data.participants.hasAny([request.auth.uid]) ||
+          isAnyAdminRole()
+        );
+        allow write: if isSignedIn();
       }
     }
 
