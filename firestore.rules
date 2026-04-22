@@ -309,6 +309,27 @@ service cloud.firestore {
       // Moderation/support/admin can update or delete reports
       allow update, delete: if isModerator() || isSupport() || isAdmin();
     }
+
+    // Notifications collection
+    match /notifications/{notificationId} {
+      // Notification owner and admin roles can read
+      allow read: if isSignedIn() && (
+        resource.data.userId == request.auth.uid ||
+        isAnyAdminRole()
+      );
+
+      // Users can create their own notifications; admin roles can create for any user
+      allow create: if isSignedIn() && (
+        request.resource.data.userId == request.auth.uid ||
+        isAnyAdminRole()
+      );
+
+      // Notification owner can mark read/delete; admin roles can manage
+      allow update, delete: if isSignedIn() && (
+        resource.data.userId == request.auth.uid ||
+        isAnyAdminRole()
+      );
+    }
     
     // Transactions collection (payment records)
     match /transactions/{transactionId} {

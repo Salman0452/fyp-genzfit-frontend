@@ -129,6 +129,21 @@ service cloud.firestore {
       allow update, delete: if isModerator() || isSupport() || isAdmin();
     }
 
+    match /notifications/{notificationId} {
+      allow read: if isSignedIn() && (
+        resource.data.userId == request.auth.uid ||
+        isAnyAdminRole()
+      );
+      allow create: if isSignedIn() && (
+        request.resource.data.userId == request.auth.uid ||
+        isAnyAdminRole()
+      );
+      allow update, delete: if isSignedIn() && (
+        resource.data.userId == request.auth.uid ||
+        isAnyAdminRole()
+      );
+    }
+
     match /transactions/{transactionId} {
       allow read: if isSignedIn();
       allow create: if isSignedIn();

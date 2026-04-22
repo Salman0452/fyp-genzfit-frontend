@@ -24,6 +24,20 @@ class PaymentService {
     required double sessionAmount,
   }) async {
     try {
+      // Idempotency guard: if a transaction already exists for this exact
+      // client-trainer-session pair, reuse it instead of creating duplicates.
+      final existingTransaction = await _firestore
+          .collection(transactionsCollection)
+          .where('clientId', isEqualTo: clientId)
+          .where('trainerId', isEqualTo: trainerId)
+          .where('sessionId', isEqualTo: sessionId)
+          .limit(1)
+          .get();
+
+      if (existingTransaction.docs.isNotEmpty) {
+        return existingTransaction.docs.first.id;
+      }
+
       // Get commission rate from Firestore
       double commissionRate = platformCommissionRate; // Default 10%
       try {

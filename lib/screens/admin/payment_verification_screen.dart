@@ -20,6 +20,8 @@ class _PaymentVerificationScreenState extends State<PaymentVerificationScreen>
     with SingleTickerProviderStateMixin {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final PaymentService _paymentService = PaymentService();
+  final ScrollController _pendingTableHorizontalScrollController =
+      ScrollController();
   late TabController _tabController;
   bool _isAccessLoading = true;
   bool _canManagePayments = false;
@@ -34,6 +36,7 @@ class _PaymentVerificationScreenState extends State<PaymentVerificationScreen>
 
   @override
   void dispose() {
+    _pendingTableHorizontalScrollController.dispose();
     _tabController.dispose();
     super.dispose();
   }
@@ -262,104 +265,113 @@ class _PaymentVerificationScreenState extends State<PaymentVerificationScreen>
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(16),
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: DataTable(
-                    headingRowColor: WidgetStateProperty.resolveWith(
-                      (states) => Theme.of(context).brightness == Brightness.dark
-                          ? const Color(0xFF2A2A2A)
-                          : const Color(0xFFF3F3F3),
-                    ),
-                    columns: const [
-                      DataColumn(label: Text('Transaction')),
-                      DataColumn(label: Text('Client')),
-                      DataColumn(label: Text('Trainer')),
-                      DataColumn(label: Text('Amount')),
-                      DataColumn(label: Text('Submitted')),
-                      DataColumn(label: Text('Aging')),
-                      DataColumn(label: Text('Receipt')),
-                      DataColumn(label: Text('Actions')),
-                    ],
-                    rows: docs.map((doc) {
-                      final transaction = TransactionModel.fromFirestore(doc);
+                child: RawScrollbar(
+                  controller: _pendingTableHorizontalScrollController,
+                  thumbVisibility: true,
+                  trackVisibility: true,
+                  thickness: 10,
+                  radius: const Radius.circular(10),
+                  scrollbarOrientation: ScrollbarOrientation.bottom,
+                  child: SingleChildScrollView(
+                    controller: _pendingTableHorizontalScrollController,
+                    scrollDirection: Axis.horizontal,
+                    child: DataTable(
+                      headingRowColor: WidgetStateProperty.resolveWith(
+                        (states) => Theme.of(context).brightness == Brightness.dark
+                            ? const Color(0xFF2A2A2A)
+                            : const Color(0xFFF3F3F3),
+                      ),
+                      columns: const [
+                        DataColumn(label: Text('Transaction')),
+                        DataColumn(label: Text('Client')),
+                        DataColumn(label: Text('Trainer')),
+                        DataColumn(label: Text('Amount')),
+                        DataColumn(label: Text('Submitted')),
+                        DataColumn(label: Text('Aging')),
+                        DataColumn(label: Text('Receipt')),
+                        DataColumn(label: Text('Actions')),
+                      ],
+                      rows: docs.map((doc) {
+                        final transaction = TransactionModel.fromFirestore(doc);
                         final hasReceipt =
-                          (transaction.clientPaymentProofUrl ?? '').trim().isNotEmpty;
-                      final aging = DateTime.now().difference(transaction.createdAt);
-                      final agingLabel =
-                          '${aging.inDays}d ${aging.inHours.remainder(24)}h';
+                            (transaction.clientPaymentProofUrl ?? '').trim().isNotEmpty;
+                        final aging = DateTime.now().difference(transaction.createdAt);
+                        final agingLabel =
+                            '${aging.inDays}d ${aging.inHours.remainder(24)}h';
 
-                      return DataRow(
-                        cells: [
-                          DataCell(Text(transaction.id.substring(0, 8).toUpperCase())),
-                          DataCell(_buildUserNameCell(transaction.clientId)),
-                          DataCell(_buildUserNameCell(transaction.trainerId)),
-                          DataCell(
-                            Text('PKR ${transaction.amount.toStringAsFixed(0)}'),
-                          ),
-                          DataCell(
-                            Text(DateFormat('MMM dd • HH:mm').format(transaction.createdAt)),
-                          ),
-                          DataCell(
-                            Text(
-                              agingLabel,
-                              style: TextStyle(
-                                color: aging.inDays >= 2
-                                    ? AppColors.error
-                                    : AppColors.warning,
-                                fontWeight: FontWeight.w700,
+                        return DataRow(
+                          cells: [
+                            DataCell(Text(transaction.id.substring(0, 8).toUpperCase())),
+                            DataCell(_buildUserNameCell(transaction.clientId)),
+                            DataCell(_buildUserNameCell(transaction.trainerId)),
+                            DataCell(
+                              Text('PKR ${transaction.amount.toStringAsFixed(0)}'),
+                            ),
+                            DataCell(
+                              Text(DateFormat('MMM dd • HH:mm').format(transaction.createdAt)),
+                            ),
+                            DataCell(
+                              Text(
+                                agingLabel,
+                                style: TextStyle(
+                                  color: aging.inDays >= 2
+                                      ? AppColors.error
+                                      : AppColors.warning,
+                                  fontWeight: FontWeight.w700,
+                                ),
                               ),
                             ),
-                          ),
-                          DataCell(
-                            TextButton(
-                              onPressed: !hasReceipt
-                                  ? null
-                                  : () => _openReceiptPreview(
-                                        transaction.clientPaymentProofUrl!,
-                                      ),
-                              child: const Text('View'),
+                            DataCell(
+                              TextButton(
+                                onPressed: !hasReceipt
+                                    ? null
+                                    : () => _openReceiptPreview(
+                                          transaction.clientPaymentProofUrl!,
+                                        ),
+                                child: const Text('View'),
+                              ),
                             ),
-                          ),
-                          DataCell(
-                            Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                IconButton(
-                                  tooltip: hasReceipt
-                                      ? 'Approve'
-                                      : 'Receipt required before approval',
-                                  onPressed: hasReceipt
-                                      ? () => _verifyPayment(doc.id, '')
-                                      : null,
-                                  icon: Icon(
-                                    Icons.check_circle,
-                                    color: Theme.of(context).brightness ==
-                                            Brightness.dark
-                                        ? AppColors.brandGreen
-                                        : AppColors.brandGreenDeep,
+                            DataCell(
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  IconButton(
+                                    tooltip: hasReceipt
+                                        ? 'Approve'
+                                        : 'Receipt required before approval',
+                                    onPressed: hasReceipt
+                                        ? () => _verifyPayment(doc.id, '')
+                                        : null,
+                                    icon: Icon(
+                                      Icons.check_circle,
+                                      color: Theme.of(context).brightness ==
+                                              Brightness.dark
+                                          ? AppColors.brandGreen
+                                          : AppColors.brandGreenDeep,
+                                    ),
                                   ),
-                                ),
-                                IconButton(
-                                  tooltip: 'Reject',
-                                  onPressed: () => _showQuickRejectDialog(doc.id),
-                                  icon:
-                                      const Icon(Icons.cancel, color: AppColors.error),
-                                ),
-                                IconButton(
-                                  tooltip: 'Details',
-                                  onPressed: () => _showPaymentDetails(
-                                    transaction: transaction,
-                                    docId: doc.id,
-                                    isPending: true,
+                                  IconButton(
+                                    tooltip: 'Reject',
+                                    onPressed: () => _showQuickRejectDialog(doc.id),
+                                    icon:
+                                        const Icon(Icons.cancel, color: AppColors.error),
                                   ),
-                                  icon: const Icon(Icons.open_in_new),
-                                ),
-                              ],
+                                  IconButton(
+                                    tooltip: 'Details',
+                                    onPressed: () => _showPaymentDetails(
+                                      transaction: transaction,
+                                      docId: doc.id,
+                                      isPending: true,
+                                    ),
+                                    icon: const Icon(Icons.open_in_new),
+                                  ),
+                                ],
+                              ),
                             ),
-                          ),
-                        ],
-                      );
-                    }).toList(),
+                          ],
+                        );
+                      }).toList(),
+                    ),
                   ),
                 ),
               ),

@@ -16,7 +16,9 @@ import 'package:genzfit/screens/progress/progress_screen.dart';
 import 'package:genzfit/screens/preferences/preferences_screen.dart';
 import 'package:genzfit/services/body_analysis_service.dart';
 import 'package:genzfit/services/notification_service.dart';
+import 'package:genzfit/services/notifications_service.dart';
 import 'package:genzfit/models/measurement_model.dart';
+import 'package:genzfit/screens/client/notifications_screen.dart';
 
 class ClientHomeScreen extends StatefulWidget {
   const ClientHomeScreen({super.key});
@@ -30,6 +32,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
   int _carouselIndex = 0;
   final BodyAnalysisService _bodyAnalysisService = BodyAnalysisService();
   final NotificationService _notificationService = NotificationService();
+  final NotificationsService _notificationsService = NotificationsService();
   MeasurementModel? _latestMeasurement;
   bool _isLoading = true;
 
@@ -142,6 +145,87 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
     );
   }
 
+  Widget _buildNotificationIcon(BuildContext context, String? userId) {
+    if (userId == null) {
+      return Container(
+        decoration: BoxDecoration(
+          color: Theme.of(context).brightness == Brightness.dark
+              ? AppColors.brandGreen
+              : AppColors.brandGreenDeep,
+          shape: BoxShape.circle,
+        ),
+        child: IconButton(
+          icon: const Icon(Icons.notifications_outlined),
+          color: Theme.of(context).brightness == Brightness.dark
+              ? const Color(0xFF010101)
+              : AppColors.textPrimary,
+          onPressed: () => Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const NotificationsScreen(),
+            ),
+          ),
+        ),
+      );
+    }
+
+    return StreamBuilder<int>(
+      stream: _notificationsService.getUnreadNotificationsCount(userId),
+      builder: (context, snapshot) {
+        final unreadCount = snapshot.data ?? 0;
+
+        return Stack(
+          children: [
+            Container(
+              decoration: BoxDecoration(
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? AppColors.brandGreen
+                    : AppColors.brandGreenDeep,
+                shape: BoxShape.circle,
+              ),
+              child: IconButton(
+                icon: const Icon(Icons.notifications_outlined),
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? const Color(0xFF010101)
+                    : AppColors.textPrimary,
+                onPressed: () {
+                  HapticFeedback.selectionClick();
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const NotificationsScreen(),
+                    ),
+                  );
+                },
+              ),
+            ),
+            if (unreadCount > 0)
+              Positioned(
+                right: 8,
+                top: 8,
+                child: Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: Colors.red,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Text(
+                    unreadCount > 99 ? '99+' : unreadCount.toString(),
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final List<Widget> screens = [
@@ -237,23 +321,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                       ),
                     ),
                   ],
-                ),
-                Container(
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).brightness == Brightness.dark
-                        ? AppColors.brandGreen
-                        : AppColors.brandGreenDeep,
-                    shape: BoxShape.circle,
-                  ),
-                  child: IconButton(
-                    icon: const Icon(Icons.notifications_outlined),
-                    color: Theme.of(context).brightness == Brightness.dark
-                        ? const Color(0xFF010101)
-                        : AppColors.textPrimary,
-                    onPressed: () {
-                      // TODO: Navigate to notifications
-                    },
-                  ),
+                _buildNotificationIcon(context, authProvider.user?.uid  ),
                 ),
               ],
             ),
