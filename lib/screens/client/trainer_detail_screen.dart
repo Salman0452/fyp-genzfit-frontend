@@ -27,9 +27,13 @@ class TrainerDetailScreen extends StatefulWidget {
 class _TrainerDetailScreenState extends State<TrainerDetailScreen> {
   final ChatService _chatService = ChatService();
   final TextEditingController _notesController = TextEditingController();
+  final TextEditingController _reviewController = TextEditingController();
   bool _isLoading = false;
   bool _hasActiveSession = false;
   bool _hasPendingRequest = false;
+  bool _canRateTrainer = false;
+  bool _hasRatedTrainer = false;
+  String? _rateableSessionId;
 
   @override
   void initState() {
@@ -40,12 +44,15 @@ class _TrainerDetailScreenState extends State<TrainerDetailScreen> {
   @override
   void dispose() {
     _notesController.dispose();
+    _reviewController.dispose();
     super.dispose();
   }
 
   Future<void> _checkSessionStatus() async {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final currentUserId = authProvider.user?.uid ?? '';
+
+    if (currentUserId.isEmpty) return;
 
     try {
       final snapshot = await FirebaseFirestore.instance
@@ -56,6 +63,10 @@ class _TrainerDetailScreenState extends State<TrainerDetailScreen> {
 
       bool hasActive = false;
       bool hasPending = false;
+      bool hasRated = false;
+      String? rateableSessionId;
+
+      final completedSessions = <QueryDocumentSnapshot<Map<String, dynamic>>>[];
 
       for (var doc in snapshot.docs) {
         final status = doc.data()['status'] as String?;
@@ -63,16 +74,216 @@ class _TrainerDetailScreenState extends State<TrainerDetailScreen> {
           hasActive = true;
         } else if (status == 'requested') {
           hasPending = true;
+        } else if (status == 'completed') {
+          completedSessions.add(doc);
         }
+      }
+
+      completedSessions.sort((a, b) {
+        final aTime = (a.data()['completedAt'] as Timestamp?)?.millisecondsSinceEpoch ?? 0;
+        final bTime = (b.data()['completedAt'] as Timestamp?)?.millisecondsSinceEpoch ?? 0;
+        return bTime.compareTo(aTime);
+      });
+
+      for (final completed in completedSessions) {
+        final ratingDoc = await FirebaseFirestore.instance
+            .collection('trainer_ratings')
+            .doc(completed.id)
+            .get();
+
+        if (ratingDoc.exists) {
+          hasRated = true;
+          continue;
+        }
+
+        rateableSessionId ??= completed.id;
       }
 
       setState(() {
         _hasActiveSession = hasActive;
         _hasPendingRequest = hasPending;
+        _hasRatedTrainer = hasRated;
+        _canRateTrainer = rateableSessionId != null;
+        _rateableSessionId = rateableSessionId;
       });
     } catch (e) {
       print('Error checking session status: $e');
     }
+  }
+
+  Future<void> _submitTrainerRating({
+    required int rating,
+    required String sessionId,
+    String? review,
+  }) async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final currentUserId = authProvider.user?.uid ?? '';
+
+    if (currentUserId.isEmpty) {
+      _showErrorSnackBar('Please login again and retry');
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      final firestore = FirebaseFirestore.instance;
+      final sessionRef = firestore.collection('sessions').doc(sessionId);
+      final ratingRef = firestore.collection('trainer_ratings').doc(sessionId);
+
+      await firestore.runTransaction((transaction) async {
+        final ratingSnapshot = await transaction.get(ratingRef);
+        if (ratingSnapshot.exists) {
+          throw Exception('You have already rated this session');
+        }
+
+        transaction.set(ratingRef, {
+          'sessionId': sessionId,
+          'trainerId': widget.trainerId,
+          'trainerUserId': widget.userId,
+          'clientId': currentUserId,
+          'rating': rating,
+          'review': (review ?? '').trim(),
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+
+        transaction.update(sessionRef, {
+          'clientRatedTrainer': true,
+          'trainerRating': rating,
+          'trainerReview': (review ?? '').trim(),
+          'trainerRatedAt': FieldValue.serverTimestamp(),
+        });
+      });
+
+      _reviewController.clear();
+      await _checkSessionStatus();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Thanks! Your rating has been submitted.'),
+            backgroundColor: AppColors.success,
+          ),
+        );
+      }
+    } catch (e) {
+      _showErrorSnackBar('Failed to submit rating: $e');
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  Future<void> _showRatingDialog() async {
+    if (_rateableSessionId == null) return;
+
+    int selectedRating = 5;
+
+    await showDialog(
+      context: context,
+      builder: (context) {
+        final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+        final accentColor =
+            isDarkMode ? AppColors.brandGreen : AppColors.brandGreenDeep;
+
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              backgroundColor:
+                  isDarkMode ? const Color(0xFF1A1A1A) : AppColors.surface,
+              title: Text(
+                'Rate Trainer',
+                style: TextStyle(
+                  color: isDarkMode
+                      ? const Color(0xFFFFFFFF)
+                      : AppColors.textPrimary,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'How was your completed session?',
+                    style: TextStyle(
+                      color: isDarkMode
+                          ? const Color(0xFFB0B0B0)
+                          : AppColors.textSecondary,
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: List.generate(5, (index) {
+                      final isSelected = index < selectedRating;
+                      return IconButton(
+                        onPressed: () {
+                          setDialogState(() {
+                            selectedRating = index + 1;
+                          });
+                        },
+                        icon: Icon(
+                          isSelected ? Icons.star_rounded : Icons.star_border_rounded,
+                          color: isSelected ? Colors.amber : AppColors.textSecondary,
+                          size: 30,
+                        ),
+                      );
+                    }),
+                  ),
+                  const SizedBox(height: 10),
+                  TextField(
+                    controller: _reviewController,
+                    maxLines: 3,
+                    decoration: InputDecoration(
+                      hintText: 'Optional feedback',
+                      hintStyle: TextStyle(color: AppColors.textSecondary.withOpacity(0.8)),
+                      filled: true,
+                      fillColor:
+                          isDarkMode ? const Color(0xFF262626) : const Color(0xFFF5F5F5),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: BorderSide(color: accentColor.withOpacity(0.2)),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: BorderSide(color: accentColor.withOpacity(0.2)),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: BorderSide(color: accentColor),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: () async {
+                    Navigator.pop(context);
+                    await _submitTrainerRating(
+                      rating: selectedRating,
+                      sessionId: _rateableSessionId!,
+                      review: _reviewController.text,
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: accentColor,
+                    foregroundColor: isDarkMode ? Colors.black : Colors.white,
+                  ),
+                  child: const Text('Submit'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
   }
 
   @override
@@ -686,69 +897,118 @@ class _TrainerDetailScreenState extends State<TrainerDetailScreen> {
         ],
       ),
       child: SafeArea(
-        child: Row(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Expanded(
-              child: OutlinedButton.icon(
-                onPressed: _isLoading ? null : _handleMessageTrainer,
-                icon: const Icon(Icons.message_outlined, size: 18),
-                label: const Text(
-                  'Message',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: AppColors.brandBlue,
-                  side: BorderSide(
-                    color: AppColors.brandBlue.withOpacity(0.5),
-                    width: 1.5,
-                  ),
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
+            if (_canRateTrainer)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: _isLoading ? null : _showRatingDialog,
+                    icon: const Icon(Icons.star_rate_rounded, size: 18),
+                    label: const Text(
+                      'Rate Trainer',
+                      style: TextStyle(fontWeight: FontWeight.w700),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.amber.shade700,
+                      side: BorderSide(
+                        color: Colors.amber.shade700.withOpacity(0.6),
+                        width: 1.4,
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
                   ),
                 ),
               ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              flex: 2,
-              child: ElevatedButton.icon(
-                onPressed: _isLoading || _hasActiveSession || _hasPendingRequest
-                    ? null
-                    : () => _handleHireTrainer(monthlyRate),
-                icon: Icon(
-                  _hasActiveSession
-                      ? Icons.check_circle
-                      : _hasPendingRequest
-                          ? Icons.hourglass_empty
-                          : Icons.handshake_outlined,
-                  size: 18,
-                ),
-                label: Text(
-                  _hasActiveSession
-                      ? 'Active Session'
-                      : _hasPendingRequest
-                          ? 'Request Pending'
-                          : 'Hire Trainer',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: -0.2,
-                  ),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: accentColor,
-                  foregroundColor: isDarkMode ? Colors.black87 : Colors.white,
-                  disabledBackgroundColor: accentColor.withOpacity(0.5),
-                  elevation: 2,
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  shadowColor: accentColor.withOpacity(0.3),
+            if (_hasRatedTrainer && !_canRateTrainer)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: Row(
+                  children: [
+                    Icon(Icons.check_circle_rounded, color: AppColors.success, size: 16),
+                    const SizedBox(width: 6),
+                    Text(
+                      'You have already rated this trainer',
+                      style: TextStyle(
+                        color: isDarkMode ? const Color(0xFFB0B0B0) : AppColors.textSecondary,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
                 ),
               ),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: _isLoading ? null : _handleMessageTrainer,
+                    icon: const Icon(Icons.message_outlined, size: 18),
+                    label: const Text(
+                      'Message',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.brandBlue,
+                      side: BorderSide(
+                        color: AppColors.brandBlue.withOpacity(0.5),
+                        width: 1.5,
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  flex: 2,
+                  child: ElevatedButton.icon(
+                    onPressed: _isLoading || _hasActiveSession || _hasPendingRequest
+                        ? null
+                        : () => _handleHireTrainer(monthlyRate),
+                    icon: Icon(
+                      _hasActiveSession
+                          ? Icons.check_circle
+                          : _hasPendingRequest
+                              ? Icons.hourglass_empty
+                              : Icons.handshake_outlined,
+                      size: 18,
+                    ),
+                    label: Text(
+                      _hasActiveSession
+                          ? 'Active Session'
+                          : _hasPendingRequest
+                              ? 'Request Pending'
+                              : 'Hire Trainer',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: -0.2,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: accentColor,
+                      foregroundColor: isDarkMode ? Colors.black87 : Colors.white,
+                      disabledBackgroundColor: accentColor.withOpacity(0.5),
+                      elevation: 2,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      shadowColor: accentColor.withOpacity(0.3),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ],
         ),

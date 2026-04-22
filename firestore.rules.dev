@@ -89,6 +89,16 @@ service cloud.firestore {
       allow read, write: if isSignedIn();
     }
 
+    match /trainer_ratings/{sessionId} {
+      allow read: if isSignedIn() && (
+        resource.data.clientId == request.auth.uid ||
+        resource.data.trainerUserId == request.auth.uid ||
+        isAnyAdminRole()
+      );
+      allow create: if isSignedIn() && request.resource.data.clientId == request.auth.uid;
+      allow update, delete: if isAnyAdminRole();
+    }
+
     match /user_preferences/{userId} {
       allow read: if isSignedIn() && (request.auth.uid == userId || isAnyAdminRole());
       allow write: if isSignedIn() && request.auth.uid == userId;

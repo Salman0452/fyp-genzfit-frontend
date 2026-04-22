@@ -54,7 +54,11 @@ class _PaymentVerificationScreenState extends State<PaymentVerificationScreen>
 
       setState(() {
         _isAccessLoading = false;
-        _canManagePayments = role == 'admin' || role == 'finance_admin';
+        _canManagePayments =
+            role == 'admin' ||
+            role == 'super_admin' ||
+            role == 'finance_admin' ||
+            role == 'financeAdmin';
       });
     } catch (_) {
       setState(() {
@@ -278,6 +282,8 @@ class _PaymentVerificationScreenState extends State<PaymentVerificationScreen>
                     ],
                     rows: docs.map((doc) {
                       final transaction = TransactionModel.fromFirestore(doc);
+                        final hasReceipt =
+                          (transaction.clientPaymentProofUrl ?? '').trim().isNotEmpty;
                       final aging = DateTime.now().difference(transaction.createdAt);
                       final agingLabel =
                           '${aging.inDays}d ${aging.inHours.remainder(24)}h';
@@ -306,7 +312,7 @@ class _PaymentVerificationScreenState extends State<PaymentVerificationScreen>
                           ),
                           DataCell(
                             TextButton(
-                              onPressed: transaction.clientPaymentProofUrl == null
+                              onPressed: !hasReceipt
                                   ? null
                                   : () => _openReceiptPreview(
                                         transaction.clientPaymentProofUrl!,
@@ -319,8 +325,12 @@ class _PaymentVerificationScreenState extends State<PaymentVerificationScreen>
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 IconButton(
-                                  tooltip: 'Approve',
-                                  onPressed: () => _verifyPayment(doc.id, ''),
+                                  tooltip: hasReceipt
+                                      ? 'Approve'
+                                      : 'Receipt required before approval',
+                                  onPressed: hasReceipt
+                                      ? () => _verifyPayment(doc.id, '')
+                                      : null,
                                   icon: Icon(
                                     Icons.check_circle,
                                     color: Theme.of(context).brightness ==

@@ -189,6 +189,26 @@ service cloud.firestore {
          request.auth.uid == resource.data.trainerId || 
          isAdmin());
     }
+
+    // Trainer ratings collection
+    match /trainer_ratings/{sessionId} {
+      // Participants of the rated session and admin roles can read
+      allow read: if isSignedIn() && (
+        resource.data.clientId == request.auth.uid ||
+        resource.data.trainerUserId == request.auth.uid ||
+        isAnyAdminRole()
+      );
+
+      // Only the client can create one rating for their completed session
+      allow create: if isClient() &&
+        request.resource.data.clientId == request.auth.uid &&
+        request.resource.data.rating is int &&
+        request.resource.data.rating >= 1 &&
+        request.resource.data.rating <= 5;
+
+      // No edits by default; allow cleanup/moderation for admin roles
+      allow update, delete: if isAnyAdminRole();
+    }
     
     // Recommendations collection
     match /recommendations/{recommendationId} {

@@ -12,6 +12,7 @@ import 'package:genzfit/screens/admin/admin_bank_verification_screen.dart';
 import 'package:genzfit/screens/admin/system_settings_screen.dart';
 import 'package:genzfit/screens/admin/admin_action_logs_screen.dart';
 import 'package:genzfit/screens/admin/admin_chat_monitor_screen.dart';
+import 'package:genzfit/screens/admin/payment_verification_screen.dart';
 import 'package:genzfit/utils/constants.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -421,6 +422,12 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   onTap: _navigateToFinances,
                 ),
                 _buildSidebarItem(
+                  icon: Icons.payments,
+                  label: 'Payment Verification',
+                  enabled: _canAccessFinance,
+                  onTap: _navigateToPaymentVerification,
+                ),
+                _buildSidebarItem(
                   icon: Icons.account_balance,
                   label: 'Bank Verification',
                   enabled: _canAccessFinance,
@@ -523,6 +530,15 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               onTap: () {
                 Navigator.of(context).pop();
                 _navigateToFinances();
+              },
+            ),
+            _buildSidebarItem(
+              icon: Icons.payments,
+              label: 'Payment Verification',
+              enabled: _canAccessFinance,
+              onTap: () {
+                Navigator.of(context).pop();
+                _navigateToPaymentVerification();
               },
             ),
             _buildSidebarItem(
@@ -882,6 +898,16 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 ),
               if (_canAccessFinance)
                 _buildActionCard(
+                  icon: Icons.payments,
+                  title: 'Payment Verification',
+                  description: 'Review client receipts',
+                  color: isDark
+                      ? const Color(0xFF4FC3F7)
+                      : const Color(0xFF0288D1),
+                  onTap: _navigateToPaymentVerification,
+                ),
+              if (_canAccessFinance)
+                _buildActionCard(
                   icon: Icons.account_balance,
                   title: 'Verify Bank Details',
                   description: 'Approve trainer payout accounts',
@@ -1206,6 +1232,14 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (context) => const AdminBankVerificationScreen(),
+      ),
+    );
+  }
+
+  void _navigateToPaymentVerification() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => const PaymentVerificationScreen(),
       ),
     );
   }

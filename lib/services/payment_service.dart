@@ -1,14 +1,14 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:cloudinary_public/cloudinary_public.dart';
 import 'dart:io';
 import 'package:genzfit/services/admin_audit_service.dart';
+import 'package:genzfit/services/storage_service.dart';
 import '../models/transaction_model.dart';
 import '../models/bank_details_model.dart';
 import '../models/payout_model.dart';
 
 class PaymentService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final StorageService _storageService = StorageService();
 
   static const double platformCommissionRate = 0.10; // 10% platform fee
   static const String transactionsCollection = 'transactions';
@@ -74,44 +74,20 @@ class PaymentService {
     required PaymentMethod paymentMethod,
   }) async {
     try {
-      // Upload receipt image to Cloudinary
-      final cloudName = dotenv.env['CLOUDINARY_CLOUD_NAME'];
-      final uploadPreset = dotenv.env['CLOUDINARY_UPLOAD_PRESET'];
-
-      if (cloudName == null || uploadPreset == null) {
-        throw Exception('Cloudinary configuration missing');
-      }
-
-      final cloudinary = CloudinaryPublic(
-        cloudName,
-        uploadPreset,
-        cache: false,
+      // Upload receipt image to Cloudinary (existing app-wide storage service).
+      final downloadUrl = await _storageService.uploadImage(
+        proofImage,
+        'payment_proofs/$transactionId',
       );
 
-      try {
-        final response = await cloudinary.uploadFile(
-          CloudinaryFile.fromFile(
-            proofImage.path,
-            resourceType: CloudinaryResourceType.Image,
-            folder: 'payment_proofs/$transactionId',
-          ),
-        );
-
-        final downloadUrl = response.secureUrl;
-
-        // Update transaction with proof URL and payment method
-        await _firestore
-            .collection(transactionsCollection)
-            .doc(transactionId)
-            .update({
-          'clientPaymentProofUrl': downloadUrl,
-          'paymentMethod': paymentMethod.value,
-        });
-      } catch (cloudinaryError) {
-        print('Cloudinary upload error: $cloudinaryError');
-        throw Exception(
-            'Cloudinary upload failed: $cloudinaryError. Please ensure upload preset is configured in Cloudinary dashboard.');
-      }
+      // Update transaction with proof URL and payment method
+      await _firestore
+          .collection(transactionsCollection)
+          .doc(transactionId)
+          .update({
+        'clientPaymentProofUrl': downloadUrl,
+        'paymentMethod': paymentMethod.value,
+      });
     } catch (e) {
       throw Exception('Failed to record payment proof: $e');
     }
