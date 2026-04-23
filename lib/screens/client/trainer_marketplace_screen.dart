@@ -494,7 +494,11 @@ class _TrainerMarketplaceScreenState extends State<TrainerMarketplaceScreen> {
     final bio = trainerData['bio'] ?? 'No bio available';
     final rating = (trainerData['rating'] ?? 0.0).toDouble();
     final monthlyRate = (trainerData['monthlyRate'] ?? 0.0).toDouble();
-    final clients = trainerData['clients'] ?? 0;
+    final clientsFromTrainer = (trainerData['clients'] as num?)?.toInt() ?? 0;
+    final clientsFromUser = (userData['clients'] as num?)?.toInt() ?? 0;
+    final clients = clientsFromTrainer > clientsFromUser
+        ? clientsFromTrainer
+        : clientsFromUser;
     final expertise = List<String>.from(trainerData['expertise'] ?? []);
 
     return Container(

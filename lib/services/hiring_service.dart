@@ -23,7 +23,7 @@ class HiringService {
       };
 
       final docRef = await _firestore.collection('sessions').add(sessionData);
-      
+
       return docRef.id;
     } catch (e) {
       print('Error creating hiring request: $e');
@@ -41,14 +41,17 @@ class HiringService {
       });
 
       // Get session details to create chat
-      final sessionDoc = await _firestore.collection('sessions').doc(sessionId).get();
+      final sessionDoc =
+          await _firestore.collection('sessions').doc(sessionId).get();
       final sessionData = sessionDoc.data() as Map<String, dynamic>;
-      
+
       // Create or get existing chat between client and trainer
       await _getOrCreateChat(
         sessionData['clientId'],
         sessionData['trainerId'],
       );
+
+      await _syncTrainerClientCount(sessionData['trainerId']);
 
       return true;
     } catch (e) {
@@ -74,7 +77,8 @@ class HiringService {
   /// Cancel a session (client or trainer action)
   Future<bool> cancelSession(String sessionId) async {
     try {
-      final sessionDoc = await _firestore.collection('sessions').doc(sessionId).get();
+      final sessionDoc =
+          await _firestore.collection('sessions').doc(sessionId).get();
       final sessionData = sessionDoc.data();
 
       await _firestore.collection('sessions').doc(sessionId).update({
@@ -109,7 +113,8 @@ class HiringService {
   /// Complete a session (trainer action)
   Future<bool> completeSession(String sessionId) async {
     try {
-      final sessionDoc = await _firestore.collection('sessions').doc(sessionId).get();
+      final sessionDoc =
+          await _firestore.collection('sessions').doc(sessionId).get();
       final sessionData = sessionDoc.data();
 
       await _firestore.collection('sessions').doc(sessionId).update({
@@ -143,9 +148,10 @@ class HiringService {
   }
 
   /// Get all sessions for a user (client or trainer)
-  Stream<List<SessionModel>> getUserSessions(String userId, {bool isTrainer = false}) {
+  Stream<List<SessionModel>> getUserSessions(String userId,
+      {bool isTrainer = false}) {
     final field = isTrainer ? 'trainerId' : 'clientId';
-    
+
     return _firestore
         .collection('sessions')
         .where(field, isEqualTo: userId)
@@ -174,9 +180,10 @@ class HiringService {
   }
 
   /// Get active sessions for a user
-  Stream<List<SessionModel>> getActiveSessions(String userId, {bool isTrainer = false}) {
+  Stream<List<SessionModel>> getActiveSessions(String userId,
+      {bool isTrainer = false}) {
     final field = isTrainer ? 'trainerId' : 'clientId';
-    
+
     return _firestore
         .collection('sessions')
         .where(field, isEqualTo: userId)
@@ -196,8 +203,7 @@ class HiringService {
           .collection('sessions')
           .where('clientId', isEqualTo: clientId)
           .where('trainerId', isEqualTo: trainerId)
-          .where('status', whereIn: ['requested', 'active'])
-          .get();
+          .where('status', whereIn: ['requested', 'active']).get();
 
       return snapshot.docs.isNotEmpty;
     } catch (e) {
@@ -238,7 +244,7 @@ class HiringService {
     };
 
     final docRef = await _firestore.collection('chats').add(chatData);
-    
+
     // Add welcome message
     await _firestore
         .collection('chats')
@@ -276,7 +282,8 @@ class HiringService {
   }
 
   /// Update session plan
-  Future<bool> updateSessionPlan(String sessionId, Map<String, dynamic> plan) async {
+  Future<bool> updateSessionPlan(
+      String sessionId, Map<String, dynamic> plan) async {
     try {
       await _firestore.collection('sessions').doc(sessionId).update({
         'plan': plan,
@@ -286,6 +293,47 @@ class HiringService {
     } catch (e) {
       print('Error updating session plan: $e');
       return false;
+    }
+  }
+
+  Future<void> _syncTrainerClientCount(String trainerUserId) async {
+    final activeSessions = await _firestore
+        .collection('sessions')
+        .where('trainerId', isEqualTo: trainerUserId)
+        .where('status', isEqualTo: 'active')
+        .get();
+
+    final uniqueClients = <String>{};
+    for (final doc in activeSessions.docs) {
+      final clientId = (doc.data()['clientId'] as String?)?.trim();
+      if (clientId != null && clientId.isNotEmpty) {
+        uniqueClients.add(clientId);
+      }
+    }
+
+    final count = uniqueClients.length;
+
+    await _firestore.collection('users').doc(trainerUserId).update({
+      'clients': count,
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+
+    final trainerDocs = await _firestore
+        .collection('trainers')
+        .where('userId', isEqualTo: trainerUserId)
+        .limit(1)
+        .get();
+
+    if (trainerDocs.docs.isNotEmpty) {
+      await trainerDocs.docs.first.reference.update({
+        'clients': count,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+    } else {
+      await _firestore.collection('trainers').doc(trainerUserId).set({
+        'clients': count,
+        'updatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
     }
   }
 

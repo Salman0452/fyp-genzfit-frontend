@@ -104,30 +104,22 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     }
 
     try {
-      final sessionsSnapshot = await _firestore
-          .collection('sessions')
-          .where('status', isEqualTo: 'active')
-          .get();
-      activeSessions = sessionsSnapshot.docs.length;
+      final allSessionsSnapshot = await _firestore.collection('sessions').get();
+      activeSessions = allSessionsSnapshot.docs.where((doc) {
+        final data = doc.data();
+        final rawStatus = (data['status'] as String? ?? '').trim().toLowerCase();
+        final isActiveFlag = data['isActive'] == true;
 
-      // Backward-compatibility fallback for older/misaligned session status values.
-      if (activeSessions == 0) {
-        final allSessionsSnapshot = await _firestore.collection('sessions').get();
-        activeSessions = allSessionsSnapshot.docs.where((doc) {
-          final data = doc.data();
-          final rawStatus = (data['status'] as String? ?? '').trim().toLowerCase();
-          final isActiveFlag = data['isActive'] == true;
+        if (isActiveFlag || _isActiveLikeStatus(rawStatus)) {
+          return true;
+        }
 
-          return isActiveFlag ||
-              rawStatus == 'active' ||
-              rawStatus == 'ongoing' ||
-              rawStatus == 'in_progress' ||
-              rawStatus == 'in progress' ||
-              rawStatus == 'inprogress' ||
-              rawStatus == 'started' ||
-              rawStatus == 'accepted';
-        }).length;
-      }
+        if (rawStatus == 'completed' && _isWithinActiveWindowFromData(data)) {
+          return true;
+        }
+
+        return false;
+      }).length;
     } catch (e) {
       if (!e.toString().contains('permission-denied')) {
         print('Error loading active sessions for dashboard: $e');
@@ -165,6 +157,48 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       _platformRevenue = revenue;
       _isLoading = false;
     });
+  }
+
+  bool _isActiveLikeStatus(String? status) {
+    final normalized = (status ?? '').trim().toLowerCase();
+    return normalized == 'active' ||
+        normalized == 'ongoing' ||
+        normalized == 'in_progress' ||
+        normalized == 'in progress' ||
+        normalized == 'inprogress' ||
+        normalized == 'started' ||
+        normalized == 'accepted' ||
+        normalized == 'verified';
+  }
+
+  DateTime? _asDate(dynamic value) {
+    if (value is Timestamp) return value.toDate();
+    if (value is DateTime) return value;
+    return null;
+  }
+
+  DateTime? _resolveBillingEndDateFromData(Map<String, dynamic> data) {
+    final start = _asDate(data['startDate']);
+    final end = _asDate(data['endDate']);
+
+    if (start == null) return end;
+    if (end == null) return start.add(const Duration(days: 30));
+
+    final minimalExpected = start.add(const Duration(days: 27));
+    if (end.isBefore(minimalExpected)) {
+      return start.add(const Duration(days: 30));
+    }
+
+    return end;
+  }
+
+  bool _isWithinActiveWindowFromData(Map<String, dynamic> data) {
+    final end = _resolveBillingEndDateFromData(data);
+    if (end == null) return false;
+
+    final now = DateTime.now();
+    return now.isBefore(end) ||
+        (now.year == end.year && now.month == end.month && now.day == end.day);
   }
 
   @override

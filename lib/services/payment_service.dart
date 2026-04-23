@@ -120,8 +120,7 @@ class PaymentService {
         throw Exception('Transaction not found');
       }
 
-      if (approved &&
-          transaction.status == TransactionStatus.verified) {
+      if (approved && transaction.status == TransactionStatus.verified) {
         return;
       }
       if (!approved && transaction.status == TransactionStatus.failed) {
@@ -199,6 +198,8 @@ class PaymentService {
             'totalEarnings': FieldValue.increment(transaction.trainerAmount),
           });
 
+          await _syncTrainerClientCount(trainerId);
+
           // Update client's active sessions count
           await _firestore.collection('users').doc(clientId).update({
             'activeSessionCount': FieldValue.increment(1),
@@ -238,6 +239,47 @@ class PaymentService {
       }
     } catch (e) {
       throw Exception('Failed to verify payment: $e');
+    }
+  }
+
+  Future<void> _syncTrainerClientCount(String trainerUserId) async {
+    final activeSessions = await _firestore
+        .collection('sessions')
+        .where('trainerId', isEqualTo: trainerUserId)
+        .where('status', isEqualTo: 'active')
+        .get();
+
+    final uniqueClients = <String>{};
+    for (final doc in activeSessions.docs) {
+      final clientId = (doc.data()['clientId'] as String?)?.trim();
+      if (clientId != null && clientId.isNotEmpty) {
+        uniqueClients.add(clientId);
+      }
+    }
+
+    final count = uniqueClients.length;
+
+    await _firestore.collection('users').doc(trainerUserId).update({
+      'clients': count,
+      'updatedAt': Timestamp.now(),
+    });
+
+    final trainerDocs = await _firestore
+        .collection('trainers')
+        .where('userId', isEqualTo: trainerUserId)
+        .limit(1)
+        .get();
+
+    if (trainerDocs.docs.isNotEmpty) {
+      await trainerDocs.docs.first.reference.update({
+        'clients': count,
+        'updatedAt': Timestamp.now(),
+      });
+    } else {
+      await _firestore.collection('trainers').doc(trainerUserId).set({
+        'clients': count,
+        'updatedAt': Timestamp.now(),
+      }, SetOptions(merge: true));
     }
   }
 

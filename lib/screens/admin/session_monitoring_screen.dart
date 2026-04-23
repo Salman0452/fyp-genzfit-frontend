@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:genzfit/models/session_model.dart';
 import 'package:genzfit/models/user_model.dart';
+import 'package:genzfit/screens/admin/admin_chat_monitor_screen.dart';
 import 'package:intl/intl.dart';
 import 'package:genzfit/utils/constants.dart';
 
@@ -878,6 +879,28 @@ class _SessionMonitoringScreenState extends State<SessionMonitoringScreen> {
                 ),
               ),
             ),
+            OutlinedButton.icon(
+              onPressed: () => _openSessionChat(session),
+              icon: const Icon(Icons.chat_outlined, size: 18),
+              label: Text(
+                'View Chat',
+                style: GoogleFonts.inter(fontSize: 12),
+              ),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: Theme.of(context).brightness == Brightness.dark
+                    ? const Color(0xFF81D4FA)
+                    : const Color(0xFF0288D1),
+                side: BorderSide(
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? const Color(0xFF81D4FA)
+                        : const Color(0xFF0288D1)),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+            ),
           ],
         ),
       ],
@@ -1030,6 +1053,17 @@ class _SessionMonitoringScreenState extends State<SessionMonitoringScreen> {
         ),
         actions: [
           TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _openSessionChat(session);
+            },
+            child: Text('View Chat',
+                style: GoogleFonts.inter(
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? const Color(0xFF81D4FA)
+                        : const Color(0xFF0288D1))),
+          ),
+          TextButton(
             onPressed: () => Navigator.pop(context),
             child: Text('Close',
                 style: GoogleFonts.inter(
@@ -1040,6 +1074,63 @@ class _SessionMonitoringScreenState extends State<SessionMonitoringScreen> {
         ],
       ),
     );
+  }
+
+  Future<void> _openSessionChat(SessionModel session) async {
+    try {
+      final snapshot = await _firestore
+          .collection('chats')
+          .where('participants', arrayContains: session.clientId)
+          .get();
+
+      QueryDocumentSnapshot<Map<String, dynamic>>? matched;
+      for (final doc in snapshot.docs) {
+        final participants = doc.data()['participants'] is List
+            ? List<String>.from(doc.data()['participants'] as List)
+            : <String>[];
+        if (participants.contains(session.trainerId)) {
+          matched = doc;
+          break;
+        }
+      }
+
+      if (matched == null) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('No chat found for this session pair.')),
+        );
+        return;
+      }
+
+      final matchedDoc = matched;
+      if (matchedDoc == null) {
+        return;
+      }
+
+      final data = matchedDoc.data();
+      final participants = data['participants'] is List
+          ? List<String>.from(data['participants'] as List)
+          : <String>[];
+      final participantNames = data['participantNames'] is Map
+          ? Map<String, String>.from(data['participantNames'] as Map)
+          : <String, String>{};
+
+      if (!mounted) return;
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => AdminChatThreadScreen(
+            chatId: matchedDoc.id,
+            participants: participants,
+            participantNames: participantNames,
+          ),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to open chat: $e')),
+      );
+    }
   }
 
   Widget _buildDialogRow(String label, String value) {
