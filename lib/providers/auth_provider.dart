@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/user_model.dart';
 import '../services/auth_service.dart';
 import '../services/user_preferences_service.dart';
@@ -7,6 +10,7 @@ import '../services/user_preferences_service.dart';
 class AuthProvider extends ChangeNotifier {
   final AuthService _authService = AuthService();
   final UserPreferencesService _prefsService = UserPreferencesService();
+  StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>? _userDocSub;
 
   UserModel? _currentUser;
   User? _firebaseUser;
@@ -38,7 +42,8 @@ class AuthProvider extends ChangeNotifier {
         if (_currentUser != null && !_currentUser!.isActive) {
           await _authService.signOut();
           _currentUser = null;
-          _error = 'This account has been disabled by admin. Please contact support.';
+          _error =
+              'This account has been disabled by admin. Please contact support.';
         }
 
         notifyListeners();
@@ -54,29 +59,49 @@ class AuthProvider extends ChangeNotifier {
     _authService.authStateChanges.listen((User? user) async {
       _firebaseUser = user;
       if (user != null) {
-        try {
-          _currentUser = await _authService.getUserData(user.uid);
-
-          if (_currentUser != null && !_currentUser!.isActive) {
+        // Subscribe to realtime updates on the users/{uid} document so
+        // fields like `totalEarnings` are reflected immediately in the UI
+        // when updated server-side.
+        _userDocSub?.cancel();
+        _userDocSub = FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .snapshots()
+            .listen((doc) async {
+          if (!doc.exists) {
+            // If user doc removed or missing, sign out for safety
             await _authService.signOut();
             _currentUser = null;
-            _error = 'This account has been disabled by admin. Please contact support.';
+            _error =
+                'This account has been disabled by admin. Please contact support.';
             notifyListeners();
             return;
           }
 
-          notifyListeners();
-          // Sync saved preferences to backend on every login / app restart
-          _prefsService.loadPreferences(user.uid).catchError((e) {
-            print('⚠️ Preferences sync on login failed: $e');
-            return null;
-          });
-        } catch (e) {
-          _error = e.toString();
-          notifyListeners();
-        }
+          try {
+            _currentUser = UserModel.fromMap({...doc.data()!, 'id': doc.id});
+            if (!_currentUser!.isActive) {
+              await _authService.signOut();
+              _currentUser = null;
+              _error =
+                  'This account has been disabled by admin. Please contact support.';
+            }
+            notifyListeners();
+
+            // Sync saved preferences to backend on every login / app restart
+            _prefsService.loadPreferences(user.uid).catchError((e) {
+              print('⚠️ Preferences sync on login failed: $e');
+              return null;
+            });
+          } catch (e) {
+            _error = e.toString();
+            notifyListeners();
+          }
+        });
       } else {
         _currentUser = null;
+        _userDocSub?.cancel();
+        _userDocSub = null;
         notifyListeners();
       }
     });
@@ -291,6 +316,9 @@ class AuthProvider extends ChangeNotifier {
       _isLoading = true;
       notifyListeners();
 
+      // Cancel subscriptions to prevent exceptions during sign-out
+      _userDocSub?.cancel();
+
       await _authService.signOut();
       _currentUser = null;
       _lastSocialAuthIsNewUser = false;
@@ -367,5 +395,11 @@ class AuthProvider extends ChangeNotifier {
   // Refresh user (alias for refreshUserData)
   Future<void> refreshUser() async {
     await refreshUserData();
+  }
+
+  @override
+  void dispose() {
+    _userDocSub?.cancel();
+    super.dispose();
   }
 }

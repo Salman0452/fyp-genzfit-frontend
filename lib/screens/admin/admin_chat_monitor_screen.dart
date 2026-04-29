@@ -100,7 +100,8 @@ class AdminChatMonitorScreen extends StatelessWidget {
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: secondaryText.withOpacity(0.22)),
+                      border:
+                          Border.all(color: secondaryText.withOpacity(0.22)),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -109,7 +110,9 @@ class AdminChatMonitorScreen extends StatelessWidget {
                           children: [
                             Expanded(
                               child: Text(
-                                participantsLabel.isEmpty ? '(Unknown participants)' : participantsLabel,
+                                participantsLabel.isEmpty
+                                    ? '(Unknown participants)'
+                                    : participantsLabel,
                                 style: GoogleFonts.poppins(
                                   color: primaryText,
                                   fontWeight: FontWeight.w700,
@@ -183,9 +186,13 @@ class AdminChatMonitorScreen extends StatelessWidget {
   String _formatDate(DateTime dateTime) {
     final month = dateTime.month.toString().padLeft(2, '0');
     final day = dateTime.day.toString().padLeft(2, '0');
-    final hour = dateTime.hour.toString().padLeft(2, '0');
     final minute = dateTime.minute.toString().padLeft(2, '0');
-    return '$month/$day $hour:$minute';
+    int hour = dateTime.hour;
+    final period = hour >= 12 ? 'PM' : 'AM';
+    int hour12 = hour % 12;
+    if (hour12 == 0) hour12 = 12;
+    final hourStr = hour12.toString().padLeft(2, '0');
+    return '$month/$day $hourStr:$minute $period';
   }
 }
 
@@ -210,9 +217,7 @@ class AdminChatThreadScreen extends StatelessWidget {
         isDark ? const Color(0xFFB0B0B0) : AppColors.textSecondary;
     final cardBackground = isDark ? const Color(0xFF1A1A1A) : AppColors.surface;
 
-    final title = participants
-        .map((uid) => _resolveName(uid))
-        .join('  <->  ');
+    final title = participants.map((uid) => _resolveName(uid)).join('  <->  ');
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -287,7 +292,8 @@ class AdminChatThreadScreen extends StatelessWidget {
                     final videoUrl = (data['videoUrl'] as String?)?.trim();
                     final fileUrl = (data['fileUrl'] as String?)?.trim();
                     final fileName = (data['fileName'] as String?)?.trim();
-                    final timestamp = (data['timestamp'] as Timestamp?)?.toDate();
+                    final timestamp =
+                        (data['timestamp'] as Timestamp?)?.toDate();
 
                     return Container(
                       margin: const EdgeInsets.only(bottom: 10),
@@ -295,7 +301,8 @@ class AdminChatThreadScreen extends StatelessWidget {
                       decoration: BoxDecoration(
                         color: cardBackground,
                         borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: secondaryText.withOpacity(0.2)),
+                        border:
+                            Border.all(color: secondaryText.withOpacity(0.2)),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -322,7 +329,8 @@ class AdminChatThreadScreen extends StatelessWidget {
                                 ),
                             ],
                           ),
-                          if (messageText != null && messageText.isNotEmpty) ...[
+                          if (messageText != null &&
+                              messageText.isNotEmpty) ...[
                             const SizedBox(height: 8),
                             Text(
                               messageText,
@@ -397,8 +405,12 @@ class AdminChatThreadScreen extends StatelessWidget {
   String _formatDate(DateTime dateTime) {
     final month = dateTime.month.toString().padLeft(2, '0');
     final day = dateTime.day.toString().padLeft(2, '0');
-    final hour = dateTime.hour.toString().padLeft(2, '0');
     final minute = dateTime.minute.toString().padLeft(2, '0');
-    return '$month/$day $hour:$minute';
+    int hour = dateTime.hour;
+    final period = hour >= 12 ? 'PM' : 'AM';
+    int hour12 = hour % 12;
+    if (hour12 == 0) hour12 = 12;
+    final hourStr = hour12.toString().padLeft(2, '0');
+    return '$month/$day $hourStr:$minute $period';
   }
 }

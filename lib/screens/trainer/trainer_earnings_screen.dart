@@ -21,7 +21,13 @@ class _TrainerEarningsScreenState extends State<TrainerEarningsScreen> {
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
-    final trainerId = authProvider.user?.uid ?? '';
+    final trainerId = authProvider.user?.uid;
+    if (trainerId == null || trainerId.isEmpty) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Earnings & Withdrawals')),
+        body: const Center(child: Text('Please sign in to view earnings.')),
+      );
+    }
 
     return DefaultTabController(
       length: 3,
@@ -57,11 +63,11 @@ class _TrainerEarningsScreenState extends State<TrainerEarningsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Balance card
           FutureBuilder<double>(
             future: _withdrawalService.getAvailableBalance(trainerId),
             builder: (context, snapshot) {
               final balance = snapshot.data ?? 0.0;
+
               return Container(
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
@@ -319,6 +325,22 @@ class _TrainerEarningsScreenState extends State<TrainerEarningsScreen> {
     return StreamBuilder<List<Map<String, dynamic>>>(
       stream: _withdrawalService.getPaymentHistory(trainerId),
       builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Text(
+                'Failed to load history: ${snapshot.error}',
+                style: TextStyle(
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? Colors.redAccent
+                      : AppColors.error,
+                ),
+              ),
+            ),
+          );
+        }
+
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
         }
@@ -362,22 +384,35 @@ class _TrainerEarningsScreenState extends State<TrainerEarningsScreen> {
   }
 
   Widget _buildHistoryItem(BuildContext context, Map<String, dynamic> item) {
-    final type = item['type'] as String;
-    final amount = item['amount'] as double;
-    final description = item['description'] as String;
-    final createdAt = (item['createdAt'] as Timestamp).toDate();
+    final type = (item['type'] as String?) ?? 'unknown';
+    final rawAmount = (item['amount'] as num?)?.toDouble() ?? 0.0;
+    final displayAmount =
+        (item['displayAmount'] as num?)?.toDouble() ?? rawAmount.abs();
+    final isWithdrawalEvent =
+        type.startsWith('withdrawal_') && type != 'withdrawal_requested';
+    final amount = isWithdrawalEvent ? -displayAmount.abs() : rawAmount;
+    final description =
+        (item['description'] as String?) ?? 'Transaction update';
+    final timestamp = item['createdAt'] as Timestamp?;
+    final createdAt = timestamp?.toDate() ?? DateTime.now();
 
     IconData icon;
     Color color;
 
     switch (type) {
       case 'session_completed':
+      case 'session_payment':
         icon = Icons.add_circle;
         color = AppColors.success;
         break;
       case 'withdrawal_requested':
         icon = Icons.remove_circle;
         color = AppColors.warning;
+        break;
+      case 'withdrawal_approved':
+      case 'withdrawal_processing':
+        icon = Icons.hourglass_top;
+        color = Colors.orange;
         break;
       case 'withdrawal_completed':
         icon = Icons.check_circle;
@@ -433,11 +468,11 @@ class _TrainerEarningsScreenState extends State<TrainerEarningsScreen> {
             ),
           ),
           Text(
-            '${amount > 0 ? '+' : '-'}Rs. ${amount.abs().toStringAsFixed(2)}',
+            '${amount >= 0 ? '+' : '-'}Rs. ${amount.abs().toStringAsFixed(2)}',
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.bold,
-              color: amount > 0 ? AppColors.success : AppColors.error,
+              color: amount >= 0 ? AppColors.success : AppColors.error,
             ),
           ),
         ],

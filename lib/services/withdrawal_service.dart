@@ -6,6 +6,63 @@ import 'package:genzfit/services/admin_audit_service.dart';
 class WithdrawalService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
+  Future<List<String>> _resolveTrainerIds(String trainerId) async {
+    final ids = <String>{trainerId};
+
+    try {
+      final trainerDoc =
+          await _firestore.collection('trainers').doc(trainerId).get();
+      final userId = trainerDoc.data()?['userId'] as String?;
+      if (userId != null && userId.isNotEmpty) {
+        ids.add(userId);
+      }
+    } catch (_) {}
+
+    try {
+      final trainerDocs = await _firestore
+          .collection('trainers')
+          .where('userId', isEqualTo: trainerId)
+          .limit(5)
+          .get();
+      for (final doc in trainerDocs.docs) {
+        ids.add(doc.id);
+      }
+    } catch (_) {}
+
+    return ids.toList();
+  }
+
+  Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>> _fetchByTrainerIds({
+    required String collection,
+    required List<String> trainerIds,
+    String? status,
+    List<String>? statusIn,
+    String? type,
+  }) async {
+    final dedupedIds = trainerIds.toSet().toList();
+    final all = <QueryDocumentSnapshot<Map<String, dynamic>>>[];
+
+    for (final id in dedupedIds) {
+      Query<Map<String, dynamic>> query =
+          _firestore.collection(collection).where('trainerId', isEqualTo: id);
+
+      if (status != null) {
+        query = query.where('status', isEqualTo: status);
+      }
+      if (statusIn != null && statusIn.isNotEmpty) {
+        query = query.where('status', whereIn: statusIn);
+      }
+      if (type != null) {
+        query = query.where('type', isEqualTo: type);
+      }
+
+      final snapshot = await query.get();
+      all.addAll(snapshot.docs);
+    }
+
+    return all;
+  }
+
   /// Request a withdrawal
   Future<String> requestWithdrawal({
     required String trainerId,
@@ -221,26 +278,53 @@ class WithdrawalService {
     try {
       final now = DateTime.now();
 
-      await _firestore
+      final withdrawalDoc = await _firestore
           .collection('withdrawal_requests')
           .doc(withdrawalId)
-          .update({
+          .get();
+      if (!withdrawalDoc.exists) {
+        throw Exception('Withdrawal request not found');
+      }
+
+      final withdrawal = WithdrawalRequestModel.fromFirestore(withdrawalDoc);
+
+      final batch = _firestore.batch();
+
+      batch.update(
+          _firestore.collection('withdrawal_requests').doc(withdrawalId), {
         'status': 'completed',
         'transactionId': transactionId,
         'completedAt': Timestamp.fromDate(now),
       });
 
-      // Create ledger entry
-      final withdrawal = await getWithdrawalRequest(withdrawalId);
-      if (withdrawal != null) {
-        await _createLedgerEntry(
-          trainerId: trainerId,
-          type: 'withdrawal_completed',
-          amount: 0,
-          description: 'Withdrawal completed - Transaction ID: $transactionId',
-          referenceId: withdrawalId,
-        );
-      }
+      final paymentLedgerRef = _firestore.collection('payment_ledger').doc();
+      batch.set(paymentLedgerRef, {
+        'trainerId': trainerId,
+        'type': 'withdrawal_completed',
+        'amount': 0,
+        'description': 'Withdrawal completed - Transaction ID: $transactionId',
+        'referenceId': withdrawalId,
+        'createdAt': Timestamp.fromDate(now),
+      });
+
+      final earningsLedgerRef = _firestore.collection('earnings_ledger').doc();
+      batch.set(earningsLedgerRef, {
+        'trainerId': trainerId,
+        'clientId': null,
+        'sessionId': null,
+        'transactionId': transactionId,
+        'amount': -withdrawal.amount,
+        'platformFee': 0,
+        'totalAmount': 0,
+        'createdAt': Timestamp.fromDate(now),
+        'status': 'active',
+        'type': 'withdrawal_payout',
+        'referenceId': withdrawalId,
+        'withdrawalId': withdrawalId,
+        'description': 'Payout completed for withdrawal $withdrawalId',
+      });
+
+      await batch.commit();
 
       if (adminId != null) {
         await AdminAuditService.logAction(
@@ -396,52 +480,272 @@ class WithdrawalService {
 
   /// Get payment history for trainer
   Stream<List<Map<String, dynamic>>> getPaymentHistory(String trainerId) {
-    return _firestore
-        .collection('payment_ledger')
-        .where('trainerId', isEqualTo: trainerId)
-        .orderBy('createdAt', descending: true)
-        .snapshots()
-        .map((snapshot) {
-      return snapshot.docs.map((doc) => {...doc.data(), 'id': doc.id}).toList();
+    return Stream.fromFuture(_resolveTrainerIds(trainerId)).asyncExpand((ids) {
+      Query<Map<String, dynamic>> query =
+          _firestore.collection('payment_ledger');
+
+      if (ids.length == 1) {
+        query = query.where('trainerId', isEqualTo: ids.first);
+      } else {
+        query = query.where('trainerId', whereIn: ids.take(10).toList());
+      }
+
+      return query.snapshots().asyncMap((snapshot) async {
+        final items =
+            snapshot.docs.map((doc) => {...doc.data(), 'id': doc.id}).toList();
+
+        final withdrawalReferenceIds = items
+            .where((item) {
+              final type = item['type'] as String? ?? '';
+              return type.startsWith('withdrawal_') &&
+                  type != 'withdrawal_requested';
+            })
+            .map((item) => (item['referenceId'] as String?) ?? '')
+            .where((id) => id.isNotEmpty)
+            .toSet()
+            .toList();
+
+        final withdrawalDocs = await Future.wait(
+          withdrawalReferenceIds.map(
+            (refId) =>
+                _firestore.collection('withdrawal_requests').doc(refId).get(),
+          ),
+        );
+
+        final withdrawalAmountById = <String, double>{};
+        for (final doc in withdrawalDocs) {
+          if (!doc.exists) continue;
+          final data = doc.data() ?? <String, dynamic>{};
+          final amount = (data['amount'] as num?)?.toDouble() ?? 0.0;
+          withdrawalAmountById[doc.id] = amount;
+        }
+
+        for (final item in items) {
+          final type = item['type'] as String? ?? '';
+          if (!type.startsWith('withdrawal_') ||
+              type == 'withdrawal_requested') {
+            continue;
+          }
+
+          final refId = item['referenceId'] as String?;
+          final originalAmount =
+              refId != null ? withdrawalAmountById[refId] : null;
+          item['sourceAmount'] = originalAmount ?? 0.0;
+          item['displayAmount'] = originalAmount ?? 0.0;
+          item['signedAmount'] = -(originalAmount ?? 0.0);
+        }
+
+        items.sort((a, b) {
+          final ta = (a['createdAt'] as Timestamp?)?.toDate();
+          final tb = (b['createdAt'] as Timestamp?)?.toDate();
+          if (ta == null && tb == null) return 0;
+          if (ta == null) return 1;
+          if (tb == null) return -1;
+          return tb.compareTo(ta);
+        });
+        return items;
+      });
     });
   }
 
   /// Get trainer's available balance
   Future<double> getAvailableBalance(String trainerId) async {
     try {
-      final sessionsSnapshot = await _firestore
-          .collection('sessions')
-          .where('trainerId', isEqualTo: trainerId)
-          .where('status', isEqualTo: 'completed')
-          .get();
+      print('DEBUG getAvailableBalance: trainerId=$trainerId');
+      final trainerIds = await _resolveTrainerIds(trainerId);
 
-      double totalEarnings = 0;
-      for (var doc in sessionsSnapshot.docs) {
-        final amount = doc.get('amount') as double?;
-        if (amount != null) {
-          totalEarnings += amount;
+      final earningsDocs = await _fetchByTrainerIds(
+        collection: 'earnings_ledger',
+        trainerIds: trainerIds,
+        status: 'active',
+      );
+
+      print(
+          'DEBUG earningsSnapshot.size=${earningsDocs.length} for trainerIds=$trainerIds');
+
+      double totalEarnings = 0.0;
+      for (var doc in earningsDocs) {
+        final data = doc.data();
+        final amount = (data['amount'] as num?)?.toDouble() ?? 0.0;
+        print('DEBUG earnings doc=${doc.id} amount=$amount data=$data');
+        totalEarnings += amount;
+      }
+
+      // Subtract pending/approved/processing requests from available balance.
+      final pendingWithdrawalDocs = await _fetchByTrainerIds(
+        collection: 'withdrawal_requests',
+        trainerIds: trainerIds,
+        statusIn: ['requested', 'approved', 'processing'],
+      );
+
+      print(
+          'DEBUG pendingWithdrawalSnapshot.size=${pendingWithdrawalDocs.length}');
+      double pendingWithdrawals = 0.0;
+      for (var doc in pendingWithdrawalDocs) {
+        final data = doc.data();
+        final amount = (data['amount'] as num?)?.toDouble() ?? 0.0;
+        print('DEBUG withdrawal doc=${doc.id} amount=$amount data=$data');
+        pendingWithdrawals += amount;
+      }
+
+      // Legacy safety: if completed withdrawals exist but payout entries were
+      // never written to earnings_ledger, subtract them here to avoid stale
+      // balance after admin completion.
+      final completedWithdrawalDocs = await _fetchByTrainerIds(
+        collection: 'withdrawal_requests',
+        trainerIds: trainerIds,
+        status: 'completed',
+      );
+
+      final payoutDocs = await _fetchByTrainerIds(
+        collection: 'earnings_ledger',
+        trainerIds: trainerIds,
+        type: 'withdrawal_payout',
+      );
+
+      final payoutReferenceIds = <String>{};
+      bool hasMappedPayoutRefs = false;
+      for (final doc in payoutDocs) {
+        final data = doc.data();
+        final refId = (data['withdrawalId'] ?? data['referenceId']) as String?;
+        if (refId != null && refId.isNotEmpty) {
+          payoutReferenceIds.add(refId);
+          hasMappedPayoutRefs = true;
         }
       }
 
-      // Subtract pending and approved withdrawals
-      final withdrawalSnapshot = await _firestore
-          .collection('withdrawal_requests')
-          .where('trainerId', isEqualTo: trainerId)
-          .where('status',
-              whereIn: ['requested', 'approved', 'processing']).get();
-
-      double pendingWithdrawals = 0;
-      for (var doc in withdrawalSnapshot.docs) {
-        final amount = doc.get('amount') as double?;
-        if (amount != null) {
-          pendingWithdrawals += amount;
+      double legacyCompletedAdjust = 0.0;
+      if (payoutDocs.isEmpty) {
+        for (final doc in completedWithdrawalDocs) {
+          final data = doc.data();
+          legacyCompletedAdjust += (data['amount'] as num?)?.toDouble() ?? 0.0;
+        }
+      } else if (hasMappedPayoutRefs) {
+        for (final doc in completedWithdrawalDocs) {
+          if (!payoutReferenceIds.contains(doc.id)) {
+            final data = doc.data();
+            legacyCompletedAdjust +=
+                (data['amount'] as num?)?.toDouble() ?? 0.0;
+          }
         }
       }
 
-      return totalEarnings - pendingWithdrawals;
+      print(
+          'DEBUG totals: totalEarnings=$totalEarnings pendingWithdrawals=$pendingWithdrawals legacyCompletedAdjust=$legacyCompletedAdjust');
+
+      return totalEarnings - pendingWithdrawals - legacyCompletedAdjust;
     } catch (e) {
       print('Error getting available balance: $e');
       return 0;
+    }
+  }
+
+  /// Diagnostic version: returns detailed debug info about earnings and withdrawals
+  /// Useful to display in UI when diagnosing balance issues.
+  Future<Map<String, dynamic>> getAvailableBalanceDebug(
+      String trainerId) async {
+    try {
+      final trainerIds = await _resolveTrainerIds(trainerId);
+
+      final earningsDocsRaw = await _fetchByTrainerIds(
+        collection: 'earnings_ledger',
+        trainerIds: trainerIds,
+        status: 'active',
+      );
+
+      double totalEarnings = 0.0;
+      final List<Map<String, dynamic>> earningsDocs = [];
+      for (var doc in earningsDocsRaw) {
+        final data = doc.data();
+        final amount = (data['amount'] as num?)?.toDouble() ?? 0.0;
+        earningsDocs.add({'id': doc.id, 'amount': amount, 'data': data});
+        totalEarnings += amount;
+      }
+
+      final withdrawalDocsRaw = await _fetchByTrainerIds(
+        collection: 'withdrawal_requests',
+        trainerIds: trainerIds,
+        statusIn: ['requested', 'approved', 'processing'],
+      );
+
+      double pendingWithdrawals = 0.0;
+      final List<Map<String, dynamic>> withdrawalDocs = [];
+      for (var doc in withdrawalDocsRaw) {
+        final data = doc.data();
+        final amount = (data['amount'] as num?)?.toDouble() ?? 0.0;
+        withdrawalDocs.add({'id': doc.id, 'amount': amount, 'data': data});
+        pendingWithdrawals += amount;
+      }
+
+      final completedWithdrawalDocsRaw = await _fetchByTrainerIds(
+        collection: 'withdrawal_requests',
+        trainerIds: trainerIds,
+        status: 'completed',
+      );
+
+      final payoutDocsRaw = await _fetchByTrainerIds(
+        collection: 'earnings_ledger',
+        trainerIds: trainerIds,
+        type: 'withdrawal_payout',
+      );
+
+      final payoutReferenceIds = <String>{};
+      bool hasMappedPayoutRefs = false;
+      for (final doc in payoutDocsRaw) {
+        final data = doc.data();
+        final refId = (data['withdrawalId'] ?? data['referenceId']) as String?;
+        if (refId != null && refId.isNotEmpty) {
+          payoutReferenceIds.add(refId);
+          hasMappedPayoutRefs = true;
+        }
+      }
+
+      double legacyCompletedAdjust = 0.0;
+      if (payoutDocsRaw.isEmpty) {
+        for (final doc in completedWithdrawalDocsRaw) {
+          final data = doc.data();
+          legacyCompletedAdjust += (data['amount'] as num?)?.toDouble() ?? 0.0;
+        }
+      } else if (hasMappedPayoutRefs) {
+        for (final doc in completedWithdrawalDocsRaw) {
+          if (!payoutReferenceIds.contains(doc.id)) {
+            final data = doc.data();
+            legacyCompletedAdjust +=
+                (data['amount'] as num?)?.toDouble() ?? 0.0;
+          }
+        }
+      }
+
+      final finalBalance =
+          totalEarnings - pendingWithdrawals - legacyCompletedAdjust;
+
+      return {
+        'usedTrainerId': trainerIds.join(', '),
+        'trainerIds': trainerIds,
+        'ledgerCount': earningsDocsRaw.length,
+        'earningsDocs': earningsDocs,
+        'totalEarnings': totalEarnings,
+        'withdrawalCount': withdrawalDocsRaw.length,
+        'withdrawalDocs': withdrawalDocs,
+        'pendingWithdrawals': pendingWithdrawals,
+        'completedWithdrawalCount': completedWithdrawalDocsRaw.length,
+        'payoutLedgerCount': payoutDocsRaw.length,
+        'legacyCompletedAdjust': legacyCompletedAdjust,
+        'finalBalance': finalBalance,
+      };
+    } catch (e) {
+      print('Error in getAvailableBalanceDebug: $e');
+      return {
+        'usedTrainerId': trainerId,
+        'ledgerCount': 0,
+        'earningsDocs': [],
+        'totalEarnings': 0.0,
+        'withdrawalCount': 0,
+        'withdrawalDocs': [],
+        'pendingWithdrawals': 0.0,
+        'finalBalance': 0.0,
+        'error': e.toString(),
+      };
     }
   }
 }

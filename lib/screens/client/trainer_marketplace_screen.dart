@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:provider/provider.dart';
 import 'package:genzfit/utils/constants.dart';
+import 'package:genzfit/providers/auth_provider.dart';
 import '../shared/loading_widget.dart';
 import 'trainer_detail_screen.dart';
 
@@ -19,6 +21,11 @@ class _TrainerMarketplaceScreenState extends State<TrainerMarketplaceScreen> {
   String _selectedExpertise = 'All';
   String _sortBy = 'rating'; // rating, price, clients
   bool _showOnlyVerified = false;
+  bool _showOnlyHired = false;
+  Map<String, String> _trainerSessionStatus =
+      {}; // Maps trainerId to session status
+  Map<String, Map<String, dynamic>> _hiredTrainerUsers =
+      {}; // trainerId -> userData
 
   final List<String> _expertiseOptions = [
     'All',
@@ -31,6 +38,59 @@ class _TrainerMarketplaceScreenState extends State<TrainerMarketplaceScreen> {
     'Nutrition',
     'Rehabilitation',
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadActiveSessionsAndTrainers();
+  }
+
+  Future<void> _loadActiveSessionsAndTrainers() async {
+    try {
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final userId = authProvider.user?.uid;
+      if (userId == null) return;
+
+      // Query all sessions where current user is the client
+      final querySnapshot = await FirebaseFirestore.instance
+          .collection('sessions')
+          .where('clientId', isEqualTo: userId)
+          .get();
+
+      final statusMap = <String, String>{};
+      final trainerIds = <String>{};
+      for (final doc in querySnapshot.docs) {
+        final data = doc.data();
+        final trainerId = data['trainerId'] as String?;
+        final status = data['status'] as String? ?? 'unknown';
+        if (trainerId != null) {
+          statusMap[trainerId] = status;
+          trainerIds.add(trainerId);
+        }
+      }
+
+      // Fetch user profiles for all hired trainers
+      final Map<String, Map<String, dynamic>> hiredTrainerUsers = {};
+      if (trainerIds.isNotEmpty) {
+        final userDocs = await Future.wait(trainerIds.map((id) =>
+            FirebaseFirestore.instance.collection('users').doc(id).get()));
+        for (final doc in userDocs) {
+          if (doc.exists && doc.data() != null) {
+            hiredTrainerUsers[doc.id] = doc.data()!;
+          }
+        }
+      }
+
+      if (mounted) {
+        setState(() {
+          _trainerSessionStatus = statusMap;
+          _hiredTrainerUsers = hiredTrainerUsers;
+        });
+      }
+    } catch (e) {
+      print('Error loading active sessions/trainers: $e');
+    }
+  }
 
   @override
   void dispose() {
@@ -192,6 +252,26 @@ class _TrainerMarketplaceScreenState extends State<TrainerMarketplaceScreen> {
                 ),
               ),
               const SizedBox(width: 10),
+              FilterChip(
+                label: const Text('Hired Only'),
+                selected: _showOnlyHired,
+                onSelected: (selected) {
+                  setState(() => _showOnlyHired = selected);
+                },
+                backgroundColor:
+                    isDarkMode ? const Color(0xFF262626) : AppColors.surface,
+                selectedColor: accentColor.withOpacity(0.2),
+                labelStyle: TextStyle(
+                  color: _showOnlyHired ? accentColor : null,
+                  fontWeight:
+                      _showOnlyHired ? FontWeight.w600 : FontWeight.normal,
+                ),
+                side: BorderSide(
+                  color: _showOnlyHired
+                      ? accentColor
+                      : accentColor.withOpacity(0.2),
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 12),
@@ -348,17 +428,52 @@ class _TrainerMarketplaceScreenState extends State<TrainerMarketplaceScreen> {
   }
 
   Widget _buildTrainerList() {
+    // If "Hired Only" is selected, show only hired trainers
+    if (_showOnlyHired) {
+      if (_hiredTrainerUsers.isEmpty) {
+        return Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.person_search,
+                size: 64,
+                color: AppColors.textSecondary,
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'No hired trainers found',
+                style: TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: 18,
+                ),
+              ),
+            ],
+          ),
+        );
+      }
+      final hiredTrainerCards = <Widget>[];
+      _hiredTrainerUsers.forEach((trainerId, userData) {
+        final trainerData = {
+          'userId': trainerId,
+          'id': trainerId,
+          'verified': userData['verified'] ?? false
+        };
+        final sessionStatus = _trainerSessionStatus[trainerId];
+        hiredTrainerCards
+            .add(_buildTrainerCard(trainerData, userData, sessionStatus));
+      });
+      return ListView(
+        padding: const EdgeInsets.all(16),
+        children: hiredTrainerCards,
+      );
+    }
     return StreamBuilder<QuerySnapshot>(
-      stream: FirebaseFirestore.instance
-          .collection('trainers')
-          // Temporarily removed verified filter for testing
-          // .where('verified', isEqualTo: true)
-          .snapshots(),
+      stream: FirebaseFirestore.instance.collection('trainers').snapshots(),
       builder: (context, trainerSnapshot) {
         if (trainerSnapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: LoadingWidget());
         }
-
         if (trainerSnapshot.hasError) {
           return Center(
             child: Text(
@@ -367,13 +482,31 @@ class _TrainerMarketplaceScreenState extends State<TrainerMarketplaceScreen> {
             ),
           );
         }
-
         var trainers = trainerSnapshot.data?.docs ?? [];
-
-        // Filter and sort trainers
         var filteredTrainers = _filterAndSortTrainers(trainers);
 
-        if (filteredTrainers.isEmpty) {
+        // Merge in hired trainers (from sessions) if not already present
+        final seenTrainerIds = <String>{};
+        for (final t in filteredTrainers) {
+          if (t['userId'] != null) seenTrainerIds.add(t['userId']);
+        }
+        final hiredTrainerCards = <Widget>[];
+        _hiredTrainerUsers.forEach((trainerId, userData) {
+          if (!seenTrainerIds.contains(trainerId)) {
+            // Build a minimal trainerData for hired trainer
+            final trainerData = {
+              'userId': trainerId,
+              'id': trainerId,
+              'verified': userData['verified'] ?? false
+            };
+            final sessionStatus = _trainerSessionStatus[trainerId];
+            // Always show hired trainers regardless of filter
+            hiredTrainerCards
+                .add(_buildTrainerCard(trainerData, userData, sessionStatus));
+          }
+        });
+
+        if (filteredTrainers.isEmpty && hiredTrainerCards.isEmpty) {
           return Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -396,45 +529,48 @@ class _TrainerMarketplaceScreenState extends State<TrainerMarketplaceScreen> {
           );
         }
 
-        return ListView.builder(
+        return ListView(
           padding: const EdgeInsets.all(16),
-          itemCount: filteredTrainers.length,
-          itemBuilder: (context, index) {
-            return FutureBuilder<DocumentSnapshot>(
-              future: FirebaseFirestore.instance
-                  .collection('users')
-                  .doc(filteredTrainers[index]['userId'])
-                  .get(),
-              builder: (context, userSnapshot) {
-                if (!userSnapshot.hasData ||
-                    userSnapshot.data?.data() == null) {
-                  return const SizedBox.shrink();
-                }
-
-                final trainerData = filteredTrainers[index];
-                final userData =
-                    userSnapshot.data!.data() as Map<String, dynamic>?;
-
-                if (userData == null) {
-                  return const SizedBox.shrink();
-                }
-
-                // Add verified status from userData to trainerData for filtering
-                final trainerDataWithVerified = {
-                  ...trainerData,
-                  'verified': userData['verified'] ?? false,
-                };
-
-                // Check if should be displayed based on verified filter
-                if (_showOnlyVerified &&
-                    trainerDataWithVerified['verified'] != true) {
-                  return const SizedBox.shrink();
-                }
-
-                return _buildTrainerCard(trainerDataWithVerified, userData);
-              },
-            );
-          },
+          children: [
+            // Hired trainers first (not in marketplace)
+            ...hiredTrainerCards,
+            // Marketplace trainers
+            ...List.generate(filteredTrainers.length, (index) {
+              return FutureBuilder<DocumentSnapshot>(
+                future: FirebaseFirestore.instance
+                    .collection('users')
+                    .doc(filteredTrainers[index]['userId'])
+                    .get(),
+                builder: (context, userSnapshot) {
+                  if (!userSnapshot.hasData ||
+                      userSnapshot.data?.data() == null) {
+                    return const SizedBox.shrink();
+                  }
+                  final trainerData = filteredTrainers[index];
+                  final userData =
+                      userSnapshot.data!.data() as Map<String, dynamic>?;
+                  if (userData == null) {
+                    return const SizedBox.shrink();
+                  }
+                  final trainerDataWithVerified = {
+                    ...trainerData,
+                    'verified': userData['verified'] ?? false,
+                  };
+                  if (_showOnlyVerified &&
+                      trainerDataWithVerified['verified'] != true) {
+                    return const SizedBox.shrink();
+                  }
+                  final trainerId = trainerData['userId'] as String? ?? '';
+                  final sessionStatus = _trainerSessionStatus[trainerId];
+                  return _buildTrainerCard(
+                    trainerDataWithVerified,
+                    userData,
+                    sessionStatus,
+                  );
+                },
+              );
+            }),
+          ],
         );
       },
     );
@@ -484,6 +620,7 @@ class _TrainerMarketplaceScreenState extends State<TrainerMarketplaceScreen> {
   Widget _buildTrainerCard(
     Map<String, dynamic> trainerData,
     Map<String, dynamic> userData,
+    String? sessionStatus,
   ) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final accentColor =
@@ -631,6 +768,47 @@ class _TrainerMarketplaceScreenState extends State<TrainerMarketplaceScreen> {
                                   Icons.check_rounded,
                                   color: Colors.white,
                                   size: 14,
+                                ),
+                              ),
+                            ],
+                            if (sessionStatus != null &&
+                                sessionStatus.isNotEmpty) ...[
+                              const SizedBox(width: 6),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: _getSessionStatusColor(sessionStatus)
+                                      .withOpacity(0.15),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: _getSessionStatusColor(sessionStatus)
+                                        .withOpacity(0.4),
+                                    width: 0.8,
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      _getSessionStatusIcon(sessionStatus),
+                                      color:
+                                          _getSessionStatusColor(sessionStatus),
+                                      size: 12,
+                                    ),
+                                    const SizedBox(width: 3),
+                                    Text(
+                                      _formatSessionStatus(sessionStatus),
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w600,
+                                        color: _getSessionStatusColor(
+                                            sessionStatus),
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
                             ],
@@ -791,5 +969,62 @@ class _TrainerMarketplaceScreenState extends State<TrainerMarketplaceScreen> {
         ),
       ),
     );
+  }
+
+  Color _getSessionStatusColor(String status) {
+    switch (status.toLowerCase()) {
+      case 'active':
+      case 'approved':
+        return const Color(0xFF4CAF50); // Green
+      case 'pending':
+      case 'requested':
+        return const Color(0xFFFFC107); // Amber
+      case 'completed':
+        return const Color(0xFF2196F3); // Blue
+      case 'cancelled':
+      case 'rejected':
+        return const Color(0xFFF44336); // Red
+      default:
+        return const Color(0xFF9E9E9E); // Grey
+    }
+  }
+
+  IconData _getSessionStatusIcon(String status) {
+    switch (status.toLowerCase()) {
+      case 'active':
+      case 'approved':
+        return Icons.check_circle;
+      case 'pending':
+      case 'requested':
+        return Icons.schedule;
+      case 'completed':
+        return Icons.done_all;
+      case 'cancelled':
+      case 'rejected':
+        return Icons.cancel;
+      default:
+        return Icons.info;
+    }
+  }
+
+  String _formatSessionStatus(String status) {
+    switch (status.toLowerCase()) {
+      case 'active':
+        return 'Active';
+      case 'approved':
+        return 'Approved';
+      case 'pending':
+        return 'Pending';
+      case 'requested':
+        return 'Requested';
+      case 'completed':
+        return 'Completed';
+      case 'cancelled':
+        return 'Cancelled';
+      case 'rejected':
+        return 'Rejected';
+      default:
+        return status;
+    }
   }
 }

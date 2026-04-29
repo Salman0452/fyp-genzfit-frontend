@@ -126,8 +126,12 @@ class _TrainerProfileScreenState extends State<TrainerProfileScreen> {
         await FirebaseFirestore.instance
             .collection('trainers')
             .doc(trainerId)
-            .update({'certifications': certifications});
+            .set({'certifications': certifications}, SetOptions(merge: true));
       }
+
+      await FirebaseFirestore.instance.collection('users').doc(userId).set({
+        'certifications': FieldValue.arrayUnion([certificateUrl]),
+      }, SetOptions(merge: true));
 
       // Update local state
       await authProvider.refreshUser();
@@ -206,10 +210,14 @@ class _TrainerProfileScreenState extends State<TrainerProfileScreen> {
         await FirebaseFirestore.instance
             .collection('trainers')
             .doc(trainerId)
-            .update({'certifications': certifications});
+            .set({'certifications': certifications}, SetOptions(merge: true));
 
         await _storageService.deleteFile(certificateUrl);
       }
+
+      await FirebaseFirestore.instance.collection('users').doc(userId).set({
+        'certifications': FieldValue.arrayRemove([certificateUrl]),
+      }, SetOptions(merge: true));
 
       await authProvider.refreshUser();
 

@@ -48,7 +48,12 @@ class _TrainerCertificationsScreenState
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       final userId = authProvider.user?.uid;
 
-      if (userId == null) return;
+      if (userId == null) {
+        if (mounted) setState(() => _isLoading = false);
+        return;
+      }
+
+      final List<Map<String, dynamic>> loadedCertifications = [];
 
       final trainerSnapshot = await FirebaseFirestore.instance
           .collection('trainers')
@@ -60,17 +65,51 @@ class _TrainerCertificationsScreenState
         final trainerData = trainerSnapshot.docs.first.data();
         final certifications =
             trainerData['certifications'] as List<dynamic>? ?? [];
+        for (final item in certifications) {
+          if (item is Map) {
+            loadedCertifications.add(Map<String, dynamic>.from(item));
+          } else if (item is String && item.isNotEmpty) {
+            loadedCertifications.add({
+              'name': 'Certificate',
+              'issuedBy': 'Uploaded certificate',
+              'imageUrl': item,
+              'dateAdded': '',
+            });
+          }
+        }
+      }
 
+      final userSnapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .get();
+
+      final userCertifications =
+          (userSnapshot.data()?['certifications'] as List<dynamic>? ?? []);
+      for (final item in userCertifications) {
+        if (item is String && item.isNotEmpty) {
+          final exists =
+              loadedCertifications.any((cert) => cert['imageUrl'] == item);
+          if (!exists) {
+            loadedCertifications.add({
+              'name': 'Certificate',
+              'issuedBy': 'Uploaded certificate',
+              'imageUrl': item,
+              'dateAdded': '',
+            });
+          }
+        }
+      }
+
+      if (mounted) {
         setState(() {
-          _certifications = certifications
-              .map((c) => Map<String, dynamic>.from(c as Map))
-              .toList();
+          _certifications = loadedCertifications;
         });
       }
     } catch (e) {
       print('Error loading certifications: $e');
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -125,13 +164,15 @@ class _TrainerCertificationsScreenState
         userId,
       );
 
+      final newCertification = {
+        'name': _certificationNameController.text,
+        'issuedBy': _issuedByController.text,
+        'imageUrl': imageUrl,
+        'dateAdded': DateTime.now().toIso8601String(),
+      };
+
       setState(() {
-        _certifications.add({
-          'name': _certificationNameController.text,
-          'issuedBy': _issuedByController.text,
-          'imageUrl': imageUrl,
-          'dateAdded': DateTime.now().toIso8601String(),
-        });
+        _certifications.add(newCertification);
         _certificationNameController.clear();
         _issuedByController.clear();
         _selectedImagePath = null;
@@ -180,8 +221,15 @@ class _TrainerCertificationsScreenState
         await FirebaseFirestore.instance
             .collection('trainers')
             .doc(trainerId)
-            .update({'certifications': _certifications});
+            .set({'certifications': _certifications}, SetOptions(merge: true));
       }
+
+      await FirebaseFirestore.instance.collection('users').doc(userId).set({
+        'certifications': _certifications
+            .map((cert) => cert['imageUrl'])
+            .whereType<String>()
+            .toList(),
+      }, SetOptions(merge: true));
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

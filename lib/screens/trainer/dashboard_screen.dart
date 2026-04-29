@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:genzfit/models/user_model.dart';
 import 'package:genzfit/models/session_model.dart';
+import 'package:genzfit/services/withdrawal_service.dart';
 import 'package:genzfit/utils/constants.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
@@ -17,6 +18,7 @@ class TrainerDashboardScreen extends StatefulWidget {
 
 class _TrainerDashboardScreenState extends State<TrainerDashboardScreen> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final WithdrawalService _withdrawalService = WithdrawalService();
 
   int _totalClients = 0;
   int _activeSessions = 0;
@@ -30,133 +32,67 @@ class _TrainerDashboardScreenState extends State<TrainerDashboardScreen> {
     _loadDashboardData();
   }
 
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Dashboard', style: GoogleFonts.poppins()),
+      ),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildStatsOverview(),
+                  const SizedBox(height: 24),
+                  _buildPendingRequests(),
+                  const SizedBox(height: 24),
+                  _buildActiveClients(),
+                  const SizedBox(height: 24),
+                  _buildRecentSessions(),
+                ],
+              ),
+            ),
+    );
+  }
+
   Future<void> _loadDashboardData() async {
     setState(() => _isLoading = true);
 
     try {
-      // Get all sessions for this trainer
       final sessionsSnapshot = await _firestore
           .collection('sessions')
           .where('trainerId', isEqualTo: widget.trainer.id)
           .get();
 
-      int clients = 0;
+      final Set<String> uniqueClients = {};
       int active = 0;
-      double earnings = 0.0;
       int pending = 0;
-      Set<String> uniqueClients = {};
 
+      // Keep dashboard earnings aligned with withdrawal screen logic.
+      final earnings =
+          await _withdrawalService.getAvailableBalance(widget.trainer.id);
+
+      // Compute unique clients, active sessions, pending requests from sessions
       for (var doc in sessionsSnapshot.docs) {
         final session = SessionModel.fromFirestore(doc);
-
         uniqueClients.add(session.clientId);
-
-        if (session.status == SessionStatus.active) {
-          active++;
-        }
-
-        if (session.status == SessionStatus.requested) {
-          pending++;
-        }
-
-        if (session.status == SessionStatus.completed &&
-            session.amount != null) {
-          earnings += session.amount!;
-        }
+        if (session.status == SessionStatus.active) active++;
+        if (session.status == SessionStatus.requested) pending++;
       }
 
-      clients = uniqueClients.length;
-
       setState(() {
-        _totalClients = clients;
+        _totalClients = uniqueClients.length;
         _activeSessions = active;
         _totalEarnings = earnings;
         _pendingRequests = pending;
         _isLoading = false;
       });
-
-      // Update trainer's client count in Firestore
-      await _firestore.collection('users').doc(widget.trainer.id).update({
-        'clients': clients,
-        'totalEarnings': earnings,
-      });
     } catch (e) {
-      print('Error loading dashboard data: $e');
       setState(() => _isLoading = false);
     }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final accentColor = Theme.of(context).brightness == Brightness.dark
-        ? AppColors.brandGreen
-        : AppColors.brandGreenDeep;
-    return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).brightness == Brightness.dark
-            ? const Color(0xFF1A1A1A)
-            : AppColors.surface,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(
-            Icons.arrow_back_ios,
-            color: Theme.of(context).brightness == Brightness.dark
-                ? const Color(0xFFFFFFFF)
-                : AppColors.textPrimary,
-          ),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Text(
-          'Dashboard',
-          style: GoogleFonts.poppins(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: Theme.of(context).brightness == Brightness.dark
-                ? const Color(0xFFFFFFFF)
-                : AppColors.textPrimary,
-          ),
-        ),
-        actions: [
-          IconButton(
-            icon: Icon(
-              Icons.refresh,
-              color: Theme.of(context).brightness == Brightness.dark
-                  ? const Color(0xFFFFFFFF)
-                  : AppColors.textPrimary,
-            ),
-            onPressed: _loadDashboardData,
-          ),
-        ],
-      ),
-      body: _isLoading
-          ? Center(
-              child: CircularProgressIndicator(color: accentColor),
-            )
-          : RefreshIndicator(
-              onRefresh: _loadDashboardData,
-              color: accentColor,
-              backgroundColor: Theme.of(context).brightness == Brightness.dark
-                  ? const Color(0xFF1A1A1A)
-                  : AppColors.surface,
-              child: SingleChildScrollView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildStatsOverview(),
-                    const SizedBox(height: 24),
-                    _buildPendingRequests(),
-                    const SizedBox(height: 24),
-                    _buildActiveClients(),
-                    const SizedBox(height: 24),
-                    _buildRecentSessions(),
-                  ],
-                ),
-              ),
-            ),
-    );
   }
 
   Widget _buildStatsOverview() {

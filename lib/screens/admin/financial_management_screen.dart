@@ -77,8 +77,13 @@ class _FinancialManagementScreenState extends State<FinancialManagementScreen>
       }
 
       final userDoc = await _firestore.collection('users').doc(uid).get();
-      final role = userDoc.data()?['role'] as String? ?? '';
-      final canManage = role == 'admin' || role == 'finance_admin';
+      final role =
+          (userDoc.data()?['role'] as String? ?? '').trim().toLowerCase();
+      // Allow admin, super_admin and finance_admin roles to manage finances.
+      final canManage = role == 'admin' ||
+          role == 'finance_admin' ||
+          role == 'super_admin' ||
+          role == 'superadmin';
 
       if (!mounted) return;
       setState(() {
@@ -105,12 +110,13 @@ class _FinancialManagementScreenState extends State<FinancialManagementScreen>
       final ledgerSnapshot = await _firestore
           .collection('earnings_ledger')
           .where('type', isEqualTo: 'session_payment')
+          .where('status', isEqualTo: 'active')
           .get();
 
       final pendingWithdrawalsSnapshot = await _firestore
           .collection('withdrawal_requests')
-          .where('status', whereIn: ['requested', 'approved', 'processing'])
-          .get();
+          .where('status',
+              whereIn: ['requested', 'approved', 'processing']).get();
 
       double totalRev = 0.0;
       double platformRev = 0.0;
@@ -129,8 +135,7 @@ class _FinancialManagementScreenState extends State<FinancialManagementScreen>
       if (ledgerSnapshot.docs.isEmpty || totalRev == 0.0) {
         final txSnapshot = await _firestore
             .collection('transactions')
-            .where('status', whereIn: ['verified', 'completed'])
-            .get();
+            .where('status', whereIn: ['verified', 'completed']).get();
 
         for (var doc in txSnapshot.docs) {
           final data = doc.data();
@@ -139,7 +144,8 @@ class _FinancialManagementScreenState extends State<FinancialManagementScreen>
 
           if (amount <= 0) continue;
           totalRev += amount;
-          platformRev += platformFee > 0 ? platformFee : amount * _commissionRate;
+          platformRev +=
+              platformFee > 0 ? platformFee : amount * _commissionRate;
         }
       }
 
@@ -259,7 +265,7 @@ class _FinancialManagementScreenState extends State<FinancialManagementScreen>
           Expanded(
             child: _buildSummaryCard(
               'Total Revenue',
-              '\$${_totalRevenue.toStringAsFixed(2)}',
+              'Rs. ${_totalRevenue.toStringAsFixed(2)}',
               Icons.attach_money,
               greenColor,
             ),
@@ -268,7 +274,7 @@ class _FinancialManagementScreenState extends State<FinancialManagementScreen>
           Expanded(
             child: _buildSummaryCard(
               'Platform Share',
-              '\$${_platformRevenue.toStringAsFixed(2)}',
+              'Rs. ${_platformRevenue.toStringAsFixed(2)}',
               Icons.account_balance,
               brandGreen,
             ),
@@ -277,7 +283,7 @@ class _FinancialManagementScreenState extends State<FinancialManagementScreen>
           Expanded(
             child: _buildSummaryCard(
               'Pending Payouts',
-              '\$${_pendingPayouts.toStringAsFixed(2)}',
+              'Rs. ${_pendingPayouts.toStringAsFixed(2)}',
               Icons.pending_actions,
               orangeColor,
             ),
@@ -397,8 +403,8 @@ class _FinancialManagementScreenState extends State<FinancialManagementScreen>
                       padding: const EdgeInsets.all(16),
                       itemCount: requests.length,
                       itemBuilder: (context, index) {
-                        final request =
-                            WithdrawalRequestModel.fromFirestore(requests[index]);
+                        final request = WithdrawalRequestModel.fromFirestore(
+                            requests[index]);
                         return _buildPayoutCard(request);
                       },
                     ),
@@ -474,7 +480,8 @@ class _FinancialManagementScreenState extends State<FinancialManagementScreen>
       decoration: BoxDecoration(
         color: const Color(0xFF171917),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: _withdrawalStatusColor(status).withOpacity(0.35)),
+        border:
+            Border.all(color: _withdrawalStatusColor(status).withOpacity(0.35)),
       ),
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -530,7 +537,8 @@ class _FinancialManagementScreenState extends State<FinancialManagementScreen>
                       ),
                     ),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
                         color: _withdrawalStatusColor(status).withOpacity(0.14),
                         borderRadius: BorderRadius.circular(20),

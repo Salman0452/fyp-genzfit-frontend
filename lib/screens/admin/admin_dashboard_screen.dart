@@ -7,12 +7,14 @@ import 'package:genzfit/screens/admin/user_management_screen.dart';
 import 'package:genzfit/screens/admin/session_monitoring_screen.dart';
 import 'package:genzfit/screens/admin/analytics_dashboard_screen.dart';
 import 'package:genzfit/screens/admin/content_moderation_screen.dart';
+import 'package:genzfit/screens/admin/customer_support_screen.dart';
 import 'package:genzfit/screens/admin/financial_management_screen.dart';
 import 'package:genzfit/screens/admin/admin_bank_verification_screen.dart';
 import 'package:genzfit/screens/admin/system_settings_screen.dart';
 import 'package:genzfit/screens/admin/admin_action_logs_screen.dart';
 import 'package:genzfit/screens/admin/admin_chat_monitor_screen.dart';
 import 'package:genzfit/screens/admin/payment_verification_screen.dart';
+import 'package:genzfit/services/notification_service.dart';
 import 'package:genzfit/utils/constants.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -27,6 +29,7 @@ class AdminDashboardScreen extends StatefulWidget {
 
 class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final NotificationService _notificationService = NotificationService();
   bool _isSidebarCollapsed = false;
 
   int _totalUsers = 0;
@@ -37,28 +40,33 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   double _platformRevenue = 0.0;
   bool _isLoading = true;
 
-    String get _adminRoleKey =>
-      widget.admin.roleKey.isNotEmpty
-        ? widget.admin.roleKey
-        : UserModel.roleToString(widget.admin.role);
+  String get _adminRoleKey => widget.admin.roleKey.isNotEmpty
+      ? widget.admin.roleKey
+      : UserModel.roleToString(widget.admin.role);
 
-    bool get _canAccessFinance =>
+  bool get _canAccessFinance =>
       _adminRoleKey == 'admin' ||
       _adminRoleKey == 'super_admin' ||
       _adminRoleKey == 'finance_admin';
 
-    bool get _canAccessModeration =>
+  bool get _canAccessModeration =>
       _adminRoleKey == 'admin' ||
       _adminRoleKey == 'super_admin' ||
       _adminRoleKey == 'moderator' ||
       _adminRoleKey == 'support';
 
-    bool get _canAccessUsers =>
+  bool get _canAccessSupport =>
+      _adminRoleKey == 'admin' ||
+      _adminRoleKey == 'super_admin' ||
+      _adminRoleKey == 'moderator' ||
+      _adminRoleKey == 'support';
+
+  bool get _canAccessUsers =>
       _adminRoleKey == 'admin' ||
       _adminRoleKey == 'super_admin' ||
       _adminRoleKey == 'support';
 
-    bool get _canAccessSettings =>
+  bool get _canAccessSettings =>
       _adminRoleKey == 'admin' ||
       _adminRoleKey == 'super_admin' ||
       _adminRoleKey == 'finance_admin';
@@ -66,7 +74,24 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   @override
   void initState() {
     super.initState();
+    _initializeNotifications();
     _loadDashboardData();
+  }
+
+  Future<void> _initializeNotifications() async {
+    try {
+      await _notificationService.initialize();
+      final uid = FirebaseAuth.instance.currentUser?.uid ?? widget.admin.id;
+      if (uid.isNotEmpty) {
+        await _notificationService.saveTokenToDatabase(uid);
+        await _notificationService.startSupportThreadInAppNotifications(
+          userId: uid,
+          isAdmin: true,
+        );
+      }
+    } catch (e) {
+      print('Admin notification initialization failed: $e');
+    }
   }
 
   Future<void> _loadDashboardData() async {
@@ -107,7 +132,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       final allSessionsSnapshot = await _firestore.collection('sessions').get();
       activeSessions = allSessionsSnapshot.docs.where((doc) {
         final data = doc.data();
-        final rawStatus = (data['status'] as String? ?? '').trim().toLowerCase();
+        final rawStatus =
+            (data['status'] as String? ?? '').trim().toLowerCase();
         final isActiveFlag = data['isActive'] == true;
 
         if (isActiveFlag || _isActiveLikeStatus(rawStatus)) {
@@ -129,9 +155,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     // Finance data can be restricted for moderator/support roles.
     if (_canAccessFinance) {
       try {
+        // Only count active session payments (exclude already-paid/settled entries)
         final ledgerSnapshot = await _firestore
             .collection('earnings_ledger')
             .where('type', isEqualTo: 'session_payment')
+            .where('status', isEqualTo: 'active')
             .get();
 
         for (var doc in ledgerSnapshot.docs) {
@@ -202,6 +230,12 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   }
 
   @override
+  void dispose() {
+    _notificationService.stopSupportThreadInAppNotifications();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final isWideScreen = MediaQuery.of(context).size.width >= 1080;
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -224,9 +258,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   _isSidebarCollapsed ? Icons.menu_open : Icons.menu,
                   color: primaryText,
                 ),
-                tooltip: _isSidebarCollapsed
-                    ? 'Expand sidebar'
-                    : 'Collapse sidebar',
+                tooltip:
+                    _isSidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar',
                 onPressed: () {
                   setState(() => _isSidebarCollapsed = !_isSidebarCollapsed);
                 },
@@ -438,6 +471,12 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   onTap: _navigateToChatMonitor,
                 ),
                 _buildSidebarItem(
+                  icon: Icons.support_agent,
+                  label: 'Customer Support',
+                  enabled: _canAccessSupport,
+                  onTap: _navigateToCustomerSupport,
+                ),
+                _buildSidebarItem(
                   icon: Icons.analytics,
                   label: 'Analytics',
                   enabled: true,
@@ -537,6 +576,15 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               onTap: () {
                 Navigator.of(context).pop();
                 _navigateToChatMonitor();
+              },
+            ),
+            _buildSidebarItem(
+              icon: Icons.support_agent,
+              label: 'Customer Support',
+              enabled: _canAccessSupport,
+              onTap: () {
+                Navigator.of(context).pop();
+                _navigateToCustomerSupport();
               },
             ),
             _buildSidebarItem(
@@ -748,7 +796,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 _buildStatCard(
                   icon: Icons.attach_money,
                   label: 'Platform Revenue',
-                  value: '\$${_platformRevenue.toStringAsFixed(0)}',
+                  value: 'Rs. ${_platformRevenue.toStringAsFixed(0)}',
                   subtitle: 'Total earnings',
                   color: isDark
                       ? const Color(0xFF9C27B0)
@@ -867,18 +915,16 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 icon: Icons.verified_user,
                 title: 'Verify Trainers',
                 description: '$_pendingVerifications pending',
-                color: isDark
-                    ? const Color(0xFFFFD166)
-                    : const Color(0xFFFFA726),
+                color:
+                    isDark ? const Color(0xFFFFD166) : const Color(0xFFFFA726),
                 onTap: _navigateToVerification,
               ),
               _buildActionCard(
                 icon: Icons.event_note,
                 title: 'Monitor Sessions',
                 description: '$_activeSessions active',
-                color: isDark
-                    ? const Color(0xFF7FFA88)
-                    : const Color(0xFF66BB6A),
+                color:
+                    isDark ? const Color(0xFF7FFA88) : const Color(0xFF66BB6A),
                 onTap: _navigateToSessionMonitoring,
               ),
               if (_canAccessModeration)
@@ -891,13 +937,22 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       : const Color(0xFF0288D1),
                   onTap: _navigateToChatMonitor,
                 ),
+              if (_canAccessSupport)
+                _buildActionCard(
+                  icon: Icons.support_agent,
+                  title: 'Customer Support',
+                  description: 'Trainer & client help desk',
+                  color: isDark
+                      ? const Color(0xFF26C6DA)
+                      : const Color(0xFF00838F),
+                  onTap: _navigateToCustomerSupport,
+                ),
               _buildActionCard(
                 icon: Icons.analytics,
                 title: 'Analytics',
                 description: 'View insights',
-                color: isDark
-                    ? const Color(0xFF9C27B0)
-                    : const Color(0xFF8E24AA),
+                color:
+                    isDark ? const Color(0xFF9C27B0) : const Color(0xFF8E24AA),
                 onTap: _navigateToAnalytics,
               ),
               if (_canAccessUsers)
@@ -905,9 +960,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   icon: Icons.manage_accounts,
                   title: 'Manage Users',
                   description: '$_totalUsers total users',
-                  color: isDark
-                      ? AppColors.brandGreen
-                      : AppColors.brandGreenDeep,
+                  color:
+                      isDark ? AppColors.brandGreen : AppColors.brandGreenDeep,
                   onTap: _navigateToUserManagement,
                 ),
               if (_canAccessModeration)
@@ -964,9 +1018,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 icon: Icons.receipt_long,
                 title: 'Audit Logs',
                 description: 'Track admin actions',
-                color: isDark
-                    ? const Color(0xFF81D4FA)
-                    : const Color(0xFF0277BD),
+                color:
+                    isDark ? const Color(0xFF81D4FA) : const Color(0xFF0277BD),
                 onTap: _navigateToAuditLogs,
               ),
             ];
@@ -1234,6 +1287,14 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (context) => const AdminChatMonitorScreen(),
+      ),
+    );
+  }
+
+  void _navigateToCustomerSupport() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => const CustomerSupportScreen(),
       ),
     );
   }

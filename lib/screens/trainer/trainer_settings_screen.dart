@@ -6,7 +6,7 @@ import 'package:genzfit/providers/theme_provider.dart';
 import 'package:genzfit/utils/constants.dart';
 import 'package:genzfit/screens/common/privacy_policy_screen.dart';
 import 'package:genzfit/screens/common/terms_of_service_screen.dart';
-import 'package:genzfit/screens/common/help_support_screen.dart';
+import 'package:genzfit/screens/common/user_support_screen.dart';
 import 'package:genzfit/screens/common/language_selection_screen.dart';
 import 'package:genzfit/screens/trainer/trainer_edit_profile_screen.dart';
 import 'package:genzfit/screens/trainer/trainer_change_password_screen.dart';
@@ -14,6 +14,7 @@ import 'package:genzfit/screens/trainer/trainer_availability_screen.dart';
 import 'package:genzfit/screens/trainer/trainer_rates_pricing_screen.dart';
 import 'package:genzfit/screens/trainer/trainer_certifications_screen.dart';
 import 'package:genzfit/screens/trainer/trainer_earnings_screen.dart';
+import 'package:genzfit/screens/preferences/notification_preferences_screen.dart';
 
 class TrainerSettingsScreen extends StatelessWidget {
   const TrainerSettingsScreen({super.key});
@@ -375,10 +376,11 @@ class TrainerSettingsScreen extends StatelessWidget {
                 title: 'Notifications',
                 subtitle: 'Manage notification preferences',
                 onTap: () {
-                  // TODO: Navigate to notifications settings
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                        content: Text('Notification settings coming soon')),
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const NotificationPreferencesScreen(),
+                    ),
                   );
                 },
               ),
@@ -464,12 +466,12 @@ class TrainerSettingsScreen extends StatelessWidget {
                 context,
                 icon: Icons.help,
                 title: 'Help & Support',
-                subtitle: 'Get help with your account',
+                subtitle: 'Message admin support directly',
                 onTap: () {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) => const HelpSupportScreen(),
+                      builder: (_) => const UserSupportScreen(),
                     ),
                   );
                 },

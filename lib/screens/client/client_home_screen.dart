@@ -63,7 +63,21 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
   void initState() {
     super.initState();
     _loadLatestMeasurement();
-    _saveTokenToDatabase();
+    _initializeNotifications();
+  }
+
+  Future<void> _initializeNotifications() async {
+    await _notificationService.initialize();
+    await _saveTokenToDatabase();
+
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final userId = authProvider.user?.uid;
+    if (userId != null && userId.isNotEmpty) {
+      await _notificationService.startSupportThreadInAppNotifications(
+        userId: userId,
+        isAdmin: false,
+      );
+    }
   }
 
   Future<void> _saveTokenToDatabase() async {
@@ -224,6 +238,12 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
         );
       },
     );
+  }
+
+  @override
+  void dispose() {
+    _notificationService.stopSupportThreadInAppNotifications();
+    super.dispose();
   }
 
   @override

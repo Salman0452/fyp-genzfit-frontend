@@ -15,7 +15,11 @@ service cloud.firestore {
     }
     
     function getUserRole() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+      // Safely return the user's role. If the users document doesn't exist
+      // (e.g. during early signup flows or missing profile), return null.
+      return exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        ? get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role
+        : null;
     }
     
     function isAdmin() {
@@ -53,15 +57,14 @@ service cloud.firestore {
     }
     
     function isActive() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.status == 'active';
+      return exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.status == 'active';
     }
     
     // Users collection
     match /users/{userId} {
-      // Restrict reads to self, admin roles, or trainer discovery profiles.
-      allow read: if isOwner(userId) ||
-        isAnyAdminRole() ||
-        (isSignedIn() && resource.data.role == 'trainer');
+      // Allow trainers to read all user docs (for FYP/demo; restrict in production)
+      allow read: if isOwner(userId) || isAnyAdminRole() || isTrainer();
       
       // Users can create their own document during signup
       // Must be authenticated and creating their own document
@@ -103,7 +106,8 @@ service cloud.firestore {
     
     // Measurements collection
     match /measurements/{measurementId} {
-      allow read: if isOwner(resource.data.userId) || isAnyAdminRole();
+      // Allow trainers to read measurements for client profile review (FYP/demo)
+      allow read: if isOwner(resource.data.userId) || isAnyAdminRole() || isTrainer();
       allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
       allow update, delete: if isOwner(resource.data.userId);
     }
@@ -156,8 +160,13 @@ service cloud.firestore {
       // Messages subcollection
       match /messages/{messageId} {
         // Allow message reads for chat participants and admin roles.
+        // Guard with `exists(...)` so attempting to read a non-existent chat
+        // document doesn't cause a rule-time error (which can result in
+        // permission-denied). If the parent chat doc exists and the caller is
+        // listed as a participant, allow reads.
         allow read: if isSignedIn() && (
-          get(/databases/$(database)/documents/chats/$(chatId)).data.participants.hasAny([request.auth.uid]) ||
+          (exists(/databases/$(database)/documents/chats/$(chatId)) &&
+            get(/databases/$(database)/documents/chats/$(chatId)).data.participants.hasAny([request.auth.uid])) ||
           isAnyAdminRole()
         );
         
@@ -165,9 +174,55 @@ service cloud.firestore {
         allow create: if isSignedIn() && 
           request.resource.data.senderId == request.auth.uid;
         
-        // Allow updates/deletes only by the sender
-        allow update, delete: if isSignedIn() && 
+        // Allow updates by sender, or by chat participants when only
+        // toggling read state. Keep deletes sender-only.
+        // Note: We don't call isAnyAdminRole() here to avoid fetching users/{uid} docs,
+        // which can cause permission-denied due to restrictive read rules.
+        // Instead, we only allow sender or participant-only-isRead updates.
+        allow update: if isSignedIn() && (
+          resource.data.senderId == request.auth.uid ||
+          (
+            exists(/databases/$(database)/documents/chats/$(chatId)) &&
+            get(/databases/$(database)/documents/chats/$(chatId)).data.participants.hasAny([request.auth.uid]) &&
+            request.resource.data.diff(resource.data).changedKeys().hasOnly(['isRead'])
+          )
+        ) || isAnyAdminRole();
+
+        allow delete: if isSignedIn() &&
           resource.data.senderId == request.auth.uid;
+      }
+    }
+
+    // Customer support threads (admin <-> trainer/client)
+    match /support_threads/{threadId} {
+      // Admin roles can monitor all support tickets.
+      // Users can access their own ticket thread.
+      allow read: if isAnyAdminRole() ||
+        (isSignedIn() && resource.data.ownerId == request.auth.uid);
+
+      // Trainers/clients can create their own support ticket; admins may also create one.
+      allow create: if isAnyAdminRole() ||
+        (isSignedIn() &&
+          request.resource.data.ownerId == request.auth.uid &&
+          (request.resource.data.category == 'trainer' ||
+            request.resource.data.category == 'client'));
+
+      // Admins can resolve/update any ticket; owners can update their own ticket metadata.
+      allow update: if isAnyAdminRole() ||
+        (isSignedIn() && resource.data.ownerId == request.auth.uid);
+
+      allow delete: if isAnyAdminRole();
+
+      match /messages/{messageId} {
+        allow read: if isAnyAdminRole() ||
+          (isSignedIn() &&
+            get(/databases/$(database)/documents/support_threads/$(threadId)).data.ownerId == request.auth.uid);
+
+        allow create: if isAnyAdminRole() ||
+          (isSignedIn() && request.resource.data.senderId == request.auth.uid);
+
+        allow update, delete: if isAnyAdminRole() ||
+          (isSignedIn() && resource.data.senderId == request.auth.uid);
       }
     }
     // Sessions collection

@@ -1,7 +1,7 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'dart:io' show Platform;
+import 'dart:async';
 
 class NotificationService {
   final FirebaseMessaging _messaging = FirebaseMessaging.instance;
@@ -12,6 +12,12 @@ class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
   factory NotificationService() => _instance;
   NotificationService._internal();
+
+  StreamSubscription<QuerySnapshot<Map<String, dynamic>>>?
+      _supportThreadSubscription;
+  final Map<String, int> _lastUnreadByThread = {};
+  String? _supportListenerUserId;
+  bool _supportListenerIsAdmin = false;
 
   /// Initialize push notifications
   Future<void> initialize() async {
@@ -28,7 +34,8 @@ class NotificationService {
 
     if (settings.authorizationStatus == AuthorizationStatus.authorized) {
       print('User granted permission');
-    } else if (settings.authorizationStatus == AuthorizationStatus.provisional) {
+    } else if (settings.authorizationStatus ==
+        AuthorizationStatus.provisional) {
       print('User granted provisional permission');
     } else {
       print('User declined or has not accepted permission');
@@ -60,7 +67,8 @@ class NotificationService {
 
   /// Initialize local notifications for Android
   Future<void> _initializeLocalNotifications() async {
-    const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
+    const androidSettings =
+        AndroidInitializationSettings('@mipmap/ic_launcher');
     const iosSettings = DarwinInitializationSettings(
       requestAlertPermission: true,
       requestBadgePermission: true,
@@ -105,9 +113,8 @@ class NotificationService {
   /// Handle foreground messages
   void _handleForegroundMessage(RemoteMessage message) {
     print('Received foreground message: ${message.notification?.title}');
-    
+
     final notification = message.notification;
-    final android = message.notification?.android;
 
     if (notification != null) {
       _showLocalNotification(
@@ -121,7 +128,7 @@ class NotificationService {
   /// Handle notification tap (app in background)
   void _handleNotificationTap(RemoteMessage message) {
     print('Notification tapped: ${message.data}');
-    
+
     final data = message.data;
     final type = data['type'];
 
@@ -130,6 +137,10 @@ class NotificationService {
       case 'chat':
         // Navigate to chat screen
         print('Navigate to chat: ${data['chatId']}');
+        break;
+      case 'support_chat':
+        // Navigate to support thread screen
+        print('Navigate to support chat thread: ${data['threadId']}');
         break;
       case 'session_request':
         // Navigate to trainer dashboard
@@ -171,13 +182,113 @@ class NotificationService {
       iOS: iosDetails,
     );
 
-    await _localNotifications.show(
-      DateTime.now().millisecondsSinceEpoch ~/ 1000,
-      title,
-      body,
-      details,
-      payload: payload,
-    );
+    try {
+      await _localNotifications.show(
+        DateTime.now().millisecondsSinceEpoch ~/ 1000,
+        title,
+        body,
+        details,
+        payload: payload,
+      );
+    } catch (e) {
+      print('Local notification failed: $e');
+    }
+  }
+
+  Future<void> startSupportThreadInAppNotifications({
+    required String userId,
+    required bool isAdmin,
+  }) async {
+    if (userId.isEmpty) return;
+
+    if (_supportListenerUserId == userId &&
+        _supportListenerIsAdmin == isAdmin &&
+        _supportThreadSubscription != null) {
+      return;
+    }
+
+    await stopSupportThreadInAppNotifications();
+    _supportListenerUserId = userId;
+    _supportListenerIsAdmin = isAdmin;
+
+    Query<Map<String, dynamic>> query =
+        _firestore.collection('support_threads');
+    if (isAdmin) {
+      query = query.where('status', isEqualTo: 'open');
+    } else {
+      query = query.where('ownerId', isEqualTo: userId);
+    }
+
+    _supportThreadSubscription = query.snapshots().listen((snapshot) async {
+      final prefsDoc =
+          await _firestore.collection('user_preferences').doc(userId).get();
+      final prefs = prefsDoc.data() ?? <String, dynamic>{};
+      final notificationsEnabled = prefs['notifications_enabled'] != false;
+      final messageNotificationsEnabled =
+          prefs['message_notifications'] != false;
+
+      if (!notificationsEnabled || !messageNotificationsEnabled) {
+        return;
+      }
+
+      for (final doc in snapshot.docs) {
+        final data = doc.data();
+        final threadId = doc.id;
+        final unread = isAdmin
+            ? (data['unreadByAdmin'] as num?)?.toInt() ?? 0
+            : (data['unreadByUser'] as num?)?.toInt() ?? 0;
+
+        final prevUnread = _lastUnreadByThread[threadId];
+        _lastUnreadByThread[threadId] = unread;
+
+        if (prevUnread == null) {
+          continue;
+        }
+
+        if (unread <= prevUnread || unread <= 0) {
+          continue;
+        }
+
+        final lastMessage = data['lastMessage'] as Map<String, dynamic>?;
+        final senderId = (lastMessage?['senderId'] as String?) ?? '';
+        if (senderId == userId) {
+          continue;
+        }
+
+        final rawText = (lastMessage?['text'] as String?)?.trim();
+        final type = (lastMessage?['type'] as String?) ?? 'text';
+        String body;
+        if (rawText != null && rawText.isNotEmpty) {
+          body = rawText;
+        } else if (type == 'image') {
+          body = '📷 Image message';
+        } else if (type == 'file') {
+          body = '📎 File message';
+        } else {
+          body = 'New support message';
+        }
+
+        final title = isAdmin
+            ? ((data['ownerName'] as String?)?.trim().isNotEmpty == true
+                ? data['ownerName'] as String
+                : 'Support Chat')
+            : 'Admin Support';
+
+        await _showLocalNotification(
+          title: title,
+          body: body,
+          payload: '{"type":"support_chat","threadId":"$threadId"}',
+        );
+      }
+    });
+  }
+
+  Future<void> stopSupportThreadInAppNotifications() async {
+    await _supportThreadSubscription?.cancel();
+    _supportThreadSubscription = null;
+    _lastUnreadByThread.clear();
+    _supportListenerUserId = null;
+    _supportListenerIsAdmin = false;
   }
 
   /// Send notification to specific user

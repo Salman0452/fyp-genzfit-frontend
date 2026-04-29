@@ -252,3 +252,148 @@ exports.verifyOTP = functions.https.onRequest(async (req, res) => {
     });
   }
 });
+
+// Push notification for support chat messages (trainer/client <-> admin)
+exports.onSupportMessageCreated = functions.firestore
+  .document("support_threads/{threadId}/messages/{messageId}")
+  .onCreate(async (snapshot, context) => {
+    try {
+      const message = snapshot.data() || {};
+      const threadId = context.params.threadId;
+      const messageId = context.params.messageId;
+
+      if (!message.senderId) {
+        return null;
+      }
+
+      const db = admin.firestore();
+
+      const threadDoc = await db.collection("support_threads").doc(threadId).get();
+      if (!threadDoc.exists) {
+        return null;
+      }
+
+      const thread = threadDoc.data() || {};
+      const senderRole = String(message.senderRole || "").toLowerCase();
+
+      let recipientIds = [];
+
+      // Admin -> owner, Owner -> assigned admin (or fallback to active admins/support)
+      if (senderRole === "admin") {
+        if (thread.ownerId) {
+          recipientIds = [thread.ownerId];
+        }
+      } else {
+        if (thread.createdByAdminId) {
+          recipientIds = [thread.createdByAdminId];
+        } else {
+          const adminsSnapshot = await db
+            .collection("users")
+            .where("role", "in", ["admin", "super_admin", "finance_admin", "moderator", "support"])
+            .where("status", "==", "active")
+            .limit(20)
+            .get();
+
+          recipientIds = adminsSnapshot.docs.map((doc) => doc.id);
+        }
+      }
+
+      recipientIds = [...new Set(recipientIds)].filter(
+        (id) => id && id !== message.senderId,
+      );
+
+      if (recipientIds.length === 0) {
+        return null;
+      }
+
+      const senderDoc = await db.collection("users").doc(message.senderId).get();
+      const senderName = senderDoc.data()?.name || "New message";
+
+      const text = (message.text || "").toString().trim();
+      const messageType = (message.type || "text").toString();
+      let preview = text;
+      if (!preview) {
+        if (messageType === "image") preview = "📷 Sent an image";
+        else if (messageType === "file") preview = "📎 Sent a file";
+        else if (messageType === "video") preview = "🎥 Sent a video";
+        else preview = "Sent a message";
+      }
+      if (preview.length > 140) {
+        preview = `${preview.substring(0, 137)}...`;
+      }
+
+      const jobs = recipientIds.map(async (recipientId) => {
+        const [userDoc, prefsDoc] = await Promise.all([
+          db.collection("users").doc(recipientId).get(),
+          db.collection("user_preferences").doc(recipientId).get(),
+        ]);
+
+        if (!userDoc.exists) {
+          return;
+        }
+
+        const userData = userDoc.data() || {};
+        const prefs = prefsDoc.data() || {};
+
+        const notificationsEnabled = prefs.notifications_enabled !== false;
+        const messageNotificationsEnabled = prefs.message_notifications !== false;
+
+        if (!notificationsEnabled || !messageNotificationsEnabled) {
+          return;
+        }
+
+        const fcmToken = userData.fcmToken;
+        if (!fcmToken) {
+          return;
+        }
+
+        try {
+          await admin.messaging().send({
+            token: fcmToken,
+            notification: {
+              title: senderName,
+              body: preview,
+            },
+            data: {
+              type: "support_chat",
+              threadId,
+              messageId,
+              senderId: String(message.senderId),
+              senderRole: String(message.senderRole || ""),
+            },
+          });
+        } catch (sendError) {
+          const code = sendError?.code || "";
+          if (code === "messaging/registration-token-not-registered") {
+            await db.collection("users").doc(recipientId).set(
+              { fcmToken: admin.firestore.FieldValue.delete() },
+              { merge: true },
+            );
+          }
+          throw sendError;
+        }
+
+        await db.collection("notifications").add({
+          userId: recipientId,
+          type: "support_chat",
+          title: senderName,
+          message: preview,
+          senderId: String(message.senderId),
+          threadId,
+          read: false,
+          createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+      });
+
+      const results = await Promise.allSettled(jobs);
+      const failed = results.filter((r) => r.status === "rejected");
+      if (failed.length > 0) {
+        console.error("onSupportMessageCreated: some sends failed", failed);
+      }
+
+      return null;
+    } catch (error) {
+      console.error("onSupportMessageCreated error:", error);
+      return null;
+    }
+  });

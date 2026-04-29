@@ -80,8 +80,12 @@ class _TrainerDetailScreenState extends State<TrainerDetailScreen> {
       }
 
       completedSessions.sort((a, b) {
-        final aTime = (a.data()['completedAt'] as Timestamp?)?.millisecondsSinceEpoch ?? 0;
-        final bTime = (b.data()['completedAt'] as Timestamp?)?.millisecondsSinceEpoch ?? 0;
+        final aTime =
+            (a.data()['completedAt'] as Timestamp?)?.millisecondsSinceEpoch ??
+                0;
+        final bTime =
+            (b.data()['completedAt'] as Timestamp?)?.millisecondsSinceEpoch ??
+                0;
         return bTime.compareTo(aTime);
       });
 
@@ -225,8 +229,12 @@ class _TrainerDetailScreenState extends State<TrainerDetailScreen> {
                           });
                         },
                         icon: Icon(
-                          isSelected ? Icons.star_rounded : Icons.star_border_rounded,
-                          color: isSelected ? Colors.amber : AppColors.textSecondary,
+                          isSelected
+                              ? Icons.star_rounded
+                              : Icons.star_border_rounded,
+                          color: isSelected
+                              ? Colors.amber
+                              : AppColors.textSecondary,
                           size: 30,
                         ),
                       );
@@ -238,17 +246,21 @@ class _TrainerDetailScreenState extends State<TrainerDetailScreen> {
                     maxLines: 3,
                     decoration: InputDecoration(
                       hintText: 'Optional feedback',
-                      hintStyle: TextStyle(color: AppColors.textSecondary.withOpacity(0.8)),
+                      hintStyle: TextStyle(
+                          color: AppColors.textSecondary.withOpacity(0.8)),
                       filled: true,
-                      fillColor:
-                          isDarkMode ? const Color(0xFF262626) : const Color(0xFFF5F5F5),
+                      fillColor: isDarkMode
+                          ? const Color(0xFF262626)
+                          : const Color(0xFFF5F5F5),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
-                        borderSide: BorderSide(color: accentColor.withOpacity(0.2)),
+                        borderSide:
+                            BorderSide(color: accentColor.withOpacity(0.2)),
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
-                        borderSide: BorderSide(color: accentColor.withOpacity(0.2)),
+                        borderSide:
+                            BorderSide(color: accentColor.withOpacity(0.2)),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
@@ -860,6 +872,174 @@ class _TrainerDetailScreenState extends State<TrainerDetailScreen> {
                     const SizedBox(height: 28),
                   ],
 
+                  // Ratings & Reviews section
+                  StreamBuilder<QuerySnapshot>(
+                    stream: FirebaseFirestore.instance
+                        .collection('trainer_ratings')
+                        .where('trainerUserId', isEqualTo: widget.userId)
+                        .orderBy('createdAt', descending: true)
+                        .limit(10)
+                        .snapshots(),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+                      if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Ratings & Reviews',
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w700,
+                                color: isDarkMode
+                                    ? const Color(0xFFFFFFFF)
+                                    : AppColors.textPrimary,
+                                letterSpacing: -0.2,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              'No ratings or reviews yet.',
+                              style: TextStyle(
+                                color: isDarkMode
+                                    ? const Color(0xFFB0B0B0)
+                                    : AppColors.textSecondary,
+                                fontSize: 13,
+                              ),
+                            ),
+                            const SizedBox(height: 28),
+                          ],
+                        );
+                      }
+                      final reviews = snapshot.data!.docs;
+                      double avgRating = 0;
+                      int count = 0;
+                      for (final doc in reviews) {
+                        final r = (doc['rating'] ?? 0) as int;
+                        avgRating += r;
+                        count++;
+                      }
+                      if (count > 0) avgRating /= count;
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Ratings & Reviews',
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                              color: isDarkMode
+                                  ? const Color(0xFFFFFFFF)
+                                  : AppColors.textPrimary,
+                              letterSpacing: -0.2,
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          Row(
+                            children: [
+                              Icon(Icons.star_rounded,
+                                  color: Colors.amber, size: 20),
+                              const SizedBox(width: 4),
+                              Text(
+                                avgRating.toStringAsFixed(1),
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 15,
+                                  color: isDarkMode
+                                      ? const Color(0xFFFFFFFF)
+                                      : AppColors.textPrimary,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                '($count review${count == 1 ? '' : 's'})',
+                                style: TextStyle(
+                                  color: isDarkMode
+                                      ? const Color(0xFFB0B0B0)
+                                      : AppColors.textSecondary,
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          ListView.separated(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            itemCount: reviews.length,
+                            separatorBuilder: (_, __) =>
+                                const Divider(height: 18),
+                            itemBuilder: (context, i) {
+                              final doc = reviews[i];
+                              final rating = doc['rating'] ?? 0;
+                              final review = (doc['review'] ?? '').toString();
+                              final createdAt =
+                                  (doc['createdAt'] as Timestamp?)?.toDate();
+                              return Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Icon(Icons.account_circle,
+                                      size: 32,
+                                      color: accentColor.withOpacity(0.7)),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Row(
+                                          children: [
+                                            ...List.generate(
+                                                5,
+                                                (idx) => Icon(
+                                                      idx < rating
+                                                          ? Icons.star_rounded
+                                                          : Icons
+                                                              .star_border_rounded,
+                                                      color: Colors.amber,
+                                                      size: 16,
+                                                    )),
+                                            if (createdAt != null) ...[
+                                              const SizedBox(width: 8),
+                                              Text(
+                                                '${createdAt.day}/${createdAt.month}/${createdAt.year}',
+                                                style: TextStyle(
+                                                  color: isDarkMode
+                                                      ? const Color(0xFFB0B0B0)
+                                                      : AppColors.textSecondary,
+                                                  fontSize: 11,
+                                                ),
+                                              ),
+                                            ]
+                                          ],
+                                        ),
+                                        if (review.isNotEmpty) ...[
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            review,
+                                            style: TextStyle(
+                                              color: isDarkMode
+                                                  ? const Color(0xFFD0D0D0)
+                                                  : AppColors.textPrimary,
+                                              fontSize: 13,
+                                            ),
+                                          ),
+                                        ]
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              );
+                            },
+                          ),
+                          const SizedBox(height: 28),
+                        ],
+                      );
+                    },
+                  ),
+
                   // Action buttons
                   const SizedBox(height: 100),
                 ],
@@ -931,12 +1111,15 @@ class _TrainerDetailScreenState extends State<TrainerDetailScreen> {
                 padding: const EdgeInsets.only(bottom: 10),
                 child: Row(
                   children: [
-                    Icon(Icons.check_circle_rounded, color: AppColors.success, size: 16),
+                    Icon(Icons.check_circle_rounded,
+                        color: AppColors.success, size: 16),
                     const SizedBox(width: 6),
                     Text(
                       'You have already rated this trainer',
                       style: TextStyle(
-                        color: isDarkMode ? const Color(0xFFB0B0B0) : AppColors.textSecondary,
+                        color: isDarkMode
+                            ? const Color(0xFFB0B0B0)
+                            : AppColors.textSecondary,
                         fontSize: 12,
                         fontWeight: FontWeight.w500,
                       ),
@@ -973,9 +1156,10 @@ class _TrainerDetailScreenState extends State<TrainerDetailScreen> {
                 Expanded(
                   flex: 2,
                   child: ElevatedButton.icon(
-                    onPressed: _isLoading || _hasActiveSession || _hasPendingRequest
-                        ? null
-                        : () => _handleHireTrainer(monthlyRate),
+                    onPressed:
+                        _isLoading || _hasActiveSession || _hasPendingRequest
+                            ? null
+                            : () => _handleHireTrainer(monthlyRate),
                     icon: Icon(
                       _hasActiveSession
                           ? Icons.check_circle
@@ -997,7 +1181,8 @@ class _TrainerDetailScreenState extends State<TrainerDetailScreen> {
                     ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: accentColor,
-                      foregroundColor: isDarkMode ? Colors.black87 : Colors.white,
+                      foregroundColor:
+                          isDarkMode ? Colors.black87 : Colors.white,
                       disabledBackgroundColor: accentColor.withOpacity(0.5),
                       elevation: 2,
                       padding: const EdgeInsets.symmetric(vertical: 12),
@@ -1130,7 +1315,7 @@ class _TrainerDetailScreenState extends State<TrainerDetailScreen> {
         'status': 'requested', // Still needs trainer approval
         'amount': amount,
         'paymentStatus':
-          'pendingVerification', // Payment awaiting admin verification
+            'pendingVerification', // Payment awaiting admin verification
         'transactionId': transactionId,
         'notes': _notesController.text.trim().isNotEmpty
             ? _notesController.text.trim()

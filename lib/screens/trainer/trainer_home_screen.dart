@@ -8,6 +8,7 @@ import 'package:genzfit/screens/chat/chat_list_screen.dart';
 import 'package:genzfit/screens/trainer/trainer_clients_screen.dart';
 import 'package:genzfit/screens/trainer/trainer_schedule_screen.dart';
 import 'package:genzfit/services/notification_service.dart';
+import 'package:genzfit/services/withdrawal_service.dart';
 import 'package:genzfit/widgets/notification_widgets.dart';
 
 class TrainerHomeScreen extends StatefulWidget {
@@ -20,6 +21,7 @@ class TrainerHomeScreen extends StatefulWidget {
 class _TrainerHomeScreenState extends State<TrainerHomeScreen> {
   int _currentIndex = 0;
   final NotificationService _notificationService = NotificationService();
+  final WithdrawalService _withdrawalService = WithdrawalService();
 
   @override
   void initState() {
@@ -31,8 +33,12 @@ class _TrainerHomeScreenState extends State<TrainerHomeScreen> {
     await _notificationService.initialize();
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final userId = authProvider.user?.uid;
-    if (userId != null) {
+    if (userId != null && userId.isNotEmpty) {
       await _notificationService.saveTokenToDatabase(userId);
+      await _notificationService.startSupportThreadInAppNotifications(
+        userId: userId,
+        isAdmin: false,
+      );
     }
   }
 
@@ -43,6 +49,12 @@ class _TrainerHomeScreenState extends State<TrainerHomeScreen> {
         builder: (_) => const NotificationsList(),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _notificationService.stopSupportThreadInAppNotifications();
+    super.dispose();
   }
 
   @override
@@ -230,7 +242,7 @@ class _TrainerHomeScreenState extends State<TrainerHomeScreen> {
               ),
 
             // Stats overview
-            _buildStatsOverview(user),
+            _buildStatsOverview(user, authProvider.user?.uid),
             const SizedBox(height: 24),
 
             // Quick actions
@@ -267,7 +279,7 @@ class _TrainerHomeScreenState extends State<TrainerHomeScreen> {
     );
   }
 
-  Widget _buildStatsOverview(user) {
+  Widget _buildStatsOverview(user, String? trainerId) {
     final accentColor = Theme.of(context).brightness == Brightness.dark
         ? AppColors.brandGreen
         : AppColors.brandGreenDeep;
@@ -312,11 +324,19 @@ class _TrainerHomeScreenState extends State<TrainerHomeScreen> {
                 height: 50,
                 color: accentColor.withOpacity(0.3),
               ),
-              _buildStatItem(
-                'Earnings',
-                'Rs. ${user?.totalEarnings ?? 0}',
-                Icons.monetization_on,
-                AppColors.success,
+              FutureBuilder<double>(
+                future: trainerId == null
+                    ? Future.value(0.0)
+                    : _withdrawalService.getAvailableBalance(trainerId),
+                builder: (context, snapshot) {
+                  final available = snapshot.data ?? 0.0;
+                  return _buildStatItem(
+                    'Earnings',
+                    'Rs. ${available.toStringAsFixed(0)}',
+                    Icons.monetization_on,
+                    AppColors.success,
+                  );
+                },
               ),
             ],
           ),

@@ -192,13 +192,42 @@ class PaymentService {
             ),
           });
 
-          // Update trainer's earnings and active sessions count
-          await _firestore.collection('users').doc(trainerId).update({
+          // Resolve trainer user UID. transaction.trainerId may be either the
+          // users/{uid} or trainers/{trainerDocId}. Ensure we update the
+          // correct users document for activeSessionCount/totalEarnings.
+          String trainerUserUid = trainerId;
+          final userDoc =
+              await _firestore.collection('users').doc(trainerId).get();
+          if (!userDoc.exists) {
+            // Try to read trainers/{trainerId} document and get its userId
+            final trainerDoc =
+                await _firestore.collection('trainers').doc(trainerId).get();
+            if (trainerDoc.exists) {
+              final tdata = trainerDoc.data();
+              if (tdata != null && tdata['userId'] != null) {
+                trainerUserUid = tdata['userId'] as String;
+              }
+            } else {
+              // As a last resort, try to find a trainers doc where userId == trainerId
+              final alt = await _firestore
+                  .collection('trainers')
+                  .where('userId', isEqualTo: trainerId)
+                  .limit(1)
+                  .get();
+              if (alt.docs.isNotEmpty) {
+                final found = alt.docs.first.data();
+                trainerUserUid = (found['userId'] as String?) ?? trainerId;
+              }
+            }
+          }
+
+          // Update trainer's earnings and active sessions count on the users document
+          await _firestore.collection('users').doc(trainerUserUid).update({
             'activeSessionCount': FieldValue.increment(1),
             'totalEarnings': FieldValue.increment(transaction.trainerAmount),
           });
 
-          await _syncTrainerClientCount(trainerId);
+          await _syncTrainerClientCount(trainerUserUid);
 
           // Update client's active sessions count
           await _firestore.collection('users').doc(clientId).update({

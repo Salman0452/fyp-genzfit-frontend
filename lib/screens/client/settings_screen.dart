@@ -5,11 +5,14 @@ import 'package:genzfit/providers/language_provider.dart';
 import 'package:genzfit/providers/theme_provider.dart';
 import 'package:genzfit/utils/constants.dart';
 import 'package:genzfit/screens/client/edit_profile_screen.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import '../plans/plan_selection_screen.dart';
 import 'package:genzfit/screens/auth/forgot_password_screen.dart';
 import 'package:genzfit/screens/common/privacy_policy_screen.dart';
 import 'package:genzfit/screens/common/terms_of_service_screen.dart';
-import 'package:genzfit/screens/common/help_support_screen.dart';
+import 'package:genzfit/screens/common/user_support_screen.dart';
 import 'package:genzfit/screens/common/language_selection_screen.dart';
+import 'package:genzfit/screens/preferences/notification_preferences_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -313,6 +316,37 @@ class SettingsScreen extends StatelessWidget {
               ),
               _buildSettingItem(
                 context,
+                icon: Icons.workspace_premium,
+                title: 'Subscription & Pricing',
+                subtitle: 'Manage your AI plan and usage',
+                onTap: () async {
+                  final userId =
+                      Provider.of<AuthProvider>(context, listen: false)
+                          .user
+                          ?.uid;
+                  if (userId == null) return;
+                  // Fetch admin bank details from Firestore
+                  String? adminBankDetails;
+                  try {
+                    final doc = await FirebaseFirestore.instance
+                        .collection('settings')
+                        .doc('admin')
+                        .get();
+                    adminBankDetails = doc.data()?['bankDetails'] as String?;
+                  } catch (_) {}
+                  if (context.mounted) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => PlanSelectionScreen(
+                            userId: userId, adminBankDetails: adminBankDetails),
+                      ),
+                    );
+                  }
+                },
+              ),
+              _buildSettingItem(
+                context,
                 icon: Icons.lock,
                 title: 'Change Password',
                 subtitle: 'Update your password',
@@ -344,11 +378,10 @@ class SettingsScreen extends StatelessWidget {
                 title: 'Notifications',
                 subtitle: 'Manage notification preferences',
                 onTap: () {
-                  // TODO: Navigate to notifications settings
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Coming soon!'),
-                      backgroundColor: AppColors.accent,
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const NotificationPreferencesScreen(),
                     ),
                   );
                 },
@@ -435,12 +468,12 @@ class SettingsScreen extends StatelessWidget {
                 context,
                 icon: Icons.help,
                 title: 'Help & Support',
-                subtitle: 'Get help with the app',
+                subtitle: 'Message admin support directly',
                 onTap: () {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => const HelpSupportScreen(),
+                      builder: (context) => const UserSupportScreen(),
                     ),
                   );
                 },

@@ -201,14 +201,14 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                     horizontal: 12,
                     vertical: 12,
                   ),
-                  itemCount:
-                      messages.length * 2, // Account for potential separators
+                  // We reserve space for a possible separator between messages by
+                  // using a virtual "slot" after each message. For slots where
+                  // a separator isn't needed we render an empty box.
+                  itemCount: messages.length * 2,
                   itemBuilder: (context, index) {
-                    // Calculate the actual message index (reverse order)
+                    // Even indices: message items. Odd indices: possible separators.
+                    final isSeparatorSlot = index % 2 == 1;
                     final messageIndex = index ~/ 2;
-
-                    // Check if we need to show a date separator
-                    final shouldShowSeparator = index % 2 == 1;
 
                     if (messageIndex >= messages.length) {
                       return const SizedBox.shrink();
@@ -217,30 +217,38 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                     final message = messages[messageIndex];
                     final isSentByUser = message.senderId == currentUserId;
 
-                    // Check if next message (in chronological order, previous in reversed list) is on different day
-                    bool showDateSeparator = false;
-                    if (shouldShowSeparator &&
-                        messageIndex + 1 < messages.length) {
-                      final currentMessageDay = DateTime(
-                        message.timestamp.year,
-                        message.timestamp.month,
-                        message.timestamp.day,
-                      );
-                      final nextMessageDay = DateTime(
-                        messages[messageIndex + 1].timestamp.year,
-                        messages[messageIndex + 1].timestamp.month,
-                        messages[messageIndex + 1].timestamp.day,
-                      );
-                      showDateSeparator = currentMessageDay != nextMessageDay;
+                    if (isSeparatorSlot) {
+                      // Determine whether a date separator should be shown between
+                      // this message and the next one in the list (chronological
+                      // neighbor). If not, render nothing for this slot.
+                      if (messageIndex + 1 < messages.length) {
+                        final currentMessageDay = DateTime(
+                          message.timestamp.year,
+                          message.timestamp.month,
+                          message.timestamp.day,
+                        );
+                        final nextMessage = messages[messageIndex + 1];
+                        final nextMessageDay = DateTime(
+                          nextMessage.timestamp.year,
+                          nextMessage.timestamp.month,
+                          nextMessage.timestamp.day,
+                        );
+
+                        final showDateSeparator =
+                            currentMessageDay != nextMessageDay;
+
+                        if (showDateSeparator) {
+                          return _buildDateSeparator(
+                            message.timestamp,
+                            isDarkMode,
+                          );
+                        }
+                      }
+
+                      return const SizedBox.shrink();
                     }
 
-                    if (showDateSeparator) {
-                      return _buildDateSeparator(
-                        messages[messageIndex].timestamp,
-                        isDarkMode,
-                      );
-                    }
-
+                    // Normal message slot
                     return _buildMessageBubble(
                       message,
                       isSentByUser,
@@ -434,7 +442,12 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
   }
 
   String _formatTimeOnly(DateTime dateTime) {
-    return '${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
+    final hour24 = dateTime.hour;
+    final minute = dateTime.minute.toString().padLeft(2, '0');
+    final period = hour24 >= 12 ? 'PM' : 'AM';
+    var hour12 = hour24 % 12;
+    if (hour12 == 0) hour12 = 12;
+    return '$hour12:$minute $period';
   }
 
   String _formatDateSeparator(DateTime dateTime) {

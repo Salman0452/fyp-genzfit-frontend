@@ -33,6 +33,33 @@ class UserPreferencesService {
     }
   }
 
+  static Map<String, dynamic> defaultNotificationPreferences() {
+    return {
+      'notifications_enabled': true,
+      'session_updates': true,
+      'message_notifications': true,
+      'payment_notifications': true,
+      'reminder_notifications': true,
+      'marketing_notifications': false,
+    };
+  }
+
+  Future<Map<String, dynamic>> loadNotificationPreferences(
+      String userId) async {
+    final prefs = await loadPreferences(userId) ?? <String, dynamic>{};
+    return {
+      ...defaultNotificationPreferences(),
+      ...prefs,
+    };
+  }
+
+  Future<void> saveNotificationPreferences({
+    required String userId,
+    required Map<String, dynamic> preferences,
+  }) async {
+    await savePreferences(userId: userId, preferences: preferences);
+  }
+
   // ── Load preferences: Firestore first, then sync to backend ───────────────
   Future<Map<String, dynamic>?> loadPreferences(String userId) async {
     try {
