@@ -17,6 +17,8 @@ import 'package:genzfit/screens/admin/payment_verification_screen.dart';
 import 'package:genzfit/services/notification_service.dart';
 import 'package:genzfit/utils/constants.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:genzfit/screens/plans/admin_plan_settings_screen.dart';
+import 'package:genzfit/screens/admin/admin_subscription_requests_screen.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
   final UserModel admin;
@@ -518,6 +520,18 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   enabled: _canAccessSettings,
                   onTap: _navigateToSettings,
                 ),
+                _buildSidebarItem(
+                  icon: Icons.price_change,
+                  label: 'Plan & Pricing',
+                  enabled: _canAccessSettings,
+                  onTap: _navigateToPlanSettings,
+                ),
+                _buildSidebarItem(
+                  icon: Icons.pending_actions,
+                  label: 'Subscription Requests',
+                  enabled: _canAccessSettings,
+                  onTap: _navigateToSubscriptionRequests,
+                ),
               ],
             ),
           ),
@@ -648,6 +662,24 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               onTap: () {
                 Navigator.of(context).pop();
                 _navigateToSettings();
+              },
+            ),
+            _buildSidebarItem(
+              icon: Icons.price_change,
+              label: 'Plan & Pricing',
+              enabled: _canAccessSettings,
+              onTap: () {
+                Navigator.of(context).pop();
+                _navigateToPlanSettings();
+              },
+            ),
+            _buildSidebarItem(
+              icon: Icons.pending_actions,
+              label: 'Subscription Requests',
+              enabled: _canAccessSettings,
+              onTap: () {
+                Navigator.of(context).pop();
+                _navigateToSubscriptionRequests();
               },
             ),
           ],
@@ -1351,6 +1383,22 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (context) => const AdminActionLogsScreen(),
+      ),
+    );
+  }
+
+  void _navigateToPlanSettings() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => const AdminPlanSettingsScreen(),
+      ),
+    );
+  }
+
+  void _navigateToSubscriptionRequests() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => const AdminSubscriptionRequestsScreen(),
       ),
     );
   }

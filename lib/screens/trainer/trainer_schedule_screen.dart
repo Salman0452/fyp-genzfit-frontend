@@ -85,7 +85,7 @@ class _TrainerScheduleScreenState extends State<TrainerScheduleScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Your scheduled sessions will appear here',
+                    'Your 1-hour active client sessions will appear here',
                     style: TextStyle(
                       fontSize: 14,
                       color: Theme.of(context).brightness == Brightness.dark
@@ -98,31 +98,55 @@ class _TrainerScheduleScreenState extends State<TrainerScheduleScreen> {
             );
           }
 
-          return ListView.builder(
+          return ListView(
             padding: const EdgeInsets.all(16),
-            itemCount: sessions.length,
-            itemBuilder: (context, index) {
-              final session = sessions[index];
-              return FutureBuilder<UserModel?>(
-                future: _firestoreService.getUser(session.clientId),
-                builder: (context, clientSnapshot) {
-                  if (clientSnapshot.connectionState ==
-                      ConnectionState.waiting) {
-                    return const Padding(
-                      padding: EdgeInsets.only(bottom: 12),
-                      child: LoadingWidget(),
-                    );
-                  }
+            children: [
+              Container(
+                margin: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? const Color(0xFF1A1A1A)
+                      : AppColors.surface,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? AppColors.brandGreen.withOpacity(0.3)
+                        : AppColors.brandGreenDeep.withOpacity(0.3),
+                  ),
+                ),
+                child: Text(
+                  'Purpose: This screen tracks your active 1-hour coaching sessions. Tap Complete when done or Cancel if session did not happen. Status updates are shared with client and admin.',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? const Color(0xFFB0B0B0)
+                        : AppColors.textSecondary,
+                  ),
+                ),
+              ),
+              ...sessions.map((session) {
+                return FutureBuilder<UserModel?>(
+                  future: _firestoreService.getUser(session.clientId),
+                  builder: (context, clientSnapshot) {
+                    if (clientSnapshot.connectionState ==
+                        ConnectionState.waiting) {
+                      return const Padding(
+                        padding: EdgeInsets.only(bottom: 12),
+                        child: LoadingWidget(),
+                      );
+                    }
 
-                  final client = clientSnapshot.data;
-                  if (client == null) {
-                    return const SizedBox.shrink();
-                  }
+                    final client = clientSnapshot.data;
+                    if (client == null) {
+                      return const SizedBox.shrink();
+                    }
 
-                  return _buildSessionCard(context, session, client);
-                },
-              );
-            },
+                    return _buildSessionCard(context, session, client);
+                  },
+                );
+              }),
+            ],
           );
         },
       ),
@@ -134,6 +158,19 @@ class _TrainerScheduleScreenState extends State<TrainerScheduleScreen> {
     SessionModel session,
     UserModel client,
   ) {
+    final now = DateTime.now();
+    final startDate = session.startDate;
+    final endDate =
+        startDate != null ? startDate.add(const Duration(hours: 1)) : null;
+    final remaining = endDate == null ? null : endDate.difference(now);
+    final isInProgress = startDate != null &&
+        endDate != null &&
+        now.isAfter(startDate) &&
+        now.isBefore(endDate);
+    final isOverdue = endDate != null &&
+        now.isAfter(endDate) &&
+        session.status == SessionStatus.active;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
@@ -170,7 +207,9 @@ class _TrainerScheduleScreenState extends State<TrainerScheduleScreen> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Active Session',
+                      isInProgress
+                          ? '1-hour session in progress'
+                          : 'Scheduled active session',
                       style: TextStyle(
                         fontSize: 12,
                         color: Theme.of(context).brightness == Brightness.dark
@@ -200,6 +239,52 @@ class _TrainerScheduleScreenState extends State<TrainerScheduleScreen> {
                 ),
               ),
             ],
+          ),
+          const SizedBox(height: 12),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: (isInProgress
+                      ? AppColors.success
+                      : isOverdue
+                          ? AppColors.warning
+                          : AppColors.brandGreen)
+                  .withOpacity(0.12),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  isOverdue ? Icons.schedule : Icons.timer_outlined,
+                  size: 18,
+                  color: isOverdue
+                      ? AppColors.warning
+                      : Theme.of(context).brightness == Brightness.dark
+                          ? AppColors.brandGreen
+                          : AppColors.brandGreenDeep,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    startDate == null
+                        ? 'Session timer will appear after acceptance.'
+                        : endDate == null
+                            ? '1-hour timer unavailable.'
+                            : isOverdue
+                                ? 'This session should have been completed by ${DateFormat('hh:mm a').format(endDate)}.'
+                                : 'Ends in ${_formatDuration(remaining ?? Duration.zero)} at ${DateFormat('hh:mm a').format(endDate)}',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? const Color(0xFFFFFFFF)
+                          : AppColors.textPrimary,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: 12),
           if (session.startDate != null)
@@ -279,6 +364,23 @@ class _TrainerScheduleScreenState extends State<TrainerScheduleScreen> {
         ],
       ),
     );
+  }
+
+  String _formatDuration(Duration duration) {
+    if (duration.isNegative) return '0m';
+
+    final hours = duration.inHours;
+    final minutes = duration.inMinutes.remainder(60);
+
+    if (hours <= 0) {
+      return '${minutes <= 0 ? 1 : minutes}m';
+    }
+
+    if (minutes == 0) {
+      return '${hours}h';
+    }
+
+    return '${hours}h ${minutes}m';
   }
 
   void _showCompleteSessionDialog(BuildContext context, SessionModel session) {

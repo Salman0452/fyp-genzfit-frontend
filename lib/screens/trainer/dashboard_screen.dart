@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:genzfit/models/user_model.dart';
 import 'package:genzfit/models/session_model.dart';
+import 'package:genzfit/screens/chat/chat_detail_screen.dart';
 import 'package:genzfit/services/withdrawal_service.dart';
+import 'package:genzfit/services/chat_service.dart';
 import 'package:genzfit/utils/constants.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
@@ -18,6 +20,7 @@ class TrainerDashboardScreen extends StatefulWidget {
 
 class _TrainerDashboardScreenState extends State<TrainerDashboardScreen> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final ChatService _chatService = ChatService();
   final WithdrawalService _withdrawalService = WithdrawalService();
 
   int _totalClients = 0;
@@ -517,15 +520,57 @@ class _TrainerDashboardScreenState extends State<TrainerDashboardScreen> {
               ),
               IconButton(
                 icon: Icon(Icons.chat_bubble_outline, color: accentColor),
-                onPressed: () {
-                  // Navigate to chat
-                },
+                onPressed: () => _openClientChat(
+                  session.clientId,
+                  clientData,
+                ),
               ),
             ],
           ),
         );
       },
     );
+  }
+
+  Future<void> _openClientChat(
+    String clientId,
+    Map<String, dynamic> clientData,
+  ) async {
+    try {
+      final trainerUser = widget.trainer;
+      final clientUser = UserModel.fromMap({
+        'id': clientId,
+        ...clientData,
+      });
+
+      final chatId = await _chatService.createOrGetChat(
+        trainerUser.id,
+        clientId,
+        trainerUser,
+        clientUser,
+      );
+
+      if (!mounted) return;
+
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => ChatDetailScreen(
+            chatId: chatId,
+            otherUserId: clientId,
+            otherUserName: clientUser.name,
+            otherUserAvatar: clientUser.avatarUrl,
+          ),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Failed to open chat. Please try again.'),
+        ),
+      );
+    }
   }
 
   Widget _buildRecentSessions() {

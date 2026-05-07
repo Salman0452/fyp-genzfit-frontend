@@ -5,16 +5,17 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
 import 'providers/auth_provider.dart';
 import 'providers/language_provider.dart';
+import 'providers/plan_provider.dart';
 import 'utils/app_localizations.dart';
 import 'screens/admin/admin_login_screen.dart';
-import 'utils/constants.dart';
+// import 'utils/constants.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   // Load environment variables
   await dotenv.load(fileName: ".env");
-  
+
   // Initialize Firebase
   await Firebase.initializeApp(
     options: const FirebaseOptions(
@@ -25,7 +26,7 @@ void main() async {
       storageBucket: 'genzfit-d36f0.firebasestorage.app',
     ),
   );
-  
+
   runApp(const GenZFitAdminApp());
 }
 
@@ -38,6 +39,7 @@ class GenZFitAdminApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => LanguageProvider()),
+        ChangeNotifierProvider(create: (_) => PlanProvider()),
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,

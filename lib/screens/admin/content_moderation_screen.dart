@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:genzfit/utils/constants.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -27,6 +28,96 @@ class _ContentModerationScreenState extends State<ContentModerationScreen>
   void dispose() {
     _tabController.dispose();
     super.dispose();
+  }
+
+  String? _extractFirestoreIndexUrl(Object? error) {
+    final errorText = error?.toString() ?? '';
+    final match = RegExp(
+      r'https://console\.firebase\.google\.com/[^\s)\]]+',
+    ).firstMatch(errorText);
+    return match?.group(0);
+  }
+
+  Widget _buildQueryError(BuildContext context, Object? error) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final errorText = error?.toString() ?? 'Unknown error';
+    final indexUrl = _extractFirestoreIndexUrl(error);
+
+    debugPrint('Content moderation Firestore error: $errorText');
+    if (indexUrl != null) {
+      debugPrint('Firestore index URL: $indexUrl');
+    }
+
+    return Center(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.error_outline,
+              size: 64,
+              color: isDark ? Colors.red.shade300 : Colors.red.shade700,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Firestore query needs an index',
+              textAlign: TextAlign.center,
+              style: GoogleFonts.poppins(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: isDark ? Colors.white : AppColors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Open the Firebase index link below to create it automatically.',
+              textAlign: TextAlign.center,
+              style: GoogleFonts.inter(
+                fontSize: 13,
+                color:
+                    isDark ? const Color(0xFFB0B0B0) : AppColors.textSecondary,
+              ),
+            ),
+            const SizedBox(height: 16),
+            SelectableText(
+              errorText,
+              textAlign: TextAlign.center,
+              style: GoogleFonts.inter(
+                fontSize: 12,
+                color: isDark ? const Color(0xFFFFB4B4) : Colors.red.shade700,
+              ),
+            ),
+            if (indexUrl != null) ...[
+              const SizedBox(height: 16),
+              SelectableText(
+                indexUrl,
+                textAlign: TextAlign.center,
+                style: GoogleFonts.inter(
+                  fontSize: 12,
+                  decoration: TextDecoration.underline,
+                  color: AppColors.brandGreenDeep,
+                ),
+              ),
+              const SizedBox(height: 12),
+              ElevatedButton.icon(
+                onPressed: () async {
+                  await Clipboard.setData(ClipboardData(text: indexUrl));
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                          content: Text('Index link copied to clipboard')),
+                    );
+                  }
+                },
+                icon: const Icon(Icons.copy),
+                label: const Text('Copy index link'),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
   }
 
   @override
@@ -81,8 +172,6 @@ class _ContentModerationScreenState extends State<ContentModerationScreen>
   Widget _buildFlaggedContentTab() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final brandGreen = isDark ? AppColors.brandGreen : AppColors.brandGreenDeep;
-    final primaryText =
-        isDark ? const Color(0xFFFFFFFF) : AppColors.textPrimary;
     final secondaryText =
         isDark ? const Color(0xFFB0B0B0) : AppColors.textSecondary;
 
@@ -94,13 +183,7 @@ class _ContentModerationScreenState extends State<ContentModerationScreen>
           .snapshots(),
       builder: (context, snapshot) {
         if (snapshot.hasError) {
-          return Center(
-            child: Text(
-              'Error: ${snapshot.error}',
-              style: GoogleFonts.inter(
-                  color: isDark ? Colors.red.shade300 : Colors.red.shade700),
-            ),
-          );
+          return _buildQueryError(context, snapshot.error);
         }
 
         if (snapshot.connectionState == ConnectionState.waiting) {
@@ -374,13 +457,7 @@ class _ContentModerationScreenState extends State<ContentModerationScreen>
           .snapshots(),
       builder: (context, snapshot) {
         if (snapshot.hasError) {
-          return Center(
-            child: Text(
-              'Error: ${snapshot.error}',
-              style: GoogleFonts.inter(
-                  color: isDark ? Colors.red.shade300 : Colors.red.shade700),
-            ),
-          );
+          return _buildQueryError(context, snapshot.error);
         }
 
         if (snapshot.connectionState == ConnectionState.waiting) {

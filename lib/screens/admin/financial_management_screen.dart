@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -165,6 +166,110 @@ class _FinancialManagementScreenState extends State<FinancialManagementScreen>
         print('Error loading financial summary: $e');
       }
     }
+  }
+
+  String? _extractFirestoreIndexUrl(Object? error) {
+    final errorText = error?.toString() ?? '';
+    final match = RegExp(
+      r'https://console\.firebase\.google\.com/[^\s)\]]+',
+    ).firstMatch(errorText);
+    return match?.group(0);
+  }
+
+  Widget _buildQueryErrorWidget(
+      BuildContext context, Object? error, String tabName) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final errorText = error?.toString() ?? 'Unknown error';
+    final indexUrl = _extractFirestoreIndexUrl(error);
+
+    debugPrint('Financial screen $tabName error: $errorText');
+    if (indexUrl != null) {
+      debugPrint('Firestore index URL: $indexUrl');
+    }
+
+    return Center(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.error_outline,
+              size: 64,
+              color: isDark ? Colors.red.shade300 : Colors.red.shade700,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Firestore Error',
+              textAlign: TextAlign.center,
+              style: GoogleFonts.poppins(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: isDark ? Colors.white : AppColors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            if (indexUrl != null)
+              Text(
+                'This query needs a composite index. Open the link below to create it automatically.',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.inter(
+                  fontSize: 13,
+                  color: isDark
+                      ? const Color(0xFFB0B0B0)
+                      : AppColors.textSecondary,
+                ),
+              ),
+            if (indexUrl == null)
+              Text(
+                'Check the error message below and contact support if needed.',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.inter(
+                  fontSize: 13,
+                  color: isDark
+                      ? const Color(0xFFB0B0B0)
+                      : AppColors.textSecondary,
+                ),
+              ),
+            const SizedBox(height: 16),
+            SelectableText(
+              errorText,
+              textAlign: TextAlign.center,
+              style: GoogleFonts.inter(
+                fontSize: 12,
+                color: isDark ? const Color(0xFFFFB4B4) : Colors.red.shade700,
+              ),
+            ),
+            if (indexUrl != null) ...[
+              const SizedBox(height: 16),
+              SelectableText(
+                indexUrl,
+                textAlign: TextAlign.center,
+                style: GoogleFonts.inter(
+                  fontSize: 11,
+                  decoration: TextDecoration.underline,
+                  color: AppColors.brandGreenDeep,
+                ),
+              ),
+              const SizedBox(height: 12),
+              ElevatedButton.icon(
+                onPressed: () async {
+                  await Clipboard.setData(ClipboardData(text: indexUrl));
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                          content: Text('Index link copied to clipboard')),
+                    );
+                  }
+                },
+                icon: const Icon(Icons.copy),
+                label: const Text('Copy index link'),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
   }
 
   @override
@@ -841,12 +946,7 @@ class _FinancialManagementScreenState extends State<FinancialManagementScreen>
           .snapshots(),
       builder: (context, snapshot) {
         if (snapshot.hasError) {
-          return Center(
-            child: Text(
-              'Error: ${snapshot.error}',
-              style: GoogleFonts.inter(color: Colors.red),
-            ),
-          );
+          return _buildQueryErrorWidget(context, snapshot.error, 'Refunds');
         }
 
         if (snapshot.connectionState == ConnectionState.waiting) {
@@ -1055,12 +1155,7 @@ class _FinancialManagementScreenState extends State<FinancialManagementScreen>
           .snapshots(),
       builder: (context, snapshot) {
         if (snapshot.hasError) {
-          return Center(
-            child: Text(
-              'Error: ${snapshot.error}',
-              style: GoogleFonts.inter(color: Colors.red),
-            ),
-          );
+          return _buildQueryErrorWidget(context, snapshot.error, 'Revenue');
         }
 
         if (snapshot.connectionState == ConnectionState.waiting) {

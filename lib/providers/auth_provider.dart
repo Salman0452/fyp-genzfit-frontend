@@ -11,6 +11,7 @@ class AuthProvider extends ChangeNotifier {
   final AuthService _authService = AuthService();
   final UserPreferencesService _prefsService = UserPreferencesService();
   StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>? _userDocSub;
+  StreamSubscription<User?>? _authStateSub;
 
   UserModel? _currentUser;
   User? _firebaseUser;
@@ -56,7 +57,8 @@ class AuthProvider extends ChangeNotifier {
 
   // Initialize auth state
   void _initializeAuthState() {
-    _authService.authStateChanges.listen((User? user) async {
+    _authStateSub?.cancel();
+    _authStateSub = _authService.authStateChanges.listen((User? user) async {
       _firebaseUser = user;
       if (user != null) {
         // Subscribe to realtime updates on the users/{uid} document so
@@ -97,6 +99,9 @@ class AuthProvider extends ChangeNotifier {
             _error = e.toString();
             notifyListeners();
           }
+        }, onError: (error) {
+          _error = error.toString();
+          notifyListeners();
         });
       } else {
         _currentUser = null;
@@ -276,40 +281,6 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  // Sign in / sign up with Facebook
-  Future<bool> signInWithFacebook({
-    UserRole? role,
-    String? goals,
-    List<String>? expertise,
-    double? hourlyRate,
-    String? nameOverride,
-  }) async {
-    try {
-      _isLoading = true;
-      _error = null;
-      notifyListeners();
-
-      final socialResult = await _authService.signInWithFacebook(
-        role: role,
-        goals: goals,
-        expertise: expertise,
-        hourlyRate: hourlyRate,
-        nameOverride: nameOverride,
-      );
-      _currentUser = socialResult.user;
-      _lastSocialAuthIsNewUser = socialResult.isNewUser;
-
-      _isLoading = false;
-      notifyListeners();
-      return true;
-    } catch (e) {
-      _error = e.toString().replaceFirst('Exception: ', '');
-      _isLoading = false;
-      notifyListeners();
-      return false;
-    }
-  }
-
   // Sign out
   Future<void> signOut() async {
     try {
@@ -318,6 +289,7 @@ class AuthProvider extends ChangeNotifier {
 
       // Cancel subscriptions to prevent exceptions during sign-out
       _userDocSub?.cancel();
+      _userDocSub = null;
 
       await _authService.signOut();
       _currentUser = null;
@@ -400,6 +372,7 @@ class AuthProvider extends ChangeNotifier {
   @override
   void dispose() {
     _userDocSub?.cancel();
+    _authStateSub?.cancel();
     super.dispose();
   }
 }

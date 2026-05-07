@@ -9,7 +9,7 @@ import 'package:uuid/uuid.dart';
 class StorageService {
   static const String _cloudName = 'dvpdkmpp8';
   static const String _uploadPreset = 'genzfit_preset';
-  
+
   final CloudinaryPublic _cloudinary = CloudinaryPublic(
     _cloudName,
     _uploadPreset,
@@ -21,7 +21,7 @@ class StorageService {
   Future<String> uploadImage(File file, String folder) async {
     try {
       final fileName = '${_uuid.v4()}.jpg';
-      
+
       final response = await _cloudinary.uploadFile(
         CloudinaryFile.fromFile(
           file.path,
@@ -30,10 +30,83 @@ class StorageService {
           publicId: fileName,
         ),
       );
-      
+
       return response.secureUrl;
     } catch (e) {
       throw Exception('Failed to upload image: ${e.toString()}');
+    }
+  }
+
+  // Upload image bytes (web-safe / file-picker friendly)
+  Future<String> uploadImageBytes(
+    Uint8List bytes,
+    String folder,
+    String publicId, {
+    String fileName = 'receipt.jpg',
+  }) async {
+    try {
+      print('[CloudinaryUpload] Starting upload...');
+      print('[CloudinaryUpload] Bytes length: ${bytes.length}');
+      print('[CloudinaryUpload] Folder: $folder');
+      print('[CloudinaryUpload] Public ID: $publicId');
+      print('[CloudinaryUpload] File name: $fileName');
+
+      if (bytes.isEmpty) {
+        throw Exception('Image bytes are empty');
+      }
+
+      final uri =
+          Uri.parse('https://api.cloudinary.com/v1_1/$_cloudName/image/upload');
+      print('[CloudinaryUpload] Upload URI: $uri');
+      print('[CloudinaryUpload] Upload preset: $_uploadPreset');
+
+      final request = http.MultipartRequest('POST', uri)
+        ..fields['upload_preset'] = _uploadPreset
+        ..fields['folder'] = folder
+        ..fields['public_id'] = publicId
+        ..files.add(http.MultipartFile.fromBytes(
+          'file',
+          bytes,
+          filename: fileName,
+        ));
+
+      print('[CloudinaryUpload] Request created, sending...');
+
+      final streamed =
+          await request.send().timeout(const Duration(seconds: 120));
+      print('[CloudinaryUpload] Response status code: ${streamed.statusCode}');
+
+      final body = await http.Response.fromStream(streamed);
+      print('[CloudinaryUpload] Response body length: ${body.body.length}');
+      print(
+          '[CloudinaryUpload] Response body (first 500 chars): ${body.body.substring(0, body.body.length > 500 ? 500 : body.body.length)}');
+
+      if (streamed.statusCode == 200) {
+        print('[CloudinaryUpload] Status 200, parsing response...');
+        final responseData = jsonDecode(body.body);
+        print('[CloudinaryUpload] Parsed response: $responseData');
+
+        if (responseData is Map<String, dynamic>) {
+          final url = responseData['secure_url'];
+          print('[CloudinaryUpload] Extracted URL: $url');
+
+          if (url != null && url is String && url.isNotEmpty) {
+            print('[CloudinaryUpload] Upload successful! URL: $url');
+            return url;
+          }
+          throw Exception('No secure_url in response: $responseData');
+        }
+        throw Exception('Invalid response format: ${body.body}');
+      }
+
+      print(
+          '[CloudinaryUpload] Status code ${streamed.statusCode}, error response: ${body.body}');
+      throw Exception(
+          'Cloudinary image upload failed (${streamed.statusCode}): ${body.body}');
+    } catch (e, stackTrace) {
+      print('[CloudinaryUpload] Exception caught: $e');
+      print('[CloudinaryUpload] Stack trace: $stackTrace');
+      rethrow;
     }
   }
 
@@ -41,7 +114,7 @@ class StorageService {
   Future<String> uploadVideo(File file, String folder) async {
     try {
       final fileName = '${_uuid.v4()}.mp4';
-      
+
       final response = await _cloudinary.uploadFile(
         CloudinaryFile.fromFile(
           file.path,
@@ -50,7 +123,7 @@ class StorageService {
           publicId: fileName,
         ),
       );
-      
+
       return response.secureUrl;
     } catch (e) {
       throw Exception('Failed to upload video: ${e.toString()}');
@@ -94,8 +167,8 @@ class StorageService {
     String folder,
     String publicId,
   ) async {
-    final uri = Uri.parse(
-        'https://api.cloudinary.com/v1_1/$_cloudName/raw/upload');
+    final uri =
+        Uri.parse('https://api.cloudinary.com/v1_1/$_cloudName/raw/upload');
     final request = http.MultipartRequest('POST', uri)
       ..fields['upload_preset'] = _uploadPreset
       ..fields['folder'] = folder
@@ -105,8 +178,7 @@ class StorageService {
         bytes,
         filename: '$publicId.glb',
       ));
-    final streamed =
-        await request.send().timeout(const Duration(seconds: 120));
+    final streamed = await request.send().timeout(const Duration(seconds: 120));
     final body = await http.Response.fromStream(streamed);
     if (streamed.statusCode == 200) {
       final data = jsonDecode(body.body) as Map<String, dynamic>;

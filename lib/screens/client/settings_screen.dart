@@ -7,7 +7,7 @@ import 'package:genzfit/utils/constants.dart';
 import 'package:genzfit/screens/client/edit_profile_screen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../plans/plan_selection_screen.dart';
-import 'package:genzfit/screens/auth/forgot_password_screen.dart';
+import 'package:genzfit/screens/client/client_change_password_screen.dart';
 import 'package:genzfit/screens/common/privacy_policy_screen.dart';
 import 'package:genzfit/screens/common/terms_of_service_screen.dart';
 import 'package:genzfit/screens/common/user_support_screen.dart';
@@ -148,7 +148,11 @@ class SettingsScreen extends StatelessWidget {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       await authProvider.signOut();
       if (context.mounted) {
-        Navigator.pushReplacementNamed(context, '/role-selection');
+        Navigator.pushNamedAndRemoveUntil(
+          context,
+          '/role-selection',
+          (route) => false,
+        );
       }
     }
   }
@@ -354,7 +358,7 @@ class SettingsScreen extends StatelessWidget {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => const ForgotPasswordScreen(),
+                      builder: (context) => const ClientChangePasswordScreen(),
                     ),
                   );
                 },

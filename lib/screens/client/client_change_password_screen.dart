@@ -5,16 +5,16 @@ import 'package:genzfit/providers/auth_provider.dart';
 import 'package:genzfit/utils/constants.dart';
 import 'package:genzfit/widgets/custom_button.dart';
 
-class TrainerChangePasswordScreen extends StatefulWidget {
-  const TrainerChangePasswordScreen({super.key});
+class ClientChangePasswordScreen extends StatefulWidget {
+  const ClientChangePasswordScreen({super.key});
 
   @override
-  State<TrainerChangePasswordScreen> createState() =>
-      _TrainerChangePasswordScreenState();
+  State<ClientChangePasswordScreen> createState() =>
+      _ClientChangePasswordScreenState();
 }
 
-class _TrainerChangePasswordScreenState
-    extends State<TrainerChangePasswordScreen> {
+class _ClientChangePasswordScreenState
+    extends State<ClientChangePasswordScreen> {
   late TextEditingController _currentPasswordController;
   late TextEditingController _newPasswordController;
   late TextEditingController _confirmPasswordController;
@@ -79,17 +79,16 @@ class _TrainerChangePasswordScreenState
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       final user = authProvider.user;
 
-      if (user == null) throw Exception('User not authenticated');
+      if (user == null || user.email == null) {
+        throw Exception('User not authenticated');
+      }
 
-      // Re-authenticate user with current password
       final credential = firebase_auth.EmailAuthProvider.credential(
         email: user.email!,
         password: _currentPasswordController.text,
       );
 
       await user.reauthenticateWithCredential(credential);
-
-      // Update password
       await user.updatePassword(_newPasswordController.text);
 
       if (mounted) {
@@ -170,7 +169,7 @@ class _TrainerChangePasswordScreenState
             ),
             const SizedBox(height: 8),
             Text(
-              'Keep your account secure with a strong password',
+              'Enter your current password, then set a new one',
               style: TextStyle(
                 fontSize: 12,
                 color: Theme.of(context).brightness == Brightness.dark
@@ -179,8 +178,6 @@ class _TrainerChangePasswordScreenState
               ),
             ),
             const SizedBox(height: 32),
-
-            // Current Password
             Text(
               'Current Password',
               style: TextStyle(
@@ -209,7 +206,8 @@ class _TrainerChangePasswordScreenState
                 ),
                 suffixIcon: IconButton(
                   onPressed: () => setState(
-                      () => _showCurrentPassword = !_showCurrentPassword),
+                    () => _showCurrentPassword = !_showCurrentPassword,
+                  ),
                   icon: Icon(
                     _showCurrentPassword
                         ? Icons.visibility_outlined
@@ -220,8 +218,6 @@ class _TrainerChangePasswordScreenState
               ),
             ),
             const SizedBox(height: 24),
-
-            // New Password
             Text(
               'New Password',
               style: TextStyle(
@@ -271,8 +267,6 @@ class _TrainerChangePasswordScreenState
               ),
             ),
             const SizedBox(height: 24),
-
-            // Confirm Password
             Text(
               'Confirm New Password',
               style: TextStyle(
@@ -301,7 +295,8 @@ class _TrainerChangePasswordScreenState
                 ),
                 suffixIcon: IconButton(
                   onPressed: () => setState(
-                      () => _showConfirmPassword = !_showConfirmPassword),
+                    () => _showConfirmPassword = !_showConfirmPassword,
+                  ),
                   icon: Icon(
                     _showConfirmPassword
                         ? Icons.visibility_outlined
@@ -312,7 +307,6 @@ class _TrainerChangePasswordScreenState
               ),
             ),
             const SizedBox(height: 32),
-
             SizedBox(
               width: double.infinity,
               child: CustomButton(
@@ -327,12 +321,10 @@ class _TrainerChangePasswordScreenState
               decoration: BoxDecoration(
                 color: AppColors.warning.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(AppSizes.borderRadius),
-                border: Border.all(
-                  color: AppColors.warning.withOpacity(0.3),
-                ),
+                border: Border.all(color: AppColors.warning.withOpacity(0.3)),
               ),
               child: Text(
-                'For security reasons, you may need to log in again after changing your password.',
+                'After password change, you will be logged out automatically for security.',
                 style: TextStyle(
                   fontSize: 12,
                   color: Theme.of(context).brightness == Brightness.dark

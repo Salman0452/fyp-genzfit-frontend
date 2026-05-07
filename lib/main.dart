@@ -7,6 +7,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'providers/auth_provider.dart';
 import 'providers/language_provider.dart';
 import 'providers/theme_provider.dart';
+import 'providers/plan_provider.dart';
 import 'utils/app_localizations.dart';
 import 'screens/splash_screen.dart';
 import 'screens/auth/role_selection_screen.dart';
@@ -362,6 +363,7 @@ class GenZFitApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => LanguageProvider()),
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
+        ChangeNotifierProvider(create: (_) => PlanProvider()),
       ],
       child: Consumer2<LanguageProvider, ThemeProvider>(
         builder: (context, languageProvider, themeProvider, child) {

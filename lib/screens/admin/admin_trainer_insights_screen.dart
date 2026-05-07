@@ -39,6 +39,8 @@ class AdminTrainerInsightsScreen extends StatelessWidget {
         children: [
           _buildHeader(context),
           const SizedBox(height: 16),
+          _buildSubscriptionSection(context),
+          const SizedBox(height: 16),
           _buildTrainerProfileSection(context),
           const SizedBox(height: 16),
           _buildPreferencesSection(context),
@@ -87,7 +89,8 @@ class AdminTrainerInsightsScreen extends StatelessWidget {
             children: [
               _chip(context, 'Role: ${_safeText(trainerUserData['role'])}'),
               _chip(context, 'Status: ${_safeText(trainerUserData['status'])}'),
-              _chip(context, 'Email Verified: ${(trainerUserData['emailVerified'] == true) ? 'Yes' : 'No'}'),
+              _chip(context,
+                  'Email Verified: ${(trainerUserData['emailVerified'] == true) ? 'Yes' : 'No'}'),
               _chip(context, 'UID: $trainerId'),
             ],
           ),
@@ -129,7 +132,8 @@ class AdminTrainerInsightsScreen extends StatelessWidget {
                 .doc(trainerId)
                 .snapshots(),
             builder: (context, trainerDocSnapshot) {
-              if (trainerDocSnapshot.connectionState == ConnectionState.waiting) {
+              if (trainerDocSnapshot.connectionState ==
+                  ConnectionState.waiting) {
                 return const Padding(
                   padding: EdgeInsets.symmetric(vertical: 8),
                   child: LinearProgressIndicator(minHeight: 2),
@@ -159,7 +163,8 @@ class AdminTrainerInsightsScreen extends StatelessWidget {
                     .limit(1)
                     .snapshots(),
                 builder: (context, fallbackSnapshot) {
-                  if (fallbackSnapshot.connectionState == ConnectionState.waiting) {
+                  if (fallbackSnapshot.connectionState ==
+                      ConnectionState.waiting) {
                     return const Padding(
                       padding: EdgeInsets.symmetric(vertical: 8),
                       child: LinearProgressIndicator(minHeight: 2),
@@ -173,15 +178,16 @@ class AdminTrainerInsightsScreen extends StatelessWidget {
                     );
                   }
 
-                  if (!fallbackSnapshot.hasData || fallbackSnapshot.data!.docs.isEmpty) {
+                  if (!fallbackSnapshot.hasData ||
+                      fallbackSnapshot.data!.docs.isEmpty) {
                     return Text(
                       'No trainer profile found in trainers collection.',
                       style: GoogleFonts.inter(color: secondaryText),
                     );
                   }
 
-                  final trainerDoc =
-                      fallbackSnapshot.data!.docs.first.data() as Map<String, dynamic>;
+                  final trainerDoc = fallbackSnapshot.data!.docs.first.data()
+                      as Map<String, dynamic>;
                   return _buildTrainerProfileContent(
                     context,
                     trainerDoc,
@@ -192,6 +198,220 @@ class AdminTrainerInsightsScreen extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildSubscriptionSection(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryText =
+        isDark ? const Color(0xFFFFFFFF) : AppColors.textPrimary;
+    final secondaryText =
+        isDark ? const Color(0xFFB0B0B0) : AppColors.textSecondary;
+    final cardBackground = isDark ? const Color(0xFF1A1A1A) : AppColors.surface;
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: cardBackground,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: secondaryText.withOpacity(0.25)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Subscription & Chatbot Usage',
+            style: GoogleFonts.poppins(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: primaryText,
+            ),
+          ),
+          const SizedBox(height: 10),
+          StreamBuilder<QuerySnapshot>(
+            stream: FirebaseFirestore.instance
+                .collection('user_subscriptions')
+                .where('userId', isEqualTo: trainerId)
+                .snapshots(),
+            builder: (context, subscriptionSnapshot) {
+              if (subscriptionSnapshot.connectionState ==
+                  ConnectionState.waiting) {
+                return const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 8),
+                  child: LinearProgressIndicator(minHeight: 2),
+                );
+              }
+
+              if (subscriptionSnapshot.hasError) {
+                return Text(
+                  'Failed to load subscription details: ${subscriptionSnapshot.error}',
+                  style: GoogleFonts.inter(color: Colors.red),
+                );
+              }
+
+              final subscriptionDocs =
+                  subscriptionSnapshot.data?.docs ?? const [];
+              if (subscriptionDocs.isEmpty) {
+                return Text(
+                  'No subscription records found for this user.',
+                  style: GoogleFonts.inter(color: secondaryText),
+                );
+              }
+
+              final subscriptions = subscriptionDocs
+                  .map((doc) => doc.data() as Map<String, dynamic>)
+                  .toList()
+                ..sort((a, b) => _toDateTime(_subscriptionTimelineDate(b))
+                    .compareTo(_toDateTime(_subscriptionTimelineDate(a))));
+
+              final latest = subscriptions.first;
+              final status = _safeText(latest['status']).toLowerCase();
+              final planId = _safeText(latest['planId']) == '-'
+                  ? ''
+                  : _safeText(latest['planId']);
+              final planName = _safeText(latest['planName']) == '-'
+                  ? (planId.isEmpty ? 'Unknown Plan' : planId)
+                  : _safeText(latest['planName']);
+
+              final activatedAt = latest['approvedDate'] ?? latest['startDate'];
+              final endAt = latest['endDate'];
+              final requestAt = latest['startDate'];
+
+              if (planId.isEmpty) {
+                return _buildSubscriptionUsageContent(
+                  context,
+                  planName: planName,
+                  status: status,
+                  activatedAt: activatedAt,
+                  endAt: endAt,
+                  requestAt: requestAt,
+                  dailyMessageLimit: null,
+                );
+              }
+
+              return FutureBuilder<DocumentSnapshot>(
+                future: FirebaseFirestore.instance
+                    .collection('plans')
+                    .doc(planId)
+                    .get(),
+                builder: (context, planSnapshot) {
+                  final planData =
+                      planSnapshot.data?.data() as Map<String, dynamic>?;
+                  final dailyLimit =
+                      (latest['dailyMessageLimit'] as num?)?.toInt() ??
+                          (planData?['dailyMessageLimit'] as num?)?.toInt();
+
+                  return _buildSubscriptionUsageContent(
+                    context,
+                    planName: planName,
+                    status: status,
+                    activatedAt: activatedAt,
+                    endAt: endAt,
+                    requestAt: requestAt,
+                    dailyMessageLimit: dailyLimit,
+                  );
+                },
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSubscriptionUsageContent(
+    BuildContext context, {
+    required String planName,
+    required String status,
+    required dynamic activatedAt,
+    required dynamic endAt,
+    required dynamic requestAt,
+    required int? dailyMessageLimit,
+  }) {
+    final secondaryText = Theme.of(context).brightness == Brightness.dark
+        ? const Color(0xFFB0B0B0)
+        : AppColors.textSecondary;
+
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('chatbot_usage')
+          .where('userId', isEqualTo: trainerId)
+          .snapshots(),
+      builder: (context, usageSnapshot) {
+        int messagesUsedToday = 0;
+
+        if (usageSnapshot.hasData) {
+          final docs = usageSnapshot.data!.docs;
+          final now = DateTime.now();
+
+          for (final doc in docs) {
+            final data = doc.data() as Map<String, dynamic>;
+            final usageDate = _toDateTime(data['date']);
+            if (_isSameDay(usageDate, now)) {
+              messagesUsedToday = (data['messageCount'] as num?)?.toInt() ?? 0;
+              break;
+            }
+          }
+        }
+
+        final messagesLeft = dailyMessageLimit == null
+            ? null
+            : (dailyMessageLimit - messagesUsedToday)
+                .clamp(0, dailyMessageLimit);
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                _chip(context, 'Plan: $planName'),
+                _chip(context, 'Status: ${_formatStatus(status)}'),
+                if (dailyMessageLimit != null)
+                  _chip(context, 'Daily Limit: $dailyMessageLimit messages'),
+              ],
+            ),
+            const SizedBox(height: 12),
+            _buildKeyValue(
+                context, 'Activated On', _asDateFromAny(activatedAt)),
+            _buildKeyValue(context, 'Ends On', _asDateFromAny(endAt)),
+            _buildKeyValue(context, 'Requested On', _asDateFromAny(requestAt)),
+            _buildKeyValue(context, 'Messages Used Today', messagesUsedToday),
+            _buildKeyValue(
+              context,
+              'Messages Left Today',
+              messagesLeft == null
+                  ? 'Unknown (plan limit unavailable)'
+                  : messagesLeft,
+            ),
+            if (usageSnapshot.hasError)
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Text(
+                  'Usage stats could not be fully loaded: ${usageSnapshot.error}',
+                  style: GoogleFonts.inter(
+                    color: Colors.red,
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+            if (status == 'pending' || status == 'rejected')
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Text(
+                  status == 'pending'
+                      ? 'Subscription is pending admin approval.'
+                      : 'Subscription request was rejected.',
+                  style: GoogleFonts.inter(
+                    color: secondaryText,
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+              ),
+          ],
+        );
+      },
     );
   }
 
@@ -305,10 +525,12 @@ class AdminTrainerInsightsScreen extends StatelessWidget {
                 );
               }
 
-              final storedPrefs = snapshot.data?.data() as Map<String, dynamic>?;
-              final userInlinePrefs = trainerUserData['preferences'] is Map<String, dynamic>
-                  ? trainerUserData['preferences'] as Map<String, dynamic>
-                  : <String, dynamic>{};
+              final storedPrefs =
+                  snapshot.data?.data() as Map<String, dynamic>?;
+              final userInlinePrefs =
+                  trainerUserData['preferences'] is Map<String, dynamic>
+                      ? trainerUserData['preferences'] as Map<String, dynamic>
+                      : <String, dynamic>{};
               final merged = <String, dynamic>{
                 ...userInlinePrefs,
                 ...?storedPrefs,
@@ -328,7 +550,8 @@ class AdminTrainerInsightsScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: entries
                     .where((entry) => _hasDisplayableValue(entry.value))
-                    .map((entry) => _buildKeyValue(context, _humanizeKey(entry.key), _displayValue(entry.value)))
+                    .map((entry) => _buildKeyValue(context,
+                        _humanizeKey(entry.key), _displayValue(entry.value)))
                     .toList(),
               );
             },
@@ -414,9 +637,11 @@ class AdminTrainerInsightsScreen extends StatelessWidget {
         };
       }
       if (item is Map) {
-        final map = Map<String, dynamic>.from(item as Map);
+        final map = Map<String, dynamic>.from(item);
         return {
-          'name': _safeText(map['name']) == '-' ? 'Certificate' : _safeText(map['name']),
+          'name': _safeText(map['name']) == '-'
+              ? 'Certificate'
+              : _safeText(map['name']),
           'issuedBy': _safeText(map['issuedBy']),
           'imageUrl': _safeText(map['imageUrl']),
           'dateAdded': map['dateAdded'],
@@ -475,7 +700,8 @@ class AdminTrainerInsightsScreen extends StatelessWidget {
                     margin: const EdgeInsets.only(bottom: 8),
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      border: Border.all(color: secondaryText.withOpacity(0.22)),
+                      border:
+                          Border.all(color: secondaryText.withOpacity(0.22)),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Column(
@@ -517,7 +743,8 @@ class AdminTrainerInsightsScreen extends StatelessWidget {
                                     return Center(
                                       child: CircularProgressIndicator(
                                         strokeWidth: 2,
-                                        value: progress.expectedTotalBytes == null
+                                        value: progress.expectedTotalBytes ==
+                                                null
                                             ? null
                                             : progress.cumulativeBytesLoaded /
                                                 progress.expectedTotalBytes!,
@@ -614,7 +841,8 @@ class AdminTrainerInsightsScreen extends StatelessWidget {
                 ),
               ]
             : entries
-                .map((entry) => _buildKeyValue(context, _humanizeKey(entry.key), _displayValue(entry.value)))
+                .map((entry) => _buildKeyValue(context, _humanizeKey(entry.key),
+                    _displayValue(entry.value)))
                 .toList(),
       ),
     );
@@ -669,16 +897,16 @@ class AdminTrainerInsightsScreen extends StatelessWidget {
             onPressed: () => isVerified
                 ? _revokeVerification(context)
                 : _approveTrainer(context),
-            icon: Icon(isVerified ? Icons.remove_circle_outline : Icons.verified),
+            icon:
+                Icon(isVerified ? Icons.remove_circle_outline : Icons.verified),
             label: Text(
               isVerified ? 'Revoke Verification' : 'Verify Trainer',
               style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
             ),
             style: ElevatedButton.styleFrom(
               backgroundColor: isVerified ? Colors.red : primaryColor,
-              foregroundColor: isDark
-                  ? const Color(0xFF1A1A1A)
-                  : AppColors.textPrimary,
+              foregroundColor:
+                  isDark ? const Color(0xFF1A1A1A) : AppColors.textPrimary,
               padding: const EdgeInsets.symmetric(vertical: 14),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -713,7 +941,10 @@ class AdminTrainerInsightsScreen extends StatelessWidget {
 
   List<String> _asStringList(dynamic value) {
     if (value is List) {
-      return value.map((e) => e.toString()).where((e) => e.trim().isNotEmpty).toList();
+      return value
+          .map((e) => e.toString())
+          .where((e) => e.trim().isNotEmpty)
+          .toList();
     }
     return const [];
   }
@@ -789,6 +1020,32 @@ class AdminTrainerInsightsScreen extends StatelessWidget {
     return DateFormat('yyyy-MM-dd HH:mm').format(date);
   }
 
+  dynamic _subscriptionTimelineDate(Map<String, dynamic> subscription) {
+    return subscription['approvedDate'] ??
+        subscription['startDate'] ??
+        subscription['endDate'];
+  }
+
+  DateTime _toDateTime(dynamic value) {
+    if (value is Timestamp) return value.toDate();
+    if (value is DateTime) return value;
+    if (value is String)
+      return DateTime.tryParse(value) ?? DateTime.fromMillisecondsSinceEpoch(0);
+    return DateTime.fromMillisecondsSinceEpoch(0);
+  }
+
+  bool _isSameDay(DateTime first, DateTime second) {
+    return first.year == second.year &&
+        first.month == second.month &&
+        first.day == second.day;
+  }
+
+  String _formatStatus(String rawStatus) {
+    final normalized = rawStatus.trim().toLowerCase();
+    if (normalized.isEmpty || normalized == '-') return '-';
+    return normalized[0].toUpperCase() + normalized.substring(1);
+  }
+
   void _showCertificatePreview(BuildContext context, String imageUrl) {
     showDialog(
       context: context,
@@ -851,8 +1108,10 @@ class AdminTrainerInsightsScreen extends StatelessWidget {
 
     try {
       final batch = FirebaseFirestore.instance.batch();
-      final userRef = FirebaseFirestore.instance.collection('users').doc(trainerId);
-      final trainerRef = FirebaseFirestore.instance.collection('trainers').doc(trainerId);
+      final userRef =
+          FirebaseFirestore.instance.collection('users').doc(trainerId);
+      final trainerRef =
+          FirebaseFirestore.instance.collection('trainers').doc(trainerId);
 
       batch.update(userRef, {
         'verified': true,
@@ -909,8 +1168,10 @@ class AdminTrainerInsightsScreen extends StatelessWidget {
 
     try {
       final batch = FirebaseFirestore.instance.batch();
-      final userRef = FirebaseFirestore.instance.collection('users').doc(trainerId);
-      final trainerRef = FirebaseFirestore.instance.collection('trainers').doc(trainerId);
+      final userRef =
+          FirebaseFirestore.instance.collection('users').doc(trainerId);
+      final trainerRef =
+          FirebaseFirestore.instance.collection('trainers').doc(trainerId);
 
       batch.update(userRef, {
         'verified': false,

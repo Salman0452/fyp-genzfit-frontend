@@ -39,6 +39,8 @@ class AdminClientInsightsScreen extends StatelessWidget {
         children: [
           _buildClientHeader(context),
           const SizedBox(height: 16),
+          _buildSubscriptionSection(context),
+          const SizedBox(height: 16),
           _buildPreferencesSection(context),
           const SizedBox(height: 16),
           _buildMeasurementsSection(context),
@@ -143,10 +145,12 @@ class AdminClientInsightsScreen extends StatelessWidget {
                 );
               }
 
-              final storedPrefs = snapshot.data?.data() as Map<String, dynamic>?;
-              final userInlinePrefs = clientData['preferences'] is Map<String, dynamic>
-                  ? clientData['preferences'] as Map<String, dynamic>
-                  : <String, dynamic>{};
+              final storedPrefs =
+                  snapshot.data?.data() as Map<String, dynamic>?;
+              final userInlinePrefs =
+                  clientData['preferences'] is Map<String, dynamic>
+                      ? clientData['preferences'] as Map<String, dynamic>
+                      : <String, dynamic>{};
               final merged = <String, dynamic>{
                 ...userInlinePrefs,
                 ...?storedPrefs,
@@ -164,6 +168,220 @@ class AdminClientInsightsScreen extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildSubscriptionSection(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryText =
+        isDark ? const Color(0xFFFFFFFF) : AppColors.textPrimary;
+    final secondaryText =
+        isDark ? const Color(0xFFB0B0B0) : AppColors.textSecondary;
+    final cardBackground = isDark ? const Color(0xFF1A1A1A) : AppColors.surface;
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: cardBackground,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: secondaryText.withOpacity(0.25)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Subscription & Chatbot Usage',
+            style: GoogleFonts.poppins(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: primaryText,
+            ),
+          ),
+          const SizedBox(height: 10),
+          StreamBuilder<QuerySnapshot>(
+            stream: FirebaseFirestore.instance
+                .collection('user_subscriptions')
+                .where('userId', isEqualTo: clientId)
+                .snapshots(),
+            builder: (context, subscriptionSnapshot) {
+              if (subscriptionSnapshot.connectionState ==
+                  ConnectionState.waiting) {
+                return const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 8),
+                  child: LinearProgressIndicator(minHeight: 2),
+                );
+              }
+
+              if (subscriptionSnapshot.hasError) {
+                return Text(
+                  'Failed to load subscription details: ${subscriptionSnapshot.error}',
+                  style: GoogleFonts.inter(color: Colors.red),
+                );
+              }
+
+              final subscriptionDocs =
+                  subscriptionSnapshot.data?.docs ?? const [];
+              if (subscriptionDocs.isEmpty) {
+                return Text(
+                  'No subscription records found for this user.',
+                  style: GoogleFonts.inter(color: secondaryText),
+                );
+              }
+
+              final subscriptions = subscriptionDocs
+                  .map((doc) => doc.data() as Map<String, dynamic>)
+                  .toList()
+                ..sort((a, b) => _asDate(_subscriptionTimelineDate(b))
+                    .compareTo(_asDate(_subscriptionTimelineDate(a))));
+
+              final latest = subscriptions.first;
+              final status = _safeText(latest['status']).toLowerCase();
+              final planId = _safeText(latest['planId']) == '-'
+                  ? ''
+                  : _safeText(latest['planId']);
+              final planName = _safeText(latest['planName']) == '-'
+                  ? (planId.isEmpty ? 'Unknown Plan' : planId)
+                  : _safeText(latest['planName']);
+
+              final activatedAt = latest['approvedDate'] ?? latest['startDate'];
+              final endAt = latest['endDate'];
+              final requestAt = latest['startDate'];
+
+              if (planId.isEmpty) {
+                return _buildSubscriptionUsageContent(
+                  context,
+                  planName: planName,
+                  status: status,
+                  activatedAt: activatedAt,
+                  endAt: endAt,
+                  requestAt: requestAt,
+                  dailyMessageLimit: null,
+                );
+              }
+
+              return FutureBuilder<DocumentSnapshot>(
+                future: FirebaseFirestore.instance
+                    .collection('plans')
+                    .doc(planId)
+                    .get(),
+                builder: (context, planSnapshot) {
+                  final planData =
+                      planSnapshot.data?.data() as Map<String, dynamic>?;
+                  final dailyLimit =
+                      (latest['dailyMessageLimit'] as num?)?.toInt() ??
+                          (planData?['dailyMessageLimit'] as num?)?.toInt();
+
+                  return _buildSubscriptionUsageContent(
+                    context,
+                    planName: planName,
+                    status: status,
+                    activatedAt: activatedAt,
+                    endAt: endAt,
+                    requestAt: requestAt,
+                    dailyMessageLimit: dailyLimit,
+                  );
+                },
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSubscriptionUsageContent(
+    BuildContext context, {
+    required String planName,
+    required String status,
+    required dynamic activatedAt,
+    required dynamic endAt,
+    required dynamic requestAt,
+    required int? dailyMessageLimit,
+  }) {
+    final secondaryText = Theme.of(context).brightness == Brightness.dark
+        ? const Color(0xFFB0B0B0)
+        : AppColors.textSecondary;
+
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('chatbot_usage')
+          .where('userId', isEqualTo: clientId)
+          .snapshots(),
+      builder: (context, usageSnapshot) {
+        int messagesUsedToday = 0;
+
+        if (usageSnapshot.hasData) {
+          final docs = usageSnapshot.data!.docs;
+          final now = DateTime.now();
+
+          for (final doc in docs) {
+            final data = doc.data() as Map<String, dynamic>;
+            final usageDate = _asDate(data['date']);
+            if (_isSameDay(usageDate, now)) {
+              messagesUsedToday = (data['messageCount'] as num?)?.toInt() ?? 0;
+              break;
+            }
+          }
+        }
+
+        final messagesLeft = dailyMessageLimit == null
+            ? null
+            : (dailyMessageLimit - messagesUsedToday)
+                .clamp(0, dailyMessageLimit);
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                _chip(context, 'Plan: $planName'),
+                _chip(context, 'Status: ${_formatStatus(status)}'),
+                if (dailyMessageLimit != null)
+                  _chip(context, 'Daily Limit: $dailyMessageLimit messages'),
+              ],
+            ),
+            const SizedBox(height: 12),
+            _buildKeyValue(
+                context, 'Activated On', _asDateFromAny(activatedAt)),
+            _buildKeyValue(context, 'Ends On', _asDateFromAny(endAt)),
+            _buildKeyValue(context, 'Requested On', _asDateFromAny(requestAt)),
+            _buildKeyValue(context, 'Messages Used Today', messagesUsedToday),
+            _buildKeyValue(
+              context,
+              'Messages Left Today',
+              messagesLeft == null
+                  ? 'Unknown (plan limit unavailable)'
+                  : messagesLeft,
+            ),
+            if (usageSnapshot.hasError)
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Text(
+                  'Usage stats could not be fully loaded: ${usageSnapshot.error}',
+                  style: GoogleFonts.inter(
+                    color: Colors.red,
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+            if (status == 'pending' || status == 'rejected')
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Text(
+                  status == 'pending'
+                      ? 'Subscription is pending admin approval.'
+                      : 'Subscription request was rejected.',
+                  style: GoogleFonts.inter(
+                    color: secondaryText,
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+              ),
+          ],
+        );
+      },
     );
   }
 
@@ -221,9 +439,9 @@ class AdminClientInsightsScreen extends StatelessWidget {
                 );
               }
 
-              final docs = [...snapshot.data!.docs]
-                ..sort((a, b) => _asDate((b.data() as Map<String, dynamic>)['date'])
-                    .compareTo(_asDate((a.data() as Map<String, dynamic>)['date'])));
+              final docs = [...snapshot.data!.docs]..sort((a, b) =>
+                  _asDate((b.data() as Map<String, dynamic>)['date']).compareTo(
+                      _asDate((a.data() as Map<String, dynamic>)['date'])));
 
               return Column(
                 children: docs.map((doc) {
@@ -235,7 +453,8 @@ class AdminClientInsightsScreen extends StatelessWidget {
                       ? weight / ((height / 100) * (height / 100))
                       : null;
                   final estimated = data['estimatedMeasurements'] is Map
-                      ? Map<String, dynamic>.from(data['estimatedMeasurements'] as Map)
+                      ? Map<String, dynamic>.from(
+                          data['estimatedMeasurements'] as Map)
                       : <String, dynamic>{};
                   final photos = data['photoUrls'] is List
                       ? List<dynamic>.from(data['photoUrls'] as List)
@@ -282,7 +501,8 @@ class AdminClientInsightsScreen extends StatelessWidget {
                           )
                         else
                           ...estimated.entries.map(
-                            (entry) => _buildKeyValue(context, entry.key, entry.value),
+                            (entry) =>
+                                _buildKeyValue(context, entry.key, entry.value),
                           ),
                         const SizedBox(height: 10),
                         Align(
@@ -513,6 +733,40 @@ class AdminClientInsightsScreen extends StatelessWidget {
     return text.isEmpty ? '-' : text;
   }
 
+  dynamic _subscriptionTimelineDate(Map<String, dynamic> subscription) {
+    return subscription['approvedDate'] ??
+        subscription['startDate'] ??
+        subscription['endDate'];
+  }
+
+  bool _isSameDay(DateTime first, DateTime second) {
+    return first.year == second.year &&
+        first.month == second.month &&
+        first.day == second.day;
+  }
+
+  String _asDateFromAny(dynamic raw) {
+    if (raw == null) return '-';
+
+    DateTime? date;
+    if (raw is Timestamp) {
+      date = raw.toDate();
+    } else if (raw is DateTime) {
+      date = raw;
+    } else if (raw is String) {
+      date = DateTime.tryParse(raw);
+    }
+
+    if (date == null) return raw.toString();
+    return DateFormat('yyyy-MM-dd HH:mm').format(date);
+  }
+
+  String _formatStatus(String rawStatus) {
+    final normalized = rawStatus.trim().toLowerCase();
+    if (normalized.isEmpty || normalized == '-') return '-';
+    return normalized[0].toUpperCase() + normalized.substring(1);
+  }
+
   String _displayValue(dynamic value) {
     if (value == null) {
       return '-';
@@ -524,7 +778,9 @@ class AdminClientInsightsScreen extends StatelessWidget {
       if (value.isEmpty) {
         return '-';
       }
-      return value.entries.map((e) => '${_humanizeKey(e.key.toString())}: ${e.value}').join(' | ');
+      return value.entries
+          .map((e) => '${_humanizeKey(e.key.toString())}: ${e.value}')
+          .join(' | ');
     }
     return value.toString();
   }

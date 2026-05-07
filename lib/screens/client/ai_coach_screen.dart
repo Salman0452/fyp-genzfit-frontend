@@ -5,6 +5,10 @@ import 'package:genzfit/services/ai_chatbot_service.dart';
 import 'package:genzfit/utils/constants.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
+import 'package:percent_indicator/linear_percent_indicator.dart';
+import '../../providers/plan_provider.dart';
+import '../../models/plan_models.dart';
 
 class AICoachScreen extends StatefulWidget {
   final UserModel user;
@@ -31,6 +35,12 @@ class _AICoachScreenState extends State<AICoachScreen> {
     _chatbotService = AIChatbotService(apiKey: apiKey);
     _loadConversationHistory();
     _loadSuggestedPrompts();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final planProvider = Provider.of<PlanProvider>(context, listen: false);
+      planProvider.loadPlans();
+      planProvider.loadActiveSubscription(widget.user.id);
+      planProvider.loadTodayUsage(widget.user.id);
+    });
   }
 
   @override
@@ -82,20 +92,41 @@ class _AICoachScreenState extends State<AICoachScreen> {
 
   Future<void> _sendMessage(String text) async {
     if (text.trim().isEmpty) return;
-
+    final planProvider = Provider.of<PlanProvider>(context, listen: false);
+    final activePlan = planProvider.activeSubscription;
+    final plans = planProvider.plans;
+    int dailyLimit = 3;
+    if (activePlan != null) {
+      final plan = plans.firstWhere(
+        (p) => p.id == activePlan.planId,
+        orElse: () => PlanModel(
+            id: '',
+            name: '',
+            dailyMessageLimit: 3,
+            price: 0,
+            duration: '',
+            description: '',
+            sortOrder: 0),
+      );
+      dailyLimit = plan.dailyMessageLimit;
+    }
+    final used = planProvider.todayUsage?.messageCount ?? 0;
+    if (used >= dailyLimit) {
+      _showError(
+          'You have reached your daily AI chatbot message limit. Upgrade your plan to continue.');
+      return;
+    }
     final userMessage = ChatMessage(
       role: 'user',
       content: text.trim(),
       timestamp: DateTime.now(),
     );
-
     setState(() {
       _messages.add(userMessage);
       _isLoading = true;
       _messageController.clear();
     });
     _scrollToBottom();
-
     try {
       final response = await _chatbotService.sendMessage(
         userId: widget.user.id,
@@ -113,6 +144,7 @@ class _AICoachScreenState extends State<AICoachScreen> {
         _messages.add(aiMessage);
         _isLoading = false;
       });
+      await planProvider.incrementUsage(widget.user.id);
       _scrollToBottom();
     } catch (e) {
       setState(() => _isLoading = false);
@@ -196,134 +228,221 @@ class _AICoachScreenState extends State<AICoachScreen> {
     }
   }
 
+  Widget _buildUsageProgressBar(PlanProvider planProvider) {
+    final activePlan = planProvider.activeSubscription;
+    final plans = planProvider.plans;
+    int dailyLimit = 3;
+    if (activePlan != null) {
+      final plan = plans.firstWhere(
+        (p) => p.id == activePlan.planId,
+        orElse: () => PlanModel(
+            id: '',
+            name: '',
+            dailyMessageLimit: 3,
+            price: 0,
+            duration: '',
+            description: '',
+            sortOrder: 0),
+      );
+      dailyLimit = plan.dailyMessageLimit;
+    }
+    final used = planProvider.todayUsage?.messageCount ?? 0;
+    final percent = dailyLimit > 0 ? (used / dailyLimit).clamp(0.0, 1.0) : 0.0;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('AI Chatbot Usage: $used / $dailyLimit',
+            style: const TextStyle(fontWeight: FontWeight.w600)),
+        const SizedBox(height: 8),
+        LinearPercentIndicator(
+          lineHeight: 16.0,
+          percent: percent,
+          backgroundColor: Colors.grey.shade300,
+          progressColor: percent < 0.8
+              ? Colors.green
+              : (percent < 1.0 ? Colors.orange : Colors.red),
+          barRadius: const Radius.circular(8),
+          center: Text('${(percent * 100).toInt()}%',
+              style: const TextStyle(fontSize: 12, color: Colors.black)),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    return Scaffold(
-      backgroundColor: isDarkMode ? const Color(0xFF1A1A1A) : AppColors.surface,
-      appBar: AppBar(
-        backgroundColor: isDarkMode ? const Color(0xFF262626) : Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios,
-              color: isDarkMode ? Colors.white : AppColors.textPrimary),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Row(
-          children: [
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [AppColors.brandBlue, AppColors.brandGreen],
-                ),
-                borderRadius: BorderRadius.circular(20),
+    return ChangeNotifierProvider(
+      create: (_) => PlanProvider()
+        ..loadPlans()
+        ..loadActiveSubscription(widget.user.id)
+        ..loadTodayUsage(widget.user.id),
+      child: Consumer<PlanProvider>(
+        builder: (context, planProvider, _) {
+          final activePlan = planProvider.activeSubscription;
+          final plans = planProvider.plans;
+          int dailyLimit = 3;
+          if (activePlan != null) {
+            final plan = plans.firstWhere(
+              (p) => p.id == activePlan.planId,
+              orElse: () => PlanModel(
+                  id: '',
+                  name: '',
+                  dailyMessageLimit: 3,
+                  price: 0,
+                  duration: '',
+                  description: '',
+                  sortOrder: 0),
+            );
+            dailyLimit = plan.dailyMessageLimit;
+          }
+          final used = planProvider.todayUsage?.messageCount ?? 0;
+          final limitReached = used >= dailyLimit;
+          return Scaffold(
+            backgroundColor:
+                isDarkMode ? const Color(0xFF1A1A1A) : AppColors.surface,
+            appBar: AppBar(
+              backgroundColor:
+                  isDarkMode ? const Color(0xFF262626) : Colors.white,
+              elevation: 0,
+              leading: IconButton(
+                icon: Icon(Icons.arrow_back_ios,
+                    color: isDarkMode ? Colors.white : AppColors.textPrimary),
+                onPressed: () => Navigator.pop(context),
               ),
-              child: const Icon(Icons.smart_toy, color: Colors.white, size: 24),
-            ),
-            const SizedBox(width: 12),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'AI Coach',
-                  style: GoogleFonts.poppins(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    color: isDarkMode ? Colors.white : AppColors.textPrimary,
+              title: Row(
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [AppColors.brandBlue, AppColors.brandGreen],
+                      ),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: const Icon(Icons.smart_toy,
+                        color: Colors.white, size: 24),
                   ),
-                ),
-                Text(
-                  'Powered by Groq',
-                  style: GoogleFonts.inter(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                    color: isDarkMode
-                        ? const Color(0xFFB0B0B0)
-                        : AppColors.textSecondary,
+                  const SizedBox(width: 12),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'AI Coach',
+                        style: GoogleFonts.poppins(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color:
+                              isDarkMode ? Colors.white : AppColors.textPrimary,
+                        ),
+                      ),
+                      Text(
+                        'Powered by Groq',
+                        style: GoogleFonts.inter(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: isDarkMode
+                              ? const Color(0xFFB0B0B0)
+                              : AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
                   ),
+                ],
+              ),
+              actions: [
+                IconButton(
+                  icon: Icon(Icons.delete_outline,
+                      color: isDarkMode ? Colors.white : AppColors.textPrimary),
+                  onPressed: _clearHistory,
                 ),
               ],
             ),
-          ],
-        ),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.delete_outline,
-                color: isDarkMode ? Colors.white : AppColors.textPrimary),
-            onPressed: _clearHistory,
-          ),
-        ],
-      ),
-      body: Column(
-        children: [
-          Expanded(
-            child: _isLoadingHistory
-                ? Center(
-                    child: CircularProgressIndicator(
-                      color: isDarkMode
-                          ? AppColors.brandGreen
-                          : AppColors.brandGreenDeep,
-                    ),
-                  )
-                : _messages.isEmpty
-                    ? _buildEmptyState(isDarkMode)
-                    : ListView.builder(
-                        controller: _scrollController,
-                        padding: const EdgeInsets.all(16),
-                        itemCount: _messages.length,
-                        itemBuilder: (context, index) {
-                          return _buildMessageBubble(
-                              _messages[index], isDarkMode);
-                        },
-                      ),
-          ),
-          if (_isLoading)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: isDarkMode
-                          ? const Color(0xFF2A2A2A)
-                          : const Color(0xFFF0F0F0),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        SizedBox(
-                          width: 16,
-                          height: 16,
+            body: Column(
+              children: [
+                Expanded(
+                  child: _isLoadingHistory
+                      ? Center(
                           child: CircularProgressIndicator(
-                            strokeWidth: 2,
                             color: isDarkMode
-                                ? const Color(0xFFB0B0B0)
-                                : const Color(0xFF595959),
+                                ? AppColors.brandGreen
+                                : AppColors.brandGreenDeep,
                           ),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          'Typing...',
-                          style: GoogleFonts.inter(
+                        )
+                      : _messages.isEmpty
+                          ? _buildEmptyState(isDarkMode)
+                          : ListView.builder(
+                              controller: _scrollController,
+                              padding: const EdgeInsets.all(16),
+                              itemCount: _messages.length,
+                              itemBuilder: (context, index) {
+                                return _buildMessageBubble(
+                                    _messages[index], isDarkMode);
+                              },
+                            ),
+                ),
+                if (_isLoading)
+                  Padding(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
                             color: isDarkMode
-                                ? const Color(0xFFB0B0B0)
-                                : const Color(0xFF595959),
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
+                                ? const Color(0xFF2A2A2A)
+                                : const Color(0xFFF0F0F0),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: isDarkMode
+                                      ? const Color(0xFFB0B0B0)
+                                      : const Color(0xFF595959),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Typing...',
+                                style: GoogleFonts.inter(
+                                  color: isDarkMode
+                                      ? const Color(0xFFB0B0B0)
+                                      : const Color(0xFF595959),
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ],
                     ),
+                  )
+                else if (limitReached)
+                  Center(
+                    child: Text(
+                      'You have reached your daily AI chatbot message limit. Upgrade your plan to continue.',
+                      style: TextStyle(
+                        color: Colors.red.shade700,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
                   ),
-                ],
-              ),
+                _buildInputArea(isDarkMode),
+              ],
             ),
-          _buildInputArea(isDarkMode),
-        ],
+          );
+        },
       ),
     );
   }
@@ -602,77 +721,116 @@ class _AICoachScreenState extends State<AICoachScreen> {
   }
 
   Widget _buildInputArea(bool isDarkMode) {
-    return SafeArea(
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: isDarkMode ? const Color(0xFF262626) : Colors.white,
-          border: Border(
-            top: BorderSide(
-              color: isDarkMode
-                  ? const Color(0xFF3A3A3A)
-                  : const Color(0xFFE0E0E0),
-              width: 1,
-            ),
-          ),
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                decoration: BoxDecoration(
+    return Consumer<PlanProvider>(
+      builder: (context, planProvider, _) {
+        final activePlan = planProvider.activeSubscription;
+        final plans = planProvider.plans;
+        int dailyLimit = 3;
+        if (activePlan != null) {
+          final plan = plans.firstWhere(
+            (p) => p.id == activePlan.planId,
+            orElse: () => PlanModel(
+                id: '',
+                name: '',
+                dailyMessageLimit: 3,
+                price: 0,
+                duration: '',
+                description: '',
+                sortOrder: 0),
+          );
+          dailyLimit = plan.dailyMessageLimit;
+        }
+        final used = planProvider.todayUsage?.messageCount ?? 0;
+        final limitReached = used >= dailyLimit;
+        return SafeArea(
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: isDarkMode ? const Color(0xFF262626) : Colors.white,
+              border: Border(
+                top: BorderSide(
                   color: isDarkMode
-                      ? const Color(0xFF1A1A1A)
-                      : const Color(0xFFF8F8F8),
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(
-                    color: isDarkMode
-                        ? const Color(0xFF3A3A3A)
-                        : const Color(0xFFE0E0E0),
-                    width: 1,
-                  ),
+                      ? const Color(0xFF3A3A3A)
+                      : const Color(0xFFE0E0E0),
+                  width: 1,
                 ),
-                child: TextField(
-                  controller: _messageController,
-                  style: GoogleFonts.inter(
-                    color: isDarkMode ? Colors.white : AppColors.textPrimary,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                  ),
-                  maxLines: null,
-                  textInputAction: TextInputAction.send,
-                  onSubmitted: _sendMessage,
-                  decoration: InputDecoration(
-                    hintText: 'Ask me anything...',
-                    hintStyle: GoogleFonts.inter(
-                      color: isDarkMode
-                          ? const Color(0xFF595959)
-                          : const Color(0xFFC0C0C0),
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
+              ),
+            ),
+            child: limitReached
+                ? Center(
+                    child: Text(
+                      'You have reached your daily AI chatbot message limit. Upgrade your plan to continue.',
+                      style: TextStyle(
+                        color: Colors.red.shade700,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                      textAlign: TextAlign.center,
                     ),
-                    border: InputBorder.none,
+                  )
+                : Row(
+                    children: [
+                      Expanded(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          decoration: BoxDecoration(
+                            color: isDarkMode
+                                ? const Color(0xFF1A1A1A)
+                                : const Color(0xFFF8F8F8),
+                            borderRadius: BorderRadius.circular(24),
+                            border: Border.all(
+                              color: isDarkMode
+                                  ? const Color(0xFF3A3A3A)
+                                  : const Color(0xFFE0E0E0),
+                              width: 1,
+                            ),
+                          ),
+                          child: TextField(
+                            controller: _messageController,
+                            style: GoogleFonts.inter(
+                              color: isDarkMode
+                                  ? Colors.white
+                                  : AppColors.textPrimary,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                            ),
+                            maxLines: null,
+                            textInputAction: TextInputAction.send,
+                            onSubmitted: _sendMessage,
+                            decoration: InputDecoration(
+                              hintText: 'Ask me anything...',
+                              hintStyle: GoogleFonts.inter(
+                                color: isDarkMode
+                                    ? const Color(0xFF595959)
+                                    : const Color(0xFFC0C0C0),
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                              ),
+                              border: InputBorder.none,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Container(
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [AppColors.brandBlue, AppColors.brandGreen],
+                          ),
+                          borderRadius: BorderRadius.circular(24),
+                        ),
+                        child: IconButton(
+                          icon: const Icon(Icons.send,
+                              color: Colors.white, size: 20),
+                          onPressed: () =>
+                              _sendMessage(_messageController.text),
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-              ),
-            ),
-            const SizedBox(width: 8),
-            Container(
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [AppColors.brandBlue, AppColors.brandGreen],
-                ),
-                borderRadius: BorderRadius.circular(24),
-              ),
-              child: IconButton(
-                icon: const Icon(Icons.send, color: Colors.white, size: 20),
-                onPressed: () => _sendMessage(_messageController.text),
-              ),
-            ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 }

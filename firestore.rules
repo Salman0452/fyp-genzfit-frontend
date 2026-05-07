@@ -63,8 +63,10 @@ service cloud.firestore {
     
     // Users collection
     match /users/{userId} {
-      // Allow trainers to read all user docs (for FYP/demo; restrict in production)
-      allow read: if isOwner(userId) || isAnyAdminRole() || isTrainer();
+      // Allow trainers and clients to read all trainer user docs (for FYP/demo; restrict in production)
+      allow read: if isOwner(userId) || isAnyAdminRole() || isTrainer() ||
+        (isClient() &&
+          get(/databases/$(database)/documents/users/$(userId)).data.role == 'trainer');
       
       // Users can create their own document during signup
       // Must be authenticated and creating their own document
@@ -458,6 +460,15 @@ service cloud.firestore {
          request.resource.data.status == 'failed');
     }
 
+    // Refund requests for client refund operations
+    match /refund_requests/{refundId} {
+      allow read: if (isClient() && resource.data.userId == request.auth.uid) ||
+        isFinanceAdmin() || isAdmin();
+      allow create: if isClient() && request.resource.data.userId == request.auth.uid;
+      allow update: if isFinanceAdmin() || isAdmin();
+      allow delete: if isFinanceAdmin() || isAdmin();
+    }
+
     // Withdrawal requests for trainer payout operations
     match /withdrawal_requests/{withdrawalId} {
       allow read: if (isTrainer() && resource.data.trainerId == request.auth.uid) ||
@@ -496,6 +507,37 @@ service cloud.firestore {
       // Settings UI is available to admin/super_admin/finance_admin roles.
       // Keep rules aligned with that role model.
       allow write: if isFinanceAdmin() || isAdmin();
+    }
+
+    // Subscription plans (publicly readable)
+    match /plans/{planId} {
+      allow read: if true;
+      // Only admins can write plans
+      allow create, update, delete: if isAdmin();
+    }
+
+    // User subscriptions (clients can read/write their own)
+    match /user_subscriptions/{subscriptionId} {
+      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+      // Admins can read/write all
+      allow read, write: if isAnyAdminRole();
+    }
+
+    // Chatbot usage (clients can read/write their own)
+    match /chatbot_usage/{usageId} {
+      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+      // Admins can read/write all
+      allow read, write: if isAnyAdminRole();
+    }
+    
+    // Admin settings (publicly readable for client config)
+    match /settings/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
     }
   }
 }

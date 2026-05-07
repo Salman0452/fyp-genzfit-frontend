@@ -7,6 +7,14 @@ class PlanService {
       FirebaseFirestore.instance.collection('user_subscriptions');
   final _usageRef = FirebaseFirestore.instance.collection('chatbot_usage');
 
+  String _inferBillingCycle(String duration) {
+    final normalized = duration.trim().toLowerCase();
+    if (normalized.contains('year')) return 'yearly';
+    if (normalized.contains('month')) return 'monthly';
+    if (normalized == 'free') return 'free';
+    return 'custom';
+  }
+
   Future<List<PlanModel>> fetchPlans() async {
     final snapshot = await _plansRef.orderBy('sortOrder').get();
     return snapshot.docs.map((doc) => PlanModel.fromFirestore(doc)).toList();
@@ -27,13 +35,22 @@ class PlanService {
     required String userId,
     required String planId,
     required String paymentReceiptUrl,
+    required String planName,
+    required String planDuration,
+    required double planPrice,
+    required String billingCycle,
   }) async {
     await _subscriptionsRef.add({
       'userId': userId,
       'planId': planId,
+      'planName': planName,
+      'planDuration': planDuration,
+      'planPrice': planPrice,
+      'billingCycle': billingCycle,
       'startDate': Timestamp.now(),
       'status': 'pending',
       'paymentReceiptUrl': paymentReceiptUrl,
+      'requestType': 'subscription_purchase',
     });
   }
 
@@ -71,5 +88,87 @@ class PlanService {
         'messageCount': FieldValue.increment(1),
       });
     }
+  }
+
+  Stream<List<Map<String, dynamic>>> getPendingSubscriptions() {
+    return _subscriptionsRef
+        .where('status', isEqualTo: 'pending')
+        .orderBy('startDate', descending: true)
+        .snapshots()
+        .asyncMap((snapshot) async {
+      List<Map<String, dynamic>> pendingList = [];
+
+      for (var doc in snapshot.docs) {
+        final data = doc.data();
+        final userId = data['userId'] as String;
+        final planId = data['planId'] as String;
+
+        // Fetch user info
+        final userDoc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(userId)
+            .get();
+        final userData = userDoc.data() ?? {};
+
+        // Fetch plan info
+        final planDoc = await _plansRef.doc(planId).get();
+        final planData = planDoc.data() ?? {};
+        final rawDuration = (data['planDuration'] as String?) ??
+            (planData['duration'] as String?) ??
+            '';
+        final billingCycle = (data['billingCycle'] as String?)
+                    ?.trim()
+                    .toLowerCase()
+                    .isNotEmpty ==
+                true
+            ? (data['billingCycle'] as String).trim().toLowerCase()
+            : _inferBillingCycle(rawDuration);
+
+        pendingList.add({
+          'docId': doc.id,
+          'userId': userId,
+          'userName': userData['name'] ?? 'Unknown User',
+          'userEmail': userData['email'] ?? '',
+          'userAvatar': userData['profilePhoto'] ?? '',
+          'planId': planId,
+          'planName': (data['planName'] as String?)?.isNotEmpty == true
+              ? data['planName']
+              : (planData['name'] ?? 'Unknown Plan'),
+          'planPrice':
+              (data['planPrice'] as num?) ?? (planData['price'] ?? 0.0),
+          'planDuration': rawDuration,
+          'billingCycle': billingCycle,
+          'receiptUrl': data['paymentReceiptUrl'] ?? '',
+          'timestamp': data['startDate'],
+          'status': data['status'] ?? 'pending',
+        });
+      }
+
+      return pendingList;
+    });
+  }
+
+  Future<void> approveSubscription({
+    required String docId,
+    required int durationDays,
+  }) async {
+    final endDate = DateTime.now().add(Duration(days: durationDays));
+
+    await _subscriptionsRef.doc(docId).update({
+      'status': 'active',
+      'endDate': Timestamp.fromDate(endDate),
+      'approvedDate': Timestamp.now(),
+    });
+  }
+
+  Future<void> rejectSubscription({
+    required String docId,
+    required String adminNote,
+  }) async {
+    await _subscriptionsRef.doc(docId).update({
+      'status': 'rejected',
+      'adminNote': adminNote,
+      'rejectedDate': Timestamp.now(),
+    });
   }
 }

@@ -159,8 +159,9 @@ class _SignupScreenState extends State<SignupScreen> {
       hourlyRate: _hourlyRateController.text.isEmpty
           ? null
           : double.tryParse(_hourlyRateController.text),
-      nameOverride:
-          _nameController.text.trim().isEmpty ? null : _nameController.text.trim(),
+      nameOverride: _nameController.text.trim().isEmpty
+          ? null
+          : _nameController.text.trim(),
     );
 
     if (!mounted) return;
@@ -175,40 +176,6 @@ class _SignupScreenState extends State<SignupScreen> {
       Helpers.showSnackBar(
         context,
         authProvider.error ?? 'Google sign up failed',
-        isError: true,
-      );
-    }
-  }
-
-  Future<void> _handleFacebookSignup() async {
-    if (!_validateRoleSpecificFields()) {
-      return;
-    }
-
-    final authProvider = context.read<AuthProvider>();
-    final success = await authProvider.signInWithFacebook(
-      role: widget.role,
-      goals: _selectedGoal,
-      expertise: _selectedExpertise.isEmpty ? null : _selectedExpertise,
-      hourlyRate: _hourlyRateController.text.isEmpty
-          ? null
-          : double.tryParse(_hourlyRateController.text),
-      nameOverride:
-          _nameController.text.trim().isEmpty ? null : _nameController.text.trim(),
-    );
-
-    if (!mounted) return;
-
-    if (success) {
-      if (authProvider.lastSocialAuthIsNewUser) {
-        _navigateAfterSignup();
-      } else {
-        _navigateByRole(authProvider.currentUser);
-      }
-    } else {
-      Helpers.showSnackBar(
-        context,
-        authProvider.error ?? 'Facebook sign up failed',
         isError: true,
       );
     }
@@ -253,7 +220,8 @@ class _SignupScreenState extends State<SignupScreen> {
         (route) => false,
       );
     } else if (widget.role == UserRole.trainer) {
-      Navigator.pushNamedAndRemoveUntil(context, '/trainer-home', (route) => false);
+      Navigator.pushNamedAndRemoveUntil(
+          context, '/trainer-home', (route) => false);
     }
   }
 
@@ -522,21 +490,6 @@ class _SignupScreenState extends State<SignupScreen> {
                         icon: const Icon(Icons.g_mobiledata, size: 22),
                         label: const Text(
                           'Google',
-                          style: TextStyle(fontWeight: FontWeight.w600),
-                        ),
-                        style: OutlinedButton.styleFrom(
-                          minimumSize: const Size.fromHeight(48),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed:
-                            authProvider.isLoading ? null : _handleFacebookSignup,
-                        icon: const Icon(Icons.facebook, size: 18),
-                        label: const Text(
-                          'Facebook',
                           style: TextStyle(fontWeight: FontWeight.w600),
                         ),
                         style: OutlinedButton.styleFrom(

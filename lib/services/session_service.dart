@@ -51,9 +51,15 @@ class SessionService {
 
   // Cancel session (client)
   Future<void> cancelSession(String sessionId) async {
+    final session = await getSession(sessionId);
+    if (session == null) return;
+
     await _firestore.collection('sessions').doc(sessionId).update({
       'status': SessionModel.statusToString(SessionStatus.cancelled),
       'updatedAt': Timestamp.fromDate(DateTime.now()),
+      'cancelledAt': Timestamp.fromDate(DateTime.now()),
+      'sessionState': 'cancelled',
+      'sessionDisplayStatus': 'Cancelled',
     });
   }
 
@@ -62,10 +68,19 @@ class SessionService {
     final session = await getSession(sessionId);
     if (session == null) return;
 
+    final now = DateTime.now();
+    final effectiveStart = session.startDate ?? now;
+    final effectiveEnd = effectiveStart.add(const Duration(hours: 1));
+
     await _firestore.collection('sessions').doc(sessionId).update({
       'status': SessionModel.statusToString(SessionStatus.completed),
-      'completedAt': Timestamp.fromDate(DateTime.now()),
-      'updatedAt': Timestamp.fromDate(DateTime.now()),
+      'completedAt': Timestamp.fromDate(now),
+      'completedBy': 'trainer',
+      'updatedAt': Timestamp.fromDate(now),
+      'sessionState': 'completed',
+      'sessionDisplayStatus': 'Completed',
+      'sessionStartAt': Timestamp.fromDate(effectiveStart),
+      'sessionEndAt': Timestamp.fromDate(effectiveEnd),
       if (finalAmount != null) 'amount': finalAmount,
     });
 

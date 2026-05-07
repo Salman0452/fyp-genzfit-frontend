@@ -150,7 +150,11 @@ class TrainerSettingsScreen extends StatelessWidget {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       await authProvider.signOut();
       if (context.mounted) {
-        Navigator.pushReplacementNamed(context, '/role-selection');
+        Navigator.pushNamedAndRemoveUntil(
+          context,
+          '/role-selection',
+          (route) => false,
+        );
       }
     }
   }

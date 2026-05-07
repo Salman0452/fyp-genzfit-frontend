@@ -771,47 +771,7 @@ class _TrainerMarketplaceScreenState extends State<TrainerMarketplaceScreen> {
                                 ),
                               ),
                             ],
-                            if (sessionStatus != null &&
-                                sessionStatus.isNotEmpty) ...[
-                              const SizedBox(width: 6),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 4,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: _getSessionStatusColor(sessionStatus)
-                                      .withOpacity(0.15),
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(
-                                    color: _getSessionStatusColor(sessionStatus)
-                                        .withOpacity(0.4),
-                                    width: 0.8,
-                                  ),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(
-                                      _getSessionStatusIcon(sessionStatus),
-                                      color:
-                                          _getSessionStatusColor(sessionStatus),
-                                      size: 12,
-                                    ),
-                                    const SizedBox(width: 3),
-                                    Text(
-                                      _formatSessionStatus(sessionStatus),
-                                      style: TextStyle(
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w600,
-                                        color: _getSessionStatusColor(
-                                            sessionStatus),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
+                            // Removed session status tag (Active/Approved/etc.)
                           ],
                         ),
                         const SizedBox(height: 6),

@@ -51,8 +51,8 @@ class _LoginScreenState extends State<LoginScreen> {
       final error = authProvider.error ?? 'Login failed';
 
       if (error.contains('Please verify your email first')) {
-        final resendSuccess = await authProvider
-            .resendEmailVerificationForCredentials(
+        final resendSuccess =
+            await authProvider.resendEmailVerificationForCredentials(
           email: _emailController.text.trim(),
           password: _passwordController.text,
         );
@@ -84,7 +84,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
     if (success) {
       final user = authProvider.currentUser;
-      if (authProvider.lastSocialAuthIsNewUser && user?.role == UserRole.client) {
+      if (authProvider.lastSocialAuthIsNewUser &&
+          user?.role == UserRole.client) {
         Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(builder: (_) => const OnboardingScreen()),
@@ -97,32 +98,6 @@ class _LoginScreenState extends State<LoginScreen> {
       Helpers.showSnackBar(
         context,
         authProvider.error ?? 'Google sign in failed',
-        isError: true,
-      );
-    }
-  }
-
-  Future<void> _handleFacebookSignIn() async {
-    final authProvider = context.read<AuthProvider>();
-    final success = await authProvider.signInWithFacebook();
-
-    if (!mounted) return;
-
-    if (success) {
-      final user = authProvider.currentUser;
-      if (authProvider.lastSocialAuthIsNewUser && user?.role == UserRole.client) {
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(builder: (_) => const OnboardingScreen()),
-          (route) => false,
-        );
-      } else {
-        await _navigateByRole(user);
-      }
-    } else {
-      Helpers.showSnackBar(
-        context,
-        authProvider.error ?? 'Facebook sign in failed',
         isError: true,
       );
     }
@@ -316,24 +291,6 @@ class _LoginScreenState extends State<LoginScreen> {
                         icon: const Icon(Icons.g_mobiledata, size: 22),
                         label: Text(
                           'Google',
-                          style: GoogleFonts.plusJakartaSans(
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        style: OutlinedButton.styleFrom(
-                          minimumSize: const Size.fromHeight(48),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: authProvider.isLoading
-                            ? null
-                            : _handleFacebookSignIn,
-                        icon: const Icon(Icons.facebook, size: 18),
-                        label: Text(
-                          'Facebook',
                           style: GoogleFonts.plusJakartaSans(
                             fontWeight: FontWeight.w600,
                           ),

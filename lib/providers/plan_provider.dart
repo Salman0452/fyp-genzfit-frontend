@@ -37,11 +37,19 @@ class PlanProvider extends ChangeNotifier {
     required String userId,
     required String planId,
     required String paymentReceiptUrl,
+    required String planName,
+    required String planDuration,
+    required double planPrice,
+    required String billingCycle,
   }) async {
     await _planService.createSubscriptionRequest(
       userId: userId,
       planId: planId,
       paymentReceiptUrl: paymentReceiptUrl,
+      planName: planName,
+      planDuration: planDuration,
+      planPrice: planPrice,
+      billingCycle: billingCycle,
     );
     await loadActiveSubscription(userId);
   }
@@ -49,5 +57,29 @@ class PlanProvider extends ChangeNotifier {
   Future<void> incrementUsage(String userId) async {
     await _planService.incrementUsage(userId);
     await loadTodayUsage(userId);
+  }
+
+  Stream<List<Map<String, dynamic>>> getPendingSubscriptionsStream() {
+    return _planService.getPendingSubscriptions();
+  }
+
+  Future<void> approveSubscription({
+    required String docId,
+    required int durationDays,
+  }) async {
+    await _planService.approveSubscription(
+      docId: docId,
+      durationDays: durationDays,
+    );
+  }
+
+  Future<void> rejectSubscription({
+    required String docId,
+    required String adminNote,
+  }) async {
+    await _planService.rejectSubscription(
+      docId: docId,
+      adminNote: adminNote,
+    );
   }
 }

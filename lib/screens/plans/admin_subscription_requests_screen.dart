@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../models/plan_models.dart';
 
 class AdminSubscriptionRequestsScreen extends StatelessWidget {
@@ -35,6 +37,49 @@ class AdminSubscriptionRequestsScreen extends StatelessWidget {
             .where('status', isEqualTo: 'pending')
             .snapshots(),
         builder: (context, snapshot) {
+          if (snapshot.hasError) {
+            final err = snapshot.error?.toString() ?? 'Unknown error';
+            final match =
+                RegExp(r'https://console\.firebase\.google\.com/[^\s)\]]+')
+                    .firstMatch(err);
+            final indexUrl = match?.group(0);
+            return Center(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.error_outline,
+                        size: 64, color: Colors.red.shade700),
+                    const SizedBox(height: 12),
+                    Text('Firestore Error',
+                        style: GoogleFonts.poppins(
+                            fontSize: 18, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 8),
+                    SelectableText(err),
+                    if (indexUrl != null) ...[
+                      const SizedBox(height: 12),
+                      SelectableText(indexUrl),
+                      const SizedBox(height: 8),
+                      ElevatedButton.icon(
+                        onPressed: () async {
+                          await Clipboard.setData(
+                              ClipboardData(text: indexUrl));
+                          if (context.mounted)
+                            ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                    content: Text('Index link copied')));
+                        },
+                        icon: const Icon(Icons.copy),
+                        label: const Text('Copy index link'),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            );
+          }
+
           if (!snapshot.hasData)
             return const Center(child: CircularProgressIndicator());
           final requests = snapshot.data!.docs;
