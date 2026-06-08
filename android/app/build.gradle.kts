@@ -7,7 +7,7 @@ plugins {
 }
 
 android {
-    namespace = "com.rahmanbrar.genzfit"
+    namespace = "com.rehmanbrar.genzfit"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = "27.1.12297006"
 
